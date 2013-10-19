@@ -139,14 +139,14 @@
     <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
 &lt;speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="zh-CN"&gt;
   &lt;p&gt;
-    &lt;s&gt;欢迎使用 &lt;sub alias="My god"&gt;Mygod&lt;/sub&gt;语音合成器 V&lt;say-as interpret-as="number:cardinal"&gt;{0}&lt;/say-as&gt;！&lt;/s&gt;
-    &lt;s&gt;本程序由 &lt;say-as interpret-as="spell-out"&gt;MG&lt;/say-as&gt;太软 于 &lt;say-as interpret-as="date:ymd"&gt;{1}&lt;/say-as&gt;&lt;say-as interpret-as="time:hms"&gt;{2}&lt;/say-as&gt; 制作。&lt;/s&gt;
-    &lt;s&gt;了解更多关于本程序的信息或查找更新请访问：&lt;say-as interpret-as="net:uri"&gt;http://mygod.apphb.com/#Product-55&lt;/say-as&gt;。&lt;/s&gt;
+    &lt;s&gt;欢迎使用 &lt;sub alias="My god"&gt;Mygod&lt;/sub&gt;语音合成器 V{0}！&lt;/s&gt;
+    &lt;s&gt;本程序由 &lt;sub alias="My god"&gt;Mygod&lt;/sub&gt; 于 &lt;say-as interpret-as="date:ymd"&gt;{1}&lt;/say-as&gt;&lt;say-as interpret-as="time:hms"&gt;{2}&lt;/say-as&gt; 制作。&lt;/s&gt;
+    &lt;s&gt;了解更多关于本程序的信息或查找更新请访问：&lt;say-as interpret-as="net:uri"&gt;http://mygodstudio.tk/product/mygod-speech-synthesizer/&lt;/say-as&gt;。&lt;/s&gt;
   &lt;/p&gt;
   &lt;p&gt;
-    &lt;s&gt;快速帮助：请在这里禁用SSML后输入你要阅读的文字，点击生成即可听到结果。&lt;/s&gt;
+    &lt;s&gt;快速帮助：请在这里禁用 SSML 后输入你要阅读的文字，点击生成即可听到结果。&lt;/s&gt;
     &lt;s&gt;想要输出到文件或进行调整请点击右边的两个选项卡。&lt;/s&gt;
-    &lt;s&gt;想要获得更加强大的功能请考虑使用SSML。&lt;/s&gt;
+    &lt;s&gt;想要获得更加强大的功能请考虑使用 SSML。&lt;/s&gt;
   &lt;/p&gt;
 &lt;/speak&gt;</value>
   </data>

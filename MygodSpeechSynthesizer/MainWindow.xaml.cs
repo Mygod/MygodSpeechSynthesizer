@@ -11,15 +11,15 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Shell;
 using System.Xml;
+using Fluent;
 using Microsoft.Win32;
-using Microsoft.Windows.Controls.Ribbon;
-using Mygod.SpeechSynthesiser.Dwm;
-using TaskbarItemProgressState = System.Windows.Shell.TaskbarItemProgressState;
+using Mygod.Windows;
 
-namespace Mygod.SpeechSynthesiser
+namespace Mygod.Speech.Synthesizer
 {
-    public partial class MainWindow
+    public sealed partial class MainWindow
     {
         public MainWindow()
         {
@@ -31,21 +31,19 @@ namespace Mygod.SpeechSynthesiser
             synthesizer.SetOutputToNull();
             synthesizer.SpeakProgress += UpdateProgress;
             synthesizer.SpeakCompleted += Completed;
-            EnterTextBox.Text = string.Format(Properties.Resources.WelcomingText, GetProgram.Version,
-                                              GetProgram.CompilationTime.ToShortDateString(), 
-                                              GetProgram.CompilationTime.ToLongTimeString());
-        }
-
-        private void Glow(object sender, AeroGlassCompositionChangedEventArgs e)
-        {
-            if (e.GlassAvailable) Resources.Add(typeof(Ribbon), Resources["GlowingEffect"]);
-            else Resources.Remove(typeof(Ribbon));
+            EnterTextBox.Text = string.Format(Properties.Resources.WelcomingText, CurrentApp.Version,
+                                              CurrentApp.CompilationTime.ToShortDateString(),
+                                              CurrentApp.CompilationTime.ToLongTimeString());
         }
 
         private void Drag(object sender, MouseButtonEventArgs e)
         {
             DragMove();
             if (e.ClickCount == 2) WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+        private void NoDrag(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
         }
 
         private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
@@ -140,7 +138,7 @@ namespace Mygod.SpeechSynthesiser
 
         private static string GetFileName(string path, string extension)
         {
-            if (!path.ToLower().EndsWith(".wav")) return path + extension;
+            if (!path.ToLower().EndsWith(".wav", StringComparison.Ordinal)) return path + extension;
             return path.Substring(0, path.Length - 4) + extension;
         }
 
@@ -217,7 +215,7 @@ namespace Mygod.SpeechSynthesiser
         {
             if (openDialog.ShowDialog() != true) return;
             EnterTextBox.Text = File.ReadAllText(openDialog.FileName);
-            if (openDialog.FileName.ToLower().EndsWith(".ssml")) SsmlBox.IsChecked = true;
+            if (openDialog.FileName.ToLower().EndsWith(".ssml", StringComparison.Ordinal)) SsmlBox.IsChecked = true;
         }
         private void SaveToFile(object sender, ExecutedRoutedEventArgs e)
         {
@@ -336,7 +334,7 @@ namespace Mygod.SpeechSynthesiser
 
         private void InsertSayAs(object sender, RoutedEventArgs e)
         {
-            var item = e.OriginalSource as RibbonMenuItem;
+            var item = e.OriginalSource as MenuItem;
             if (item == null) return;
             InsertXmlElement("say-as", " interpret-as=\"" + item.Tag + "\"");
         }
@@ -360,7 +358,7 @@ namespace Mygod.SpeechSynthesiser
 
         private void InsertEmphasis(object sender, RoutedEventArgs e)
         {
-            var item = e.OriginalSource as RibbonMenuItem;
+            var item = e.OriginalSource as MenuItem;
             if (item == null) return;
             InsertXmlElement("emphasis", " level=\"" + item.Tag + "\"");
         }
@@ -372,7 +370,7 @@ namespace Mygod.SpeechSynthesiser
 
         private void InsertProsodyPitch(object sender, RoutedEventArgs e)
         {
-            var item = e.OriginalSource as RibbonMenuItem;
+            var item = e.OriginalSource as MenuItem;
             if (item == null) return;
             InsertXmlElement("prosody", " pitch=\"" + item.Tag + "\"");
         }
@@ -384,7 +382,7 @@ namespace Mygod.SpeechSynthesiser
 
         private void InsertProsodyRate(object sender, RoutedEventArgs e)
         {
-            var item = e.OriginalSource as RibbonMenuItem;
+            var item = e.OriginalSource as MenuItem;
             if (item == null) return;
             InsertXmlElement("prosody", " rate=\"" + item.Tag + "\"");
         }
@@ -396,7 +394,7 @@ namespace Mygod.SpeechSynthesiser
 
         private void InsertProsodyVolume(object sender, RoutedEventArgs e)
         {
-            var item = e.OriginalSource as RibbonMenuItem;
+            var item = e.OriginalSource as MenuItem;
             if (item == null) return;
             InsertXmlElement("prosody", " volume=\"" + item.Tag + "\"");
         }
@@ -441,7 +439,7 @@ namespace Mygod.SpeechSynthesiser
     }
 
     [ValueConversion(typeof(int), typeof(double))]
-    public class KiloBytesConverter : IValueConverter
+    public sealed class KiloBytesConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -455,7 +453,7 @@ namespace Mygod.SpeechSynthesiser
     }
 
     [ValueConversion(typeof(VoiceGender), typeof(string))]
-    public class GenderConverter : IValueConverter
+    public sealed class GenderConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -479,7 +477,7 @@ namespace Mygod.SpeechSynthesiser
     }
 
     [ValueConversion(typeof(VoiceAge), typeof(string))]
-    public class AgeConverter : IValueConverter
+    public sealed class AgeConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -505,11 +503,11 @@ namespace Mygod.SpeechSynthesiser
     }
 
     [ValueConversion(typeof(bool?), typeof(bool?))]
-    public class NotConverter : IValueConverter
+    public sealed class NotConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null || !(value is bool?)) return null;
+            if (!(value is bool?)) return null;
             var b = (bool?)value;
             return !b;
         }
@@ -520,12 +518,12 @@ namespace Mygod.SpeechSynthesiser
         }
     }
 
-    [ValueConversion(typeof(RibbonCheckBox), typeof(bool?))]
-    public class EnabledAndCheckedConverter : IValueConverter
+    [ValueConversion(typeof(CheckBox), typeof(bool?))]
+    public sealed class EnabledAndCheckedConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var box = value as RibbonCheckBox;
+            var box = value as CheckBox;
             if (box == null) return null;
             return box.IsChecked != null && box.IsEnabled && box.IsChecked.Value;
         }
@@ -537,11 +535,11 @@ namespace Mygod.SpeechSynthesiser
     }
 
     [ValueConversion(typeof(bool?), typeof(Visibility))]
-    public class VisibleWhileTrueConverter : IValueConverter
+    public sealed class VisibleWhileTrueConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null || !(value is bool?)) return null;
+            if (!(value is bool?)) return null;
             var b = (bool?)value;
             return b == true ? Visibility.Visible : Visibility.Collapsed;
         }

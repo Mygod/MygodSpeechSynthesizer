@@ -1,6 +1,6 @@
-﻿namespace Mygod.SpeechSynthesiser
+﻿namespace Mygod.Speech.Synthesizer
 {
-    public partial class App
+    public sealed partial class App
     {
     }
 }
