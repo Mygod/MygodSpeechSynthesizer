@@ -1,0 +1,357 @@
+﻿<s:GlassWindow x:Class="Mygod.SpeechSynthesiser.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="{x:Static s:GetProgram.Title}" Width="1000" Height="480"
+               xmlns:r="clr-namespace:Microsoft.Windows.Controls.Ribbon;assembly=RibbonControlsLibrary" AeroGlassCompositionChanged="Glow"
+               xmlns:s="clr-namespace:Mygod.SpeechSynthesiser" Icon="{x:Static s:GetProgram.MainIcon}" x:Name="This">
+    <s:GlassWindow.TaskbarItemInfo>
+        <TaskbarItemInfo ProgressState="Indeterminate" x:Name="Taskbar" x:FieldModifier="private"
+                         ProgressValue="{Binding Value, ElementName=Progress}" />
+    </s:GlassWindow.TaskbarItemInfo>
+    <s:GlassWindow.CommandBindings>
+        <CommandBinding Command="s:Commands.Synthesize" Executed="Accept" />
+        <CommandBinding Command="s:Commands.ConvertSsml" Executed="ConvertSsml" />
+        <CommandBinding Command="s:Commands.Empty" Executed="EnableSpeechRecognitionChanged" CanExecute="VistaOrUpper" />
+        <CommandBinding Command="Open" Executed="BrowseFile" />
+        <CommandBinding Command="Save" Executed="SaveToFile" />
+    </s:GlassWindow.CommandBindings>
+    <s:GlassWindow.Resources>
+        <s:VisibleWhileTrueConverter x:Key="VisibleWhileTrue" />
+        <s:GenderConverter x:Key="GenderConverter" />
+        <s:AgeConverter x:Key="AgeConverter" />
+        <s:NotConverter x:Key="NotConverter" />
+        <s:EnabledAndCheckedConverter x:Key="EnabledAndChecked" />
+        <Style TargetType="r:RibbonToolTip">
+            <Setter Property="Background" Value="#DFE9F5" />
+        </Style>
+        <Style TargetType="r:Ribbon" x:Key="GlowingEffect">
+            <Setter Property="TextBlock.Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="White" ShadowDepth="0" RenderingBias="Quality" BlurRadius="5" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </s:GlassWindow.Resources>
+    <Grid MouseLeftButtonDown="Drag">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <r:Ribbon Background="Transparent">
+            <r:Ribbon.ApplicationMenu>
+                <r:RibbonApplicationMenu Visibility="Collapsed" />
+            </r:Ribbon.ApplicationMenu>
+            <r:Ribbon.HelpPaneContent>
+                <Button Click="DisplaySsmlHelp">
+                    <Image Source="/Images/Help.png" Margin="1" ToolTip="显示关于SSML的帮助。" />
+                </Button>
+            </r:Ribbon.HelpPaneContent>
+            <r:RibbonTab Header="开始">
+                <r:RibbonGroup Header="语音合成" LargeImageSource="/Images/Synthesize.png" SmallImageSource="/Images/Synthesize.png">
+                    <r:RibbonButton Command="s:Commands.Synthesize" Label="合成" ToolTipTitle="合成 (Ctrl+Enter)"
+                                    ToolTipDescription="将输入的内容合成成音频输出到扬声器或文件。" IsDefault="True"
+                                    Name="SynthesizeButton" x:FieldModifier="private"
+                                    LargeImageSource="/Images/Synthesize.png" SmallImageSource="/Images/Synthesize.png" />
+                    <r:RibbonButton Command="s:Commands.Synthesize" Label="停止" ToolTipTitle="停止 (Ctrl+Enter)" Visibility="Collapsed"
+                                    ToolTipDescription="停止当前合成。" IsDefault="True" Name="StopButton" x:FieldModifier="private"
+                                    LargeImageSource="/Images/Stop.png" SmallImageSource="/Images/Stop.png" />
+                    <r:RibbonToggleButton Label="启用SSML" ToolTipTitle="启用SSML" ToolTipDescription="说明输入的内容是否为SSML。"
+                                          ToolTipFooterDescription="SSML是一种语音合成的标记，可以让你改进语音合成的结果。关于此语言的语言规范请点击右上角的“？”标志。各个语音引擎对SSML的支持有大有小，因此有些功能使用后与没使用无异的现象属于正常。"
+                                          ToolTipFooterTitle="什么是SSML？" LargeImageSource="/Images/SSML.png"
+                                          SmallImageSource="/Images/SSML.png" IsChecked="True"
+                                          Name="SsmlBox" x:FieldModifier="private" CanAddToQuickAccessToolBarDirectly="False" />
+                    <r:RibbonButton Command="s:Commands.ConvertSsml" Label="转换成SSML" ToolTipTitle="转换成SSML (F11)"
+                                    ToolTipDescription="将输入的内容转换成SSML，也可以用来将已有SSML格式化。"
+                                    LargeImageSource="/Images/ToSSML.png" SmallImageSource="/Images/ToSSML.png" />
+                </r:RibbonGroup>
+                <r:RibbonGroup Header="语音识别" LargeImageSource="/Images/Recognize.png" SmallImageSource="/Images/Recognize.png">
+                    <r:RibbonToggleButton Label="启用语音识别输入" ToolTipTitle="启用语音识别输入"
+                                          ToolTipDescription="使用语音识别输入内容，需要Windows Vista及以上版本才能使用此功能。"
+                                          LargeImageSource="/Images/Recognize.png" SmallImageSource="/Images/Recognize.png"
+                                          Name="EnableSpeechRecognition" x:FieldModifier="private" Command="s:Commands.Empty"
+                                          CanAddToQuickAccessToolBarDirectly="False" />
+                </r:RibbonGroup>
+                <r:RibbonGroup Header="文件" LargeImageSource="/Images/File.png" SmallImageSource="/Images/File.png">
+                    <r:RibbonButton Command="Open" Label="打开" ToolTipTitle="打开 (Ctrl+O)"
+                                    ToolTipDescription="从文本文档或SSML文件中载入内容。"
+                                    LargeImageSource="/Images/Open.png" SmallImageSource="/Images/Open.png" />
+                    <r:RibbonButton Command="Save" Label="另存为" ToolTipTitle="另存为 (Ctrl+S)" ToolTipDescription="保存内容到文件中。"
+                                    LargeImageSource="/Images/Save.png" SmallImageSource="/Images/Save.png" />
+                </r:RibbonGroup>
+                <r:RibbonGroup Header="剪贴板" LargeImageSource="/Images/Clipboard.png" SmallImageSource="/Images/Clipboard.png">
+                    <r:RibbonButton Command="Cut" Label="剪切" ToolTipTitle="剪切 (Ctrl+X)"
+                                    ToolTipDescription="剪切所选内容，并将其放入剪贴板。"
+                                    LargeImageSource="/Images/Cut.png" SmallImageSource="/Images/Cut.png" />
+                    <r:RibbonButton Command="Copy" Label="复制" ToolTipTitle="复制 (Ctrl+C)"
+                                    ToolTipDescription="复制所选内容，并将其放入剪贴板。"
+                                    LargeImageSource="/Images/Copy.png" SmallImageSource="/Images/Copy.png" />
+                    <r:RibbonButton Command="Paste" Label="粘贴" ToolTipTitle="粘贴 (Ctrl+V)" ToolTipDescription="粘贴剪贴板上的内容。"
+                                    LargeImageSource="/Images/Paste.png" SmallImageSource="/Images/Paste.png" />
+                </r:RibbonGroup>
+            </r:RibbonTab>
+            <r:RibbonTab Header="选项">
+                <r:RibbonGroup Header="语音" LargeImageSource="/Images/Synthesize.png" SmallImageSource="/Images/Synthesize.png">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="默认语音：" Target="{Binding ElementName=VoiceBox}" />
+                        <ComboBox Grid.Column="1" Name="VoiceBox" x:FieldModifier="private" VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Tag="{Binding}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                                <TextBlock DataContext="{Binding Tag}">
+                                                    ID：<Run Text="{Binding Id, Mode=OneWay}" /><LineBreak />
+                                                    名称：<Run Text="{Binding Name, Mode=OneWay}" /><LineBreak />
+                                                    性别：<Run Text="{Binding Gender, Converter={StaticResource GenderConverter}, 
+                                                        Mode=OneWay}" /><LineBreak />
+                                                    年龄：<Run Text="{Binding Age, Converter={StaticResource AgeConverter}, 
+                                                        Mode=OneWay}" /><LineBreak />
+                                                    语言代码：<Run Text="{Binding Culture.Name, Mode=OneWay}" /><LineBreak />
+                                                    语言 (国家)：<Run Text="{Binding Culture.NativeName, Mode=OneWay}" /><LineBreak />
+                                                    描述：<Run Text="{Binding Description, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Label Grid.Row="1" Grid.ColumnSpan="2" Content="提示：鼠标悬停可以看到语音的更多信息。" />
+                        <Label Grid.Row="0" Grid.Column="3" Target="{Binding ElementName=RateSlider}" Content="语速：" />
+                        <Slider Grid.Row="0" Grid.Column="4" Name="RateSlider" Minimum="-10" SmallChange="1" Maximum="10"
+                                IsSnapToTickEnabled="True"
+                                x:FieldModifier="private" VerticalAlignment="Center" AutoToolTipPlacement="BottomRight" />
+                        <Label Grid.Row="1" Grid.Column="3" Target="{Binding ElementName=VolumeSlider}" Content="音量：" />
+                        <Slider Grid.Row="1" Grid.Column="4" Maximum="100" Name="VolumeSlider" SmallChange="1" LargeChange="10" Value="100"
+                                IsSnapToTickEnabled="True" x:FieldModifier="private" VerticalAlignment="Center"
+                                AutoToolTipPlacement="BottomRight" />
+                    </Grid>
+                </r:RibbonGroup>
+                <r:RibbonGroup ToolTipTitle="文件" LargeImageSource="/Images/File.png" SmallImageSource="/Images/File.png">
+                    <r:RibbonGroup.Header>
+                        <CheckBox Content="输出到文件" Name="OutputFileBox" x:FieldModifier="private" />
+                    </r:RibbonGroup.Header>
+                    <StackPanel IsEnabled="{Binding IsChecked, ElementName=OutputFileBox}" Orientation="Horizontal">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="Auto" MinWidth="23" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="输出格式：" Target="{Binding ElementName=AudioFormatBox}" />
+                            <ComboBox Name="AudioFormatBox" SelectedIndex="0" Grid.Column="1" Grid.ColumnSpan="2" x:FieldModifier="private"
+                                      ItemsSource="{Binding SelectedItem.SupportedAudioFormats, ElementName=VoiceBox}"
+                                      VerticalAlignment="Center">
+                                <ComboBox.Resources>
+                                    <s:KiloBytesConverter x:Key="KiloBytesConverter" />
+                                </ComboBox.Resources>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding EncodingFormat, Mode=OneWay}" />
+                                            <Run Text="{Binding ChannelCount, Mode=OneWay}" />声道
+                                            <Run Text="{Binding SamplesPerSecond, Mode=OneWay,
+                                                                Converter={StaticResource KiloBytesConverter}}" />KHz
+                                            <Run Text="{Binding BitsPerSample, Mode=OneWay}" />位
+                                            <Run Text="{Binding AverageBytesPerSecond, Mode=OneWay, 
+                                                Converter={StaticResource KiloBytesConverter}}" />Kbps
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Label Content="输出位置：" Grid.Row="1" Target="{Binding ElementName=PositionBox}" />
+                            <TextBox Name="PositionBox" Grid.Row="1" Grid.Column="1" x:FieldModifier="private" VerticalAlignment="Center" />
+                            <Button Content="..." Click="Browse" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" />
+                        </Grid>
+                        <StackPanel Margin="4,0,0,0">
+                            <r:RibbonCheckBox Label="生成LRC文件" Name="LrcBox" x:FieldModifier="private" HorizontalAlignment="Left"
+                                              IsEnabledChanged="LrcBoxChanged" Click="LrcBoxChanged"
+                                              IsEnabled="{Binding IsChecked, ElementName=SsmlBox, 
+                                                  Converter={StaticResource NotConverter}}" />
+                            <r:RibbonCheckBox Label="使用增强的LRC格式" Name="LrcEnhancedBox" x:FieldModifier="private"
+                                              HorizontalAlignment="Left"
+                                              IsEnabled="{Binding ElementName=LrcBox, Converter={StaticResource EnabledAndChecked}}" />
+                            <r:RibbonCheckBox Label="对于LRC启用UTF-8编码" Name="UTF8EnabledBox" x:FieldModifier="private"
+                                              HorizontalAlignment="Left"
+                                              IsEnabled="{Binding ElementName=LrcBox, Converter={StaticResource EnabledAndChecked}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </r:RibbonGroup>
+            </r:RibbonTab>
+            <r:RibbonTab Header="SSML" Visibility="{Binding IsChecked, ElementName=SsmlBox, Converter={StaticResource VisibleWhileTrue}}">
+                <r:RibbonGroup Header="清空" LargeImageSource="/Images/Clear.png" SmallImageSource="/Images/Clear.png">
+                    <r:RibbonButton Click="GiveDefaultFormat" Label="清空并使用默认格式" ToolTipTitle="清空并使用默认格式"
+                                    ToolTipDescription="将输入的内容清空并使用默认的SSML格式。"
+                                    LargeImageSource="/Images/Clear.png" SmallImageSource="/Images/Clear.png" />
+                </r:RibbonGroup>
+                <r:RibbonGroup Header="插入" LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png">
+                    <r:RibbonButton Click="InsertComment" Label="插入注释" ToolTipTitle="插入注释"
+                                    ToolTipDescription="在当前位置插入注释或使当前选中内容成为注释。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertParagraph" Label="插入段落" ToolTipTitle="插入段落"
+                                    ToolTipDescription="在当前位置插入新段落或使当前选中内容成为新段落。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertSentence" Label="插入句子" ToolTipTitle="插入句子"
+                                    ToolTipDescription="在当前位置插入新句子或使当前选中内容成为新句子。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertPhoneme" Label="插入音标" ToolTipTitle="插入音标"
+                                    ToolTipDescription="用指定音标阅读指定内容。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertSub" Label="插入读法" ToolTipTitle="插入读法"
+                                    ToolTipDescription="合成语音时会阅读读法中的文本。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertBreak" Label="插入休息" ToolTipTitle="插入休息"
+                                    ToolTipDescription="合成语音时会空出指定的时间。在time中填写指定的时间，如3s、500ms等。"
+                                    LargeImageSource="/Images/Insert.png" SmallImageSource="/Images/Insert.png" />
+                    <r:RibbonButton Click="InsertAudio" Label="插入音频" ToolTipTitle="插入音频"
+                                    ToolTipDescription="播放音频，如果音频未能成功播放则合成内部的文字。"
+                                    LargeImageSource="/Images/Audio.png" SmallImageSource="/Images/Audio.png" />
+                    <r:RibbonButton Click="InsertPath" Label="插入路径" ToolTipTitle="插入路径"
+                                    ToolTipDescription="在当前位置插入路径，用于插入音频的src属性中。"
+                                    LargeImageSource="/Images/File.png" SmallImageSource="/Images/File.png" />
+                </r:RibbonGroup>
+                <r:RibbonGroup Header="设置" LargeImageSource="/Images/SayAs.png" SmallImageSource="/Images/SayAs.png">
+                    <r:RibbonMenuButton Label="设置说的方式" ToolTipTitle="设置说的方式"
+                                        ToolTipDescription="设置说的方式来改进由选定内容合成的语音。"
+                                        LargeImageSource="/Images/SayAs.png" SmallImageSource="/Images/SayAs.png"
+                                        r:RibbonMenuItem.Click="InsertSayAs">
+                        <r:RibbonMenuItem Header="缩写 (_acronym)" Tag="acronym" ToolTipTitle="缩写"
+                                          ToolTipDescription="标识这是一个缩写。" />
+                        <r:RibbonMenuItem Header="拼写 (_spell-out)" Tag="spell-out" ToolTipTitle="拼写"
+                                          ToolTipDescription="拼出单词。如“spell”会读成“s-p-e-l-l”。" />
+                        <r:RibbonMenuItem Header="序数词 (_number:ordinal)" Tag="number:ordinal" ToolTipTitle="序数词"
+                                          ToolTipDescription="例如“12”会读成“第十二”。" />
+                        <r:RibbonMenuItem Header="基数词 (_number:cardinal)" Tag="number:cardinal" ToolTipTitle="基数词"
+                                          ToolTipDescription="例如“12”会读成“十二”。（通常情况下不需要特地标注）" />
+                        <r:RibbonMenuItem Header="按位 (_number:digits)" Tag="number:digits" ToolTipTitle="按位"
+                                          ToolTipDescription="例如“12”会读成“一二”。" />
+                        <r:RibbonMenuItem Header="日期：日月年 (_date:dmy)" Tag="date:dmy" ToolTipTitle="日期：日月年"
+                                          ToolTipDescription="例如“18.5.2012”会读成“十八日五月二零一二年”。" />
+                        <r:RibbonMenuItem Header="日期：月日年 (_date:mdy)" Tag="date:mdy" ToolTipTitle="日期：月日年"
+                                          ToolTipDescription="例如“5.18.2012”会读成“五月十八日二零一二年”。" />
+                        <r:RibbonMenuItem Header="日期：年月日 (_date:ymd)" Tag="date:ymd" ToolTipTitle="日期：年月日"
+                                          ToolTipDescription="例如“2012.5.18”会读成“二零一二年五月十八日”。" />
+                        <r:RibbonMenuItem Header="日期：年月 (_date:ym)" Tag="date:ym" ToolTipTitle="日期：年月"
+                                          ToolTipDescription="例如“2012.5”会读成“二零一二年五月”。" />
+                        <r:RibbonMenuItem Header="日期：月年 (_date:my)" Tag="date:my" ToolTipTitle="日期：月年"
+                                          ToolTipDescription="例如“2012.5”会读成“五月二零一二年”。" />
+                        <r:RibbonMenuItem Header="日期：月日 (_date:md)" Tag="date:md" ToolTipTitle="日期：月日"
+                                          ToolTipDescription="例如“5.18”会读成“五月十八日”。" />
+                        <r:RibbonMenuItem Header="日期：年 (_date:y)" Tag="date:y" ToolTipTitle="日期：年"
+                                          ToolTipDescription="例如“2012”会读成“二零一二年”。" />
+                        <r:RibbonMenuItem Header="日期：月 (_date:m)" Tag="date:m" ToolTipTitle="日期：月"
+                                          ToolTipDescription="例如“5”会读成“五月”。" />
+                        <r:RibbonMenuItem Header="日期：日 (_date:d)" Tag="date:d" ToolTipTitle="日期：日"
+                                          ToolTipDescription="例如“18”会读成“十八日”。" />
+                        <r:RibbonMenuItem Header="时间：时分秒 (t_ime:hms)" Tag="time:hms" ToolTipTitle="时间：时分秒"
+                                          ToolTipDescription="例如“21:06:21”会读成“二十一时零六分二十一秒”。" />
+                        <r:RibbonMenuItem Header="时间：时分 (t_ime:hm)" Tag="time:hm" ToolTipTitle="时间：时分"
+                                          ToolTipDescription="例如“21:06”会读成“二十一时零六分”。" />
+                        <r:RibbonMenuItem Header="时间：时 (t_ime:h)" Tag="time:h" ToolTipTitle="时间：时"
+                                          ToolTipDescription="例如“21”会读成“二十一时”。" />
+                        <r:RibbonMenuItem Header="时长：时分秒 (d_uration:hms)" Tag="duration:hms" ToolTipTitle="时长：时分秒"
+                                          ToolTipDescription="例如“21:06:21”会读成“二十一小时六分二十一秒”。" />
+                        <r:RibbonMenuItem Header="时长：时分 (d_uration:hm)" Tag="duration:hm" ToolTipTitle="时长：时分"
+                                          ToolTipDescription="例如“21:06”会读成“二十一小时六分钟”。" />
+                        <r:RibbonMenuItem Header="时长：分秒 (d_uration:ms)" Tag="duration:ms" ToolTipTitle="时长：分秒"
+                                          ToolTipDescription="例如“6:21”会读成“六分二十一秒”。" />
+                        <r:RibbonMenuItem Header="时长：时 (d_uration:h)" Tag="duration:h" ToolTipTitle="时长：时"
+                                          ToolTipDescription="例如“21”会读成“二十一小时”。" />
+                        <r:RibbonMenuItem Header="时长：分 (d_uration:m)" Tag="duration:m" ToolTipTitle="时长：分"
+                                          ToolTipDescription="例如“6”会读成“六分钟”。" />
+                        <r:RibbonMenuItem Header="时长：秒 (d_uration:s)" Tag="duration:s" ToolTipTitle="时长：秒"
+                                          ToolTipDescription="例如“21”会读成“二十一秒”。" />
+                        <r:RibbonMenuItem Header="货币 (_currency)" Tag="currency" ToolTipTitle="货币"
+                                          ToolTipDescription="例如“￥4”会读成“4元”。" />
+                        <r:RibbonMenuItem Header="测量单位 (_measure)" Tag="measure" ToolTipTitle="测量单位"
+                                          ToolTipDescription="例如“3cm”会读成“3厘米”。" />
+                        <r:RibbonMenuItem Header="电话 (te_lephone)" Tag="telephone" ToolTipTitle="电话"
+                                          ToolTipDescription="例如“5555555555”会读成“五五五五五五五五五五”。" />
+                        <r:RibbonMenuItem Header="名字 (nam_e)" Tag="name" ToolTipTitle="名字"
+                                          ToolTipDescription="标识这是一个人或一个公司之类的名字。" />
+                        <r:RibbonMenuItem Header="电子邮箱 (ne_t:email)" Tag="net:email" ToolTipTitle="电子邮箱"
+                                          ToolTipDescription="按照读电子邮件地址方式读。通常不需要特地标注。" />
+                        <r:RibbonMenuItem Header="网址 (ne_t:uri)" Tag="net:uri" ToolTipTitle="网址"
+                                          ToolTipDescription="按照读网址的方式读。" />
+                    </r:RibbonMenuButton>
+                    <r:RibbonMenuButton Label="设置语音" ToolTipTitle="设置语音" ToolTipDescription="设置语音来更换语言/语音阅读选定内容。"
+                                        LargeImageSource="/Images/SayAs.png" SmallImageSource="/Images/SayAs.png" Name="SetVoiceButton"
+                                        r:RibbonMenuItem.Click="InsertVoice" ItemsSource="{Binding ItemsSource, ElementName=VoiceBox}"
+                                        ItemTemplate="{Binding ItemTemplate, ElementName=VoiceBox}" x:FieldModifier="private" />
+                    <r:RibbonMenuButton Label="设置强调" ToolTipTitle="设置强调"
+                                        ToolTipDescription="设置阅读选定内容时的是否强调某些字词，可能是音调、速度、响度或其他声学的变化。"
+                                        LargeImageSource="/Images/SayAs.png" SmallImageSource="/Images/SayAs.png"
+                                        r:RibbonMenuItem.Click="InsertEmphasis">
+                        <r:RibbonMenuItem Header="强 (_strong)" Tag="strong" />
+                        <r:RibbonMenuItem Header="中 (_moderate)" Tag="moderate" />
+                        <r:RibbonMenuItem Header="弱 (_reduced)" Tag="reduced" />
+                        <r:RibbonMenuItem Header="普通 (_none)" Tag="none" />
+                    </r:RibbonMenuButton>
+                    <r:RibbonMenuButton Label="设置音高" ToolTipTitle="设置音高" ToolTipDescription="设置阅读选定内容时的音高。"
+                                        LargeImageSource="/Images/SayAs.png" SmallImageSource="/Images/SayAs.png"
+                                        r:RibbonMenuItem.Click="InsertProsodyPitch">
+                        <r:RibbonMenuItem Header="超低 (_x-low)" Tag="x-low" />
+                        <r:RibbonMenuItem Header="较低 (_low)" Tag="low" />
+                        <r:RibbonMenuItem Header="适中 (_medium)" Tag="medium" />
+                        <r:RibbonMenuItem Header="较高 (_high)" Tag="high" />
+                        <r:RibbonMenuItem Header="超高 (x-h_igh)" Tag="x-high" />
+                        <r:RibbonMenuItem Header="默认 (_default)" Tag="default" />
+                        <r:RibbonMenuItem Header="自定义(_C)" Click="InsertProsodyPitchCustom" ToolTipTitle="自定义音高"
+                                          ToolTipDescription="如输入1000Hz表示以1000Hz的音高阅读，+5st表示比原来升高五个半音（这里不是指二分之五），-5.5Hz表示比原来降低5.5Hz。输入的值应在1000000Hz以内。" />
+                    </r:RibbonMenuButton>
+                    <r:RibbonButton Click="InsertProsodyContour" Label="设置音高折线" ToolTipTitle="设置音高折线"
+                                    ToolTipDescription="设置阅读选定内容时音高的变化折线。"
+                                    LargeImageSource="/Images/Polyline.png" SmallImageSource="/Images/Polyline.png" />
+                    <r:RibbonMenuButton Label="设置速度" ToolTipTitle="设置速度" ToolTipDescription="设置阅读速度。"
+                                        LargeImageSource="/Images/Speed.png" SmallImageSource="/Images/Speed.png"
+                                        r:RibbonMenuItem.Click="InsertProsodyRate">
+                        <r:RibbonMenuItem Header="超慢 (_x-slow)" Tag="x-slow" />
+                        <r:RibbonMenuItem Header="较慢 (_slow)" Tag="slow" />
+                        <r:RibbonMenuItem Header="适中 (_medium)" Tag="medium" />
+                        <r:RibbonMenuItem Header="较快 (_fast)" Tag="fast" />
+                        <r:RibbonMenuItem Header="超快 (x-f_ast)" Tag="x-fast" />
+                        <r:RibbonMenuItem Header="默认 (_default)" Tag="default" />
+                        <r:RibbonMenuItem Header="自定义(_C)" Click="InsertProsodyRateCustom" ToolTipTitle="自定义速度"
+                                          ToolTipDescription="如输入2表示以默认速度的两倍速阅读，输入-50%表示以原来速度的一半阅读。最终结果应在每分钟1000000字以内。" />
+                    </r:RibbonMenuButton>
+                    <r:RibbonButton Click="InsertProsodyDuration" Label="设置所需时长" ToolTipTitle="设置所需时长"
+                                    ToolTipDescription="设置阅读选定内容时花的时间，如2s等。"
+                                    LargeImageSource="/Images/Duration.png" SmallImageSource="/Images/Duration.png" />
+                    <r:RibbonMenuButton Label="设置音量" ToolTipTitle="设置音量" ToolTipDescription="设置阅读选定内容的音量。"
+                                        LargeImageSource="/Images/Volume.png" SmallImageSource="/Images/Volume.png"
+                                        r:RibbonMenuItem.Click="InsertProsodyVolume">
+                        <r:RibbonMenuItem Header="静音 (_silent)" Tag="silent" />
+                        <r:RibbonMenuItem Header="超轻 (_x-soft)" Tag="x-soft" />
+                        <r:RibbonMenuItem Header="较轻 (s_oft)" Tag="soft" />
+                        <r:RibbonMenuItem Header="适中 (_medium)" Tag="medium" />
+                        <r:RibbonMenuItem Header="较响 (_loud)" Tag="loud" />
+                        <r:RibbonMenuItem Header="超响 (x-lo_ud)" Tag="x-loud" />
+                        <r:RibbonMenuItem Header="默认 (_default)" Tag="default" />
+                        <r:RibbonMenuItem Header="自定义(_C)" Click="InsertProsodyVolumeCustom" ToolTipTitle="自定义音量"
+                                          ToolTipDescription="如输入100表示以最大音量阅读，输入+10表示比原来的音量提高10。设置的音量应为一个在0到100之间的数。" />
+                    </r:RibbonMenuButton>
+                </r:RibbonGroup>
+            </r:RibbonTab>
+        </r:Ribbon>
+        <TextBox Name="EnterTextBox" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                 x:FieldModifier="private" IsReadOnlyCaretVisible="True" Grid.Row="1" />
+        <s:Reflection Grid.Row="2">
+            <s:AnimatedProgressBar x:Name="Progress" x:FieldModifier="private" IsIndeterminate="True" Height="23" Maximum="1"
+                                   Margin="0,0,0,23" />
+        </s:Reflection>
+    </Grid>
+</s:GlassWindow>
