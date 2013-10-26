@@ -36,16 +36,6 @@ namespace Mygod.Speech.Synthesizer
                                               CurrentApp.CompilationTime.ToLongTimeString());
         }
 
-        private void Drag(object sender, MouseButtonEventArgs e)
-        {
-            DragMove();
-            if (e.ClickCount == 2) WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        }
-        private void NoDrag(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true;
-        }
-
         private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             EnterTextBox.SelectedText = e.Result.Text;
@@ -111,7 +101,6 @@ namespace Mygod.Speech.Synthesizer
                                               LrcEnhancedBox.IsEnabled && LrcEnhancedBox.IsChecked == true ? "<" : "\r\n[",
                                               LrcEnhancedBox.IsEnabled && LrcEnhancedBox.IsChecked == true ? '>' : ']');
                 lrcWriter.Write(text);
-
             }
             lastPosition = e.CharacterPosition;
             lastLength = e.CharacterCount;
@@ -223,7 +212,7 @@ namespace Mygod.Speech.Synthesizer
             if (saveDialog.ShowDialog() == true) File.WriteAllText(saveDialog.FileName, EnterTextBox.Text);
         }
 
-        private void DisplaySsmlHelp(object sender, RoutedEventArgs e)
+        private void GetSsmlHelp(object sender, RoutedEventArgs e)
         {
             Process.Start("http://www.w3.org/TR/speech-synthesis");
         }
@@ -265,17 +254,21 @@ namespace Mygod.Speech.Synthesizer
             }
         }
 
+        private void IsNotWorking(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = !IsWorking;
+        }
+
         private void ConvertSsml(object sender, ExecutedRoutedEventArgs e)
         {
-            if (GeneratePrompt()) return;
             var readingPrompt = new PromptBuilder();
-            if (SsmlBox.IsChecked == true) readingPrompt.AppendSsml(new XmlTextReader(new MemoryStream(Encoding.UTF8.GetBytes(EnterTextBox.Text))));
+            if (SsmlBox.IsChecked == true)
+                readingPrompt.AppendSsml(new XmlTextReader(new MemoryStream(Encoding.UTF8.GetBytes(EnterTextBox.Text))));
             else readingPrompt.AppendText(EnterTextBox.Text);
             SsmlBox.IsChecked = true;
             var doc = new XmlDocument();
             doc.LoadXml(readingPrompt.ToXml());
             EnterTextBox.Text = GetString(doc);
-            IsWorking = false;
         }
 
         private void GiveDefaultFormat(object sender, RoutedEventArgs e)

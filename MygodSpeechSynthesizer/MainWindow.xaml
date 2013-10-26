@@ -3,14 +3,14 @@
                     xmlns:m="clr-namespace:Mygod.Windows" xmlns:c="clr-namespace:Mygod.Windows.Controls"
                     xmlns:s="clr-namespace:Mygod.Speech.Synthesizer" xmlns:fluent="clr-namespace:Fluent;assembly=Fluent"
                     Title="{x:Static m:CurrentApp.Title}" Icon="{x:Static m:CurrentApp.MainIcon}" x:Name="This"
-                    RibbonThemeColor="#FF6D2F72" Style="{DynamicResource MetroWindowStyle}">
+                    RibbonThemeColor="#6D2F72" Style="{DynamicResource MetroWindowStyle}">
     <fluent:MetroWindow.TaskbarItemInfo>
         <TaskbarItemInfo ProgressState="Indeterminate" x:Name="Taskbar" x:FieldModifier="private"
                          ProgressValue="{Binding Value, ElementName=Progress}" />
     </fluent:MetroWindow.TaskbarItemInfo>
     <fluent:MetroWindow.CommandBindings>
         <CommandBinding Command="s:Commands.Synthesize" Executed="Accept" />
-        <CommandBinding Command="s:Commands.ConvertSsml" Executed="ConvertSsml" />
+        <CommandBinding Command="s:Commands.ConvertSsml" Executed="ConvertSsml" CanExecute="IsNotWorking" />
         <CommandBinding Command="s:Commands.Empty" Executed="EnableSpeechRecognitionChanged" CanExecute="VistaOrUpper" />
         <CommandBinding Command="Open" Executed="BrowseFile" />
         <CommandBinding Command="Save" Executed="SaveToFile" />
@@ -27,7 +27,7 @@
             <s:EnabledAndCheckedConverter x:Key="EnabledAndChecked" />
         </ResourceDictionary>
     </fluent:MetroWindow.Resources>
-    <Grid Margin="2,0,2,2" MouseLeftButtonDown="Drag">
+    <Grid Margin="2,0,2,2">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="1" />
@@ -36,6 +36,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <fluent:Ribbon>
+            <fluent:Ribbon.ContextualGroups>
+                <fluent:RibbonContextualTabGroup Name="SsmlGroup" BorderBrush="#6D2F72" Background="#6D2F72" Header="SSML"
+                                                 Visibility="{Binding IsChecked, ElementName=SsmlBox, 
+                                                                      Converter={StaticResource VisibleWhileTrue}}" />
+            </fluent:Ribbon.ContextualGroups>
             <fluent:RibbonTabItem Header="开始" fluent:KeyTip.Keys="S">
                 <fluent:RibbonGroupBox Header="语音合成" Icon="/Images/Synthesize.png">
                     <fluent:Button Command="s:Commands.Synthesize" Header="合成" IsDefault="True" Name="SynthesizeButton"
@@ -56,7 +61,7 @@
                                          Name="SsmlBox" x:FieldModifier="private" CanAddToQuickAccessToolBar="False"
                                          fluent:KeyTip.Keys="E">
                         <fluent:ToggleButton.ToolTip>
-                            <fluent:ScreenTip Title="启用 SSML" Text="说明输入的内容是否为 SSML。&#10;注：SSML 是一种语音合成的标记，可以让你改进语音合成的结果。关于此语言的语言规范请点击右上角的“？”标志。各个语音引擎对 SSML 的支持有大有小，因此有些功能使用后与没使用无异的现象属于正常。" />
+                            <fluent:ScreenTip Title="启用 SSML" Text="说明输入的内容是否为 SSML。&#10;注：SSML 是一种语音合成的标记，可以让你改进语音合成的结果。" />
                         </fluent:ToggleButton.ToolTip>
                     </fluent:ToggleButton>
                     <fluent:Button Command="s:Commands.ConvertSsml" Header="转换成 SSML" Icon="/Images/ToSSML.png"
@@ -227,13 +232,18 @@
                     </StackPanel>
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
-            <fluent:RibbonTabItem Header="SSML" fluent:KeyTip.Keys="M"
-                                  Visibility="{Binding IsChecked, ElementName=SsmlBox, Converter={StaticResource VisibleWhileTrue}}">
-                <fluent:RibbonGroupBox Header="清空" Icon="/Images/Clear.png">
+            <fluent:RibbonTabItem Header="SSML" fluent:KeyTip.Keys="M" Group="{Binding ElementName=SsmlGroup}">
+                <fluent:RibbonGroupBox Header="SSML" Icon="/Images/Clear.png">
                     <fluent:Button Click="GiveDefaultFormat" Header="清空并使用 默认格式" fluent:KeyTip.Keys="C"
                                    Icon="/Images/Clear.png" LargeIcon="/Images/Clear.png">
                         <fluent:Button.ToolTip>
                             <fluent:ScreenTip Title="清空并使用默认格式" Text="将输入的内容清空并使用默认的 SSML 格式。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="GetSsmlHelp" Header="获取 SSML 帮助" fluent:KeyTip.Keys="H"
+                                   Icon="/Images/Help.png" LargeIcon="/Images/Help.png">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="获取 SSML 帮助" Text="了解如何编写 SSML。&#10;注：各个语音引擎对 SSML 的支持有大有小，因此有些功能使用后与没使用无异是正常现象。" />
                         </fluent:Button.ToolTip>
                     </fluent:Button>
                 </fluent:RibbonGroupBox>
@@ -283,7 +293,7 @@
                     <fluent:Button Click="InsertPath" Header="插入路径" Icon="/Images/File.png" LargeIcon="/Images/File.png"
                                    fluent:KeyTip.Keys="8">
                         <fluent:Button.ToolTip>
-                            <fluent:ScreenTip Title="插入路径" Text="在当前位置插入路径，用于插入音频的src属性中。" />
+                            <fluent:ScreenTip Title="插入路径" Text="在当前位置插入路径，用于插入音频的 @src 属性中。" />
                         </fluent:Button.ToolTip>
                     </fluent:Button>
                 </fluent:RibbonGroupBox>
@@ -407,7 +417,7 @@
             </fluent:RibbonTabItem>
         </fluent:Ribbon>
         <TextBox Name="EnterTextBox" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
-                 x:FieldModifier="private" IsReadOnlyCaretVisible="True" Grid.Row="2" />
+                 x:FieldModifier="private" IsReadOnlyCaretVisible="True" Grid.Row="2" FontFamily="Consolas" />
         <c:AnimatedProgressBar x:Name="Progress" x:FieldModifier="private"
                                IsIndeterminate="True" Height="23" Maximum="1" Grid.Row="4" />
     </Grid>

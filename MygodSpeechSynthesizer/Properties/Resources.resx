@@ -145,8 +145,7 @@
   &lt;/p&gt;
   &lt;p&gt;
     &lt;s&gt;快速帮助：请在这里禁用 SSML 后输入你要阅读的文字，点击生成即可听到结果。&lt;/s&gt;
-    &lt;s&gt;想要输出到文件或进行调整请点击右边的两个选项卡。&lt;/s&gt;
-    &lt;s&gt;想要获得更加强大的功能请考虑使用 SSML。&lt;/s&gt;
+    &lt;s&gt;想要使用更加强大的功能请随便玩玩上面那些奇怪的按钮。&lt;/s&gt;
   &lt;/p&gt;
 &lt;/speak&gt;</value>
   </data>
