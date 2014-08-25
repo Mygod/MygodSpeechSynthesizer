@@ -1,0 +1,424 @@
+﻿<fluent:MetroWindow x:Class="Mygod.Speech.Synthesizer.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Width="1000" Height="500"
+                    xmlns:m="clr-namespace:Mygod.Windows" xmlns:c="clr-namespace:Mygod.Windows.Controls"
+                    xmlns:s="clr-namespace:Mygod.Speech.Synthesizer" xmlns:fluent="clr-namespace:Fluent;assembly=Fluent"
+                    Title="{x:Static m:CurrentApp.Title}" Icon="{x:Static m:CurrentApp.MainIcon}" x:Name="This"
+                    RibbonThemeColor="#6D2F72" Style="{DynamicResource MetroWindowStyle}">
+    <fluent:MetroWindow.TaskbarItemInfo>
+        <TaskbarItemInfo ProgressState="Indeterminate" x:Name="Taskbar" x:FieldModifier="private"
+                         ProgressValue="{Binding Value, ElementName=Progress}" />
+    </fluent:MetroWindow.TaskbarItemInfo>
+    <fluent:MetroWindow.CommandBindings>
+        <CommandBinding Command="s:Commands.Synthesize" Executed="Accept" />
+        <CommandBinding Command="s:Commands.ConvertSsml" Executed="ConvertSsml" CanExecute="IsNotWorking" />
+        <CommandBinding Command="s:Commands.Empty" Executed="EnableSpeechRecognitionChanged" CanExecute="VistaOrUpper" />
+        <CommandBinding Command="Open" Executed="BrowseFile" />
+        <CommandBinding Command="Save" Executed="SaveToFile" />
+    </fluent:MetroWindow.CommandBindings>
+    <fluent:MetroWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Fluent;Component/Themes/Metro/White.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <s:VisibleWhileTrueConverter x:Key="VisibleWhileTrue" />
+            <s:GenderConverter x:Key="GenderConverter" />
+            <s:AgeConverter x:Key="AgeConverter" />
+            <s:NotConverter x:Key="NotConverter" />
+            <s:EnabledAndCheckedConverter x:Key="EnabledAndChecked" />
+        </ResourceDictionary>
+    </fluent:MetroWindow.Resources>
+    <Grid Margin="2,0,2,2">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="1" />
+            <RowDefinition />
+            <RowDefinition Height="1" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <fluent:Ribbon>
+            <fluent:Ribbon.ContextualGroups>
+                <fluent:RibbonContextualTabGroup Name="SsmlGroup" BorderBrush="#6D2F72" Background="#6D2F72" Header="SSML"
+                                                 Visibility="{Binding IsChecked, ElementName=SsmlBox, 
+                                                                      Converter={StaticResource VisibleWhileTrue}}" />
+            </fluent:Ribbon.ContextualGroups>
+            <fluent:RibbonTabItem Header="开始" fluent:KeyTip.Keys="S">
+                <fluent:RibbonGroupBox Header="语音合成" Icon="/Images/Synthesize.png">
+                    <fluent:Button Command="s:Commands.Synthesize" Header="合成" IsDefault="True" Name="SynthesizeButton"
+                                   x:FieldModifier="private" Icon="/Images/Synthesize.png" LargeIcon="/Images/Synthesize.png"
+                                   fluent:KeyTip.Keys="S">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="合成 (Ctrl+Enter)" Text="将输入的内容合成成音频输出到扬声器或文件。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Command="s:Commands.Synthesize" Header="停止" Visibility="Collapsed" IsDefault="True"
+                                   Name="StopButton" x:FieldModifier="private" Icon="/Images/Stop.png" LargeIcon="/Images/Stop.png"
+                                   fluent:KeyTip.Keys="S">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="停止 (Ctrl+Enter)" Text="停止当前合成。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:ToggleButton Header="启用 SSML" Icon="/Images/SSML.png" LargeIcon="/Images/SSML.png" IsChecked="True"
+                                         Name="SsmlBox" x:FieldModifier="private" CanAddToQuickAccessToolBar="False"
+                                         fluent:KeyTip.Keys="E">
+                        <fluent:ToggleButton.ToolTip>
+                            <fluent:ScreenTip Title="启用 SSML" Text="说明输入的内容是否为 SSML。&#10;注：SSML 是一种语音合成的标记，可以让你改进语音合成的结果。" />
+                        </fluent:ToggleButton.ToolTip>
+                    </fluent:ToggleButton>
+                    <fluent:Button Command="s:Commands.ConvertSsml" Header="转换成 SSML" Icon="/Images/ToSSML.png"
+                                   LargeIcon="/Images/ToSSML.png" fluent:KeyTip.Keys="T">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="转换成 SSML (F11)" Text="将输入的内容转换成 SSML，也可以用来将已有 SSML 格式化。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="语音识别" Icon="/Images/Recognize.png">
+                    <fluent:ToggleButton Header="启用语音 识别输入" Icon="/Images/Recognize.png" LargeIcon="/Images/Recognize.png"
+                                         Name="EnableSpeechRecognition" x:FieldModifier="private" Command="s:Commands.Empty"
+                                         CanAddToQuickAccessToolBar="False" fluent:KeyTip.Keys="R">
+                        <fluent:ToggleButton.ToolTip>
+                            <fluent:ScreenTip Title="启用语音识别输入" DisableReason="此功能需要 Windows Vista 及以上版本才能使用。"
+                                              Text="使用语音识别输入内容。" />
+                        </fluent:ToggleButton.ToolTip>
+                    </fluent:ToggleButton>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="文件" Icon="/Images/File.png">
+                    <fluent:Button Command="Open" Header="打开" Icon="/Images/Open.png" LargeIcon="/Images/Open.png"
+                                   fluent:KeyTip.Keys="O">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="打开 (Ctrl+O)" Text="从文本文档或 SSML 文件中载入内容。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Command="Save" Header="另存为" Icon="/Images/Save.png" LargeIcon="/Images/Save.png"
+                                   fluent:KeyTip.Keys="S">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="另存为 (Ctrl+S)" Text="保存内容到文件中。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="剪贴板" Icon="/Images/Clipboard.png">
+                    <fluent:Button Command="Cut" Header="剪切" Icon="/Images/Cut.png" LargeIcon="/Images/Cut.png"
+                                   fluent:KeyTip.Keys="X">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="剪切 (Ctrl+X)" Text="剪切所选内容，并将其放入剪贴板。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Command="Copy" Header="复制" Icon="/Images/Copy.png" LargeIcon="/Images/Copy.png"
+                                   fluent:KeyTip.Keys="C">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="复制 (Ctrl+C)" Text="复制所选内容，并将其放入剪贴板。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Command="Paste" Header="粘贴" Icon="/Images/Paste.png" LargeIcon="/Images/Paste.png"
+                                   fluent:KeyTip.Keys="V">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="粘贴 (Ctrl+V)" Text="粘贴剪贴板上的内容。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="后悔药" Icon="/Images/Regret.png">
+                    <fluent:Button Command="Undo" Header="撤销" Icon="/Images/Undo.png" LargeIcon="/Images/Undo.png"
+                                   fluent:KeyTip.Keys="Z">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="撤销 (Ctrl+Z)" Text="购买后悔药来撤销上一步，或是再上一步，或是再上一步……" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Command="Redo" Header="重做" Icon="/Images/Redo.png" LargeIcon="/Images/Redo.png"
+                                   fluent:KeyTip.Keys="Y">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="重做 (Ctrl+Y)" Text="购买后悔药来撤销你的撤销操作。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+            </fluent:RibbonTabItem>
+            <fluent:RibbonTabItem Header="选项" fluent:KeyTip.Keys="O">
+                <fluent:RibbonGroupBox Header="语音" Icon="/Images/Synthesize.png">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="默认语音：" Target="{Binding ElementName=VoiceBox}" />
+                        <ComboBox Grid.Column="1" Name="VoiceBox" x:FieldModifier="private" VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Tag="{Binding}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                                <TextBlock DataContext="{Binding Tag}">
+                                                    ID：<Run Text="{Binding Id, Mode=OneWay}" /><LineBreak />
+                                                    名称：<Run Text="{Binding Name, Mode=OneWay}" /><LineBreak />
+                                                    性别：<Run Text="{Binding Gender, Converter={StaticResource GenderConverter}, 
+                                                        Mode=OneWay}" /><LineBreak />
+                                                    年龄：<Run Text="{Binding Age, Converter={StaticResource AgeConverter}, 
+                                                        Mode=OneWay}" /><LineBreak />
+                                                    语言代码：<Run Text="{Binding Culture.Name, Mode=OneWay}" /><LineBreak />
+                                                    语言 (国家)：<Run Text="{Binding Culture.NativeName, Mode=OneWay}" /><LineBreak />
+                                                    描述：<Run Text="{Binding Description, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Label Grid.Row="1" Grid.ColumnSpan="2" Content="提示：鼠标悬停可以看到语音的更多信息。" />
+                        <Label Grid.Row="0" Grid.Column="3" Target="{Binding ElementName=RateSlider}" Content="语速：" />
+                        <Slider Grid.Row="0" Grid.Column="4" Name="RateSlider" Minimum="-10" SmallChange="1" Maximum="10"
+                                IsSnapToTickEnabled="True"
+                                x:FieldModifier="private" VerticalAlignment="Center" AutoToolTipPlacement="BottomRight" />
+                        <Label Grid.Row="1" Grid.Column="3" Target="{Binding ElementName=VolumeSlider}" Content="音量：" />
+                        <Slider Grid.Row="1" Grid.Column="4" Maximum="100" Name="VolumeSlider" SmallChange="1" LargeChange="10"
+                                Value="100" IsSnapToTickEnabled="True" x:FieldModifier="private" VerticalAlignment="Center"
+                                AutoToolTipPlacement="BottomRight" />
+                    </Grid>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="输出到文件" Icon="/Images/File.png">
+                    <fluent:ToggleButton Name="OutputFileBox" x:FieldModifier="private" Header="输出 到文件" fluent:KeyTip.Keys="F"
+                                         ToolTip="将生成的语音输出到文件。" Icon="/Images/Save.png" LargeIcon="/Images/Save.png" />
+                    <Grid IsEnabled="{Binding IsChecked, ElementName=OutputFileBox}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="Auto" MinWidth="23" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="输出格式：" Target="{Binding ElementName=AudioFormatBox}" />
+                        <ComboBox Name="AudioFormatBox" SelectedIndex="0" Grid.Column="1" Grid.ColumnSpan="2"
+                                  x:FieldModifier="private" VerticalAlignment="Center"
+                                  ItemsSource="{Binding SelectedItem.SupportedAudioFormats, ElementName=VoiceBox}">
+                            <ComboBox.Resources>
+                                <s:KiloBytesConverter x:Key="KiloBytesConverter" />
+                            </ComboBox.Resources>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                            <Run Text="{Binding EncodingFormat, Mode=OneWay}" />
+                                            <Run Text="{Binding ChannelCount, Mode=OneWay}" />声道
+                                            <Run Text="{Binding SamplesPerSecond, Mode=OneWay,
+                                                                Converter={StaticResource KiloBytesConverter}}" />KHz
+                                            <Run Text="{Binding BitsPerSample, Mode=OneWay}" />位
+                                            <Run Text="{Binding AverageBytesPerSecond, Mode=OneWay, 
+                                                Converter={StaticResource KiloBytesConverter}}" />Kbps
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Label Content="输出位置：" Grid.Row="1" Target="{Binding ElementName=PositionBox}" />
+                        <TextBox Name="PositionBox" Grid.Row="1" Grid.Column="1" x:FieldModifier="private"
+                                 VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <Button Content="..." Click="Browse" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel IsEnabled="{Binding IsChecked, ElementName=OutputFileBox}" Margin="4,0,0,0">
+                        <fluent:CheckBox Header="生成 LRC 文件" Name="LrcBox" x:FieldModifier="private" HorizontalAlignment="Left"
+                                            IsEnabledChanged="LrcBoxChanged" Click="LrcBoxChanged"
+                                            IsEnabled="{Binding IsChecked, ElementName=SsmlBox, 
+                                                Converter={StaticResource NotConverter}}" />
+                        <fluent:CheckBox Header="使用增强的 LRC 格式" Name="LrcEnhancedBox" x:FieldModifier="private"
+                                            HorizontalAlignment="Left"
+                                            IsEnabled="{Binding ElementName=LrcBox, Converter={StaticResource EnabledAndChecked}}" />
+                        <fluent:CheckBox Header="对于 LRC 启用 UTF-8 编码" Name="UTF8EnabledBox" x:FieldModifier="private"
+                                            HorizontalAlignment="Left"
+                                            IsEnabled="{Binding ElementName=LrcBox, Converter={StaticResource EnabledAndChecked}}" />
+                    </StackPanel>
+                </fluent:RibbonGroupBox>
+            </fluent:RibbonTabItem>
+            <fluent:RibbonTabItem Header="SSML" fluent:KeyTip.Keys="M" Group="{Binding ElementName=SsmlGroup}">
+                <fluent:RibbonGroupBox Header="SSML" Icon="/Images/Clear.png">
+                    <fluent:Button Click="GiveDefaultFormat" Header="清空并使用 默认格式" fluent:KeyTip.Keys="C"
+                                   Icon="/Images/Clear.png" LargeIcon="/Images/Clear.png">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="清空并使用默认格式" Text="将输入的内容清空并使用默认的 SSML 格式。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="GetSsmlHelp" Header="获取 SSML 帮助" fluent:KeyTip.Keys="H"
+                                   Icon="/Images/Help.png" LargeIcon="/Images/Help.png">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="获取 SSML 帮助" Text="了解如何编写 SSML。&#10;注：各个语音引擎对 SSML 的支持有大有小，因此有些功能使用后与没使用无异是正常现象。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="插入" Icon="/Images/Insert.png">
+                    <fluent:Button Click="InsertComment" Header="插入注释" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="1">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入注释" Text="在当前位置插入注释或使当前选中内容成为注释。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertParagraph" Header="插入段落" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="2">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入段落" Text="在当前位置插入新段落或使当前选中内容成为新段落。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertSentence" Header="插入句子" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="3">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入句子" Text="在当前位置插入新句子或使当前选中内容成为新句子。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertPhoneme" Header="插入音标" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="4">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip  Title="插入音标" Text="用指定音标阅读指定内容。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertSub" Header="插入读法" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="5">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入读法" Text="合成语音时会阅读读法中的文本。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertBreak" Header="插入休息" Icon="/Images/Insert.png" LargeIcon="/Images/Insert.png"
+                                   fluent:KeyTip.Keys="6">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入休息" Text="合成语音时会空出指定的时间。在time中填写指定的时间，如3s、500ms等。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertAudio" Header="插入音频" Icon="/Images/Audio.png" LargeIcon="/Images/Audio.png"
+                                   fluent:KeyTip.Keys="7">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入音频" Text="播放音频，如果音频未能成功播放则合成内部的文字。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                    <fluent:Button Click="InsertPath" Header="插入路径" Icon="/Images/File.png" LargeIcon="/Images/File.png"
+                                   fluent:KeyTip.Keys="8">
+                        <fluent:Button.ToolTip>
+                            <fluent:ScreenTip Title="插入路径" Text="在当前位置插入路径，用于插入音频的 @src 属性中。" />
+                        </fluent:Button.ToolTip>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+                <fluent:RibbonGroupBox Header="设置" Icon="/Images/SayAs.png">
+                    <fluent:DropDownButton Header="设置说的 方式" Icon="/Images/SayAs.png" LargeIcon="/Images/SayAs.png"
+                                           fluent:MenuItem.Click="InsertSayAs" ToolTip="设置说的方式来改进由选定内容合成的语音。"
+                                           fluent:KeyTip.Keys="Q">
+                        <fluent:MenuItem Header="缩写 (_acronym)" Tag="acronym" ToolTip="标识这是一个缩写。" />
+                        <fluent:MenuItem Header="拼写 (_spell-out)" Tag="spell-out" ToolTip="拼出单词。如“spell”会读成“s-p-e-l-l”。" />
+                        <fluent:MenuItem Header="序数词 (_numbeordinal)" Tag="numbeordinal" 
+                                        ToolTip="例如“12”会读成“第十二”。" />
+                        <fluent:MenuItem Header="基数词 (_numbecardinal)" Tag="numbecardinal" 
+                                        ToolTip="例如“12”会读成“十二”。（通常情况下不需要特地标注）" />
+                        <fluent:MenuItem Header="按位 (_numbedigits)" Tag="numbedigits" 
+                                        ToolTip="例如“12”会读成“一二”。" />
+                        <fluent:MenuItem Header="日期：日月年 (_date:dmy)" Tag="date:dmy" 
+                                        ToolTip="例如“18.5.2012”会读成“十八日五月二零一二年”。" />
+                        <fluent:MenuItem Header="日期：月日年 (_date:mdy)" Tag="date:mdy" 
+                                        ToolTip="例如“5.18.2012”会读成“五月十八日二零一二年”。" />
+                        <fluent:MenuItem Header="日期：年月日 (_date:ymd)" Tag="date:ymd" 
+                                        ToolTip="例如“2012.5.18”会读成“二零一二年五月十八日”。" />
+                        <fluent:MenuItem Header="日期：年月 (_date:ym)" Tag="date:ym" 
+                                        ToolTip="例如“2012.5”会读成“二零一二年五月”。" />
+                        <fluent:MenuItem Header="日期：月年 (_date:my)" Tag="date:my" 
+                                        ToolTip="例如“2012.5”会读成“五月二零一二年”。" />
+                        <fluent:MenuItem Header="日期：月日 (_date:md)" Tag="date:md" 
+                                        ToolTip="例如“5.18”会读成“五月十八日”。" />
+                        <fluent:MenuItem Header="日期：年 (_date:y)" Tag="date:y" 
+                                        ToolTip="例如“2012”会读成“二零一二年”。" />
+                        <fluent:MenuItem Header="日期：月 (_date:m)" Tag="date:m" 
+                                        ToolTip="例如“5”会读成“五月”。" />
+                        <fluent:MenuItem Header="日期：日 (_date:d)" Tag="date:d" 
+                                        ToolTip="例如“18”会读成“十八日”。" />
+                        <fluent:MenuItem Header="时间：时分秒 (t_ime:hms)" Tag="time:hms" 
+                                        ToolTip="例如“21:06:21”会读成“二十一时零六分二十一秒”。" />
+                        <fluent:MenuItem Header="时间：时分 (t_ime:hm)" Tag="time:hm" 
+                                        ToolTip="例如“21:06”会读成“二十一时零六分”。" />
+                        <fluent:MenuItem Header="时间：时 (t_ime:h)" Tag="time:h" 
+                                        ToolTip="例如“21”会读成“二十一时”。" />
+                        <fluent:MenuItem Header="时长：时分秒 (d_uration:hms)" Tag="duration:hms" 
+                                        ToolTip="例如“21:06:21”会读成“二十一小时六分二十一秒”。" />
+                        <fluent:MenuItem Header="时长：时分 (d_uration:hm)" Tag="duration:hm" 
+                                        ToolTip="例如“21:06”会读成“二十一小时六分钟”。" />
+                        <fluent:MenuItem Header="时长：分秒 (d_uration:ms)" Tag="duration:ms" 
+                                        ToolTip="例如“6:21”会读成“六分二十一秒”。" />
+                        <fluent:MenuItem Header="时长：时 (d_uration:h)" Tag="duration:h" 
+                                        ToolTip="例如“21”会读成“二十一小时”。" />
+                        <fluent:MenuItem Header="时长：分 (d_uration:m)" Tag="duration:m" 
+                                        ToolTip="例如“6”会读成“六分钟”。" />
+                        <fluent:MenuItem Header="时长：秒 (d_uration:s)" Tag="duration:s" 
+                                        ToolTip="例如“21”会读成“二十一秒”。" />
+                        <fluent:MenuItem Header="货币 (_currency)" Tag="currency" 
+                                        ToolTip="例如“￥4”会读成“4元”。" />
+                        <fluent:MenuItem Header="测量单位 (_measure)" Tag="measure" 
+                                        ToolTip="例如“3cm”会读成“3厘米”。" />
+                        <fluent:MenuItem Header="电话 (te_lephone)" Tag="telephone" 
+                                        ToolTip="例如“5555555555”会读成“五五五五五五五五五五”。" />
+                        <fluent:MenuItem Header="名字 (nam_e)" Tag="name" 
+                                        ToolTip="标识这是一个人或一个公司之类的名字。" />
+                        <fluent:MenuItem Header="电子邮箱 (ne_t:email)" Tag="net:email" 
+                                        ToolTip="按照读电子邮件地址方式读。通常不需要特地标注。" />
+                        <fluent:MenuItem Header="网址 (ne_t:uri)" Tag="net:uri" 
+                                        ToolTip="按照读网址的方式读。" />
+                    </fluent:DropDownButton>
+                    <fluent:DropDownButton Header="设置语音" Name="SetVoiceButton" x:FieldModifier="private" fluent:KeyTip.Keys="W"
+                                           ToolTip="设置语音来更换语言/语音阅读选定内容。" Icon="/Images/SayAs.png"
+                                           LargeIcon="/Images/SayAs.png" fluent:MenuItem.Click="InsertVoice"
+                                           ItemsSource="{Binding ItemsSource, ElementName=VoiceBox}"
+                                           ItemTemplate="{Binding ItemTemplate, ElementName=VoiceBox}" />
+                    <fluent:DropDownButton Header="设置强调" Icon="/Images/SayAs.png" LargeIcon="/Images/SayAs.png"
+                                           fluent:MenuItem.Click="InsertEmphasis" fluent:KeyTip.Keys="E"
+                                           ToolTip="设置阅读选定内容时的是否强调某些字词，可能是音调、速度、响度或其他声学的变化。">
+                        <fluent:MenuItem Header="强 (_strong)" Tag="strong" />
+                        <fluent:MenuItem Header="中 (_moderate)" Tag="moderate" />
+                        <fluent:MenuItem Header="弱 (_reduced)" Tag="reduced" />
+                        <fluent:MenuItem Header="普通 (_none)" Tag="none" />
+                    </fluent:DropDownButton>
+                    <fluent:DropDownButton Header="设置音高" ToolTip="设置阅读选定内容时的音高。" fluent:KeyTip.Keys="R"
+                                           Icon="/Images/SayAs.png" LargeIcon="/Images/SayAs.png"
+                                           fluent:MenuItem.Click="InsertProsodyPitch">
+                        <fluent:MenuItem Header="超低 (_x-low)" Tag="x-low" />
+                        <fluent:MenuItem Header="较低 (_low)" Tag="low" />
+                        <fluent:MenuItem Header="适中 (_medium)" Tag="medium" />
+                        <fluent:MenuItem Header="较高 (_high)" Tag="high" />
+                        <fluent:MenuItem Header="超高 (x-h_igh)" Tag="x-high" />
+                        <fluent:MenuItem Header="默认 (_default)" Tag="default" />
+                        <fluent:MenuItem Header="自定义(_C)" Click="InsertProsodyPitchCustom" 
+                                         ToolTip="如输入 1000Hz 表示以 1000Hz 的音高阅读，+5st 表示比原来升高五个半音（这里不是指二分之五），-5.5Hz 表示比原来降低 5.5Hz。输入的值应在 1000000Hz 以内。" />
+                    </fluent:DropDownButton>
+                    <fluent:Button Click="InsertProsodyContour" Header="设置音高 折线" ToolTip="设置阅读选定内容时音高的变化折线。"
+                                   Icon="/Images/Polyline.png" LargeIcon="/Images/Polyline.png" fluent:KeyTip.Keys="T" />
+                    <fluent:DropDownButton Header="设置速度" ToolTip="设置阅读速度。" Icon="/Images/Speed.png"
+                                           LargeIcon="/Images/Speed.png" fluent:MenuItem.Click="InsertProsodyRate"
+                                           fluent:KeyTip.Keys="Y">
+                        <fluent:MenuItem Header="超慢 (_x-slow)" Tag="x-slow" />
+                        <fluent:MenuItem Header="较慢 (_slow)" Tag="slow" />
+                        <fluent:MenuItem Header="适中 (_medium)" Tag="medium" />
+                        <fluent:MenuItem Header="较快 (_fast)" Tag="fast" />
+                        <fluent:MenuItem Header="超快 (x-f_ast)" Tag="x-fast" />
+                        <fluent:MenuItem Header="默认 (_default)" Tag="default" />
+                        <fluent:MenuItem Header="自定义(_C)" Click="InsertProsodyRateCustom" 
+                                         ToolTip="如输入 2 表示以默认速度的两倍速阅读，输入 -50% 表示以原来速度的一半阅读。最终结果应在每分钟 1000000 字以内。" />
+                    </fluent:DropDownButton>
+                    <fluent:Button Click="InsertProsodyDuration" Header="设置所需 时长" Icon="/Images/Duration.png"
+                                   LargeIcon="/Images/Duration.png" ToolTip="设置阅读选定内容时花的时间，如 2s 等。"
+                                   fluent:KeyTip.Keys="U" />
+                    <fluent:DropDownButton Header="设置音量" ToolTip="设置阅读选定内容的音量。" Icon="/Images/Volume.png"
+                                           LargeIcon="/Images/Volume.png" fluent:MenuItem.Click="InsertProsodyVolume"
+                                           fluent:KeyTip.Keys="I">
+                        <fluent:MenuItem Header="静音 (_silent)" Tag="silent" />
+                        <fluent:MenuItem Header="超轻 (_x-soft)" Tag="x-soft" />
+                        <fluent:MenuItem Header="较轻 (s_oft)" Tag="soft" />
+                        <fluent:MenuItem Header="适中 (_medium)" Tag="medium" />
+                        <fluent:MenuItem Header="较响 (_loud)" Tag="loud" />
+                        <fluent:MenuItem Header="超响 (x-lo_ud)" Tag="x-loud" />
+                        <fluent:MenuItem Header="默认 (_default)" Tag="default" />
+                        <fluent:MenuItem Header="自定义(_C)" Click="InsertProsodyVolumeCustom" 
+                                         ToolTip="如输入 100 表示以最大音量阅读，输入 +10 表示比原来的音量提高 10。设置的音量应为一个在 0 到 100 之间的数。" />
+                    </fluent:DropDownButton>
+                </fluent:RibbonGroupBox>
+            </fluent:RibbonTabItem>
+        </fluent:Ribbon>
+        <TextBox Name="EnterTextBox" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                 x:FieldModifier="private" IsReadOnlyCaretVisible="True" Grid.Row="2" FontFamily="Consolas" />
+        <c:AnimatedProgressBar x:Name="Progress" x:FieldModifier="private"
+                               IsIndeterminate="True" Height="23" Maximum="1" Grid.Row="4" />
+    </Grid>
+</fluent:MetroWindow>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mygod 语音合成器</string>
+    <string name="init_error">无法初始化 TTS 引擎，请去网上下载并安装一个。</string>
+    <string name="inputText_default">感谢您选择 Mygod 语音合成器！</string>
+    <string name="synthesize">合成</string>
+    <string name="google_synthesize">Google TTS 在线合成</string>
+    <string name="stop">停止</string>
+</resources>
