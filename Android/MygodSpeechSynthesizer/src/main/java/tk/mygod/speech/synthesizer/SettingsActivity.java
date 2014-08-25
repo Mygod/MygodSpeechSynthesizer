@@ -79,6 +79,7 @@ public class SettingsActivity extends PreferenceActivity {
             engine.setEntryIcons(icons);
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity().getApplicationContext()));
+            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity().getApplicationContext()));
             updateLanguages();
         }
 

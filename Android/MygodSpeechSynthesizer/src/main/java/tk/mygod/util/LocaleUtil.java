@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Author:  Mygod (mygod.tk)
+ * @author   Mygod
  */
 public final class LocaleUtil {
     private static final Pattern localeMatcher = Pattern.compile("^([^_]*)(_([^_]*)(_#(.*))?)?$");

@@ -13,21 +13,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.RadioButton;
-import android.widget.TextView;
+import android.widget.CheckedTextView;
 import tk.mygod.speech.synthesizer.R;
 
 /**
- * based on
- * http://stackoverflow.com/questions/4549746/custom-row-in-a-listpreference
- *
- * @author atanarro
- * https://github.com/atanarro/IconListPreference/blob/master/src/com/tanarro/iconlistpreference/IconListPreference.java
+ * @author   Mygod
+ * Based on: https://github.com/atanarro/IconListPreference/blob/master/src/com/tanarro/iconlistpreference/IconListPreference.java
  */
 public class IconListPreference extends ListPreference {
 
-    private Drawable mIcon;
     private Context mContext;
     private LayoutInflater mInflater;
     private CharSequence[] entries;
@@ -44,11 +38,9 @@ public class IconListPreference extends ListPreference {
 
     public IconListPreference(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs);
-        setLayoutResource(R.layout.preference_icon);
         mContext = context;
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconPreference, defStyle, 0);
-        mIcon = a.getDrawable(R.styleable.IconPreference_preferenceIcon);
 
         int entryIconsResId = a.getResourceId(R.styleable.IconPreference_entryIcons, -1);
         if (entryIconsResId != -1) {
@@ -75,26 +67,6 @@ public class IconListPreference extends ListPreference {
         if (selectedEntry != -1)
             return entryValues[selectedEntry].toString();
         return super.getValue();
-    }
-
-    @Override
-    public void onBindView(View view) {
-        super.onBindView(view);
-        ImageView imageView = (ImageView) view.findViewById(R.id.preferenceIcon);
-        if (imageView != null && mIcon != null) {
-            imageView.setImageDrawable(mIcon);
-        }
-    }
-
-    public void setIcon(Drawable icon) {
-        if ((icon == null && mIcon != null) || (icon != null && !icon.equals(mIcon))) {
-            mIcon = icon;
-            notifyChanged();
-        }
-    }
-
-    public Drawable getIcon() {
-        return mIcon;
     }
 
     public void setEntryIcons(Drawable[] entryIcons) {
@@ -126,7 +98,7 @@ public class IconListPreference extends ListPreference {
             throw new IllegalStateException("IconListPreference requires the icons entries array be the same length than entries or null");
         }
 
-        IconListPreferenceScreenAdapter iconListPreferenceAdapter = new IconListPreferenceScreenAdapter(mContext);
+        IconListPreferenceScreenAdapter iconListPreferenceAdapter = new IconListPreferenceScreenAdapter();
 
         if (mEntryIcons != null) {
             String selectedValue = prefs.getString(mKey, "");
@@ -142,26 +114,19 @@ public class IconListPreference extends ListPreference {
     }
 
     private class IconListPreferenceScreenAdapter extends BaseAdapter {
-        public IconListPreferenceScreenAdapter(Context context) {
-
-        }
-
         public int getCount() {
             return entries.length;
         }
 
         class CustomHolder {
-            private TextView text = null;
-            private RadioButton rButton = null;
+            private CheckedTextView text = null;
 
             CustomHolder(View row, int position) {
-                text = (TextView) row.findViewById(R.id.image_list_view_row_text_view);
+                text = (CheckedTextView) row.findViewById(android.R.id.text1);
                 text.setText(entries[position]);
-
-                rButton = (RadioButton) row.findViewById(R.id.image_list_view_row_radio_button);
-                rButton.setId(position);
-                rButton.setClickable(false);
-                rButton.setChecked(selectedEntry == position);
+                text.setId(position);
+                text.setClickable(false);
+                text.setChecked(selectedEntry == position);
 
                 if (mEntryIcons != null) {
                     text.setText(" " + text.getText());
@@ -179,18 +144,19 @@ public class IconListPreference extends ListPreference {
         }
 
         public View getView(int position, View convertView, ViewGroup parent) {
-            View row;
+            if (convertView == null)
+                convertView = mInflater.inflate(com.android.internal.R.layout.select_dialog_singlechoice_holo,
+                                                parent, false);
             CustomHolder holder;
             final int p = position;
-            row = mInflater.inflate(R.layout.image_list_preference_row, parent, false);
-            holder = new CustomHolder(row, position);
+            holder = new CustomHolder(convertView, position);
 
-            row.setTag(holder);
+            convertView.setTag(holder);
 
             // row.setClickable(true);
             // row.setFocusable(true);
             // row.setFocusableInTouchMode(true);
-            row.setOnClickListener(new View.OnClickListener() {
+            convertView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     v.requestFocus();
 
@@ -205,7 +171,7 @@ public class IconListPreference extends ListPreference {
                 }
             });
 
-            return row;
+            return convertView;
         }
 
     }
