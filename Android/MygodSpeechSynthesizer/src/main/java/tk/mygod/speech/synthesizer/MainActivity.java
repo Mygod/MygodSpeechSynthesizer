@@ -42,6 +42,8 @@ public class MainActivity extends Activity implements OnTtsSynthesisCallbackList
             case R.id.stop:
                 TtsEngineManager.engines.selectedEngine.stop();
                 return true;
+            case R.id.synthesize_to_file:
+                return true;
             case R.id.settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;

@@ -10,5 +10,6 @@
     <string name="settings_tts">Text-to-speech settings</string>
     <string name="settings_tts_preferred_engine">Preferred engine</string>
     <string name="settings_tts_language">Language</string>
+    <string name="synthesize_to_file">Synthesize to File</string>
 
 </resources>

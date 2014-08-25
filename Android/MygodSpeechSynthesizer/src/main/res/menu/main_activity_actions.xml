@@ -11,6 +11,10 @@
           android:title="@string/stop"
           android:showAsAction="ifRoom|withText"
           app:showAsAction="ifRoom|withText"/>
+    <item android:id="@+id/synthesize_to_file"
+          android:title="@string/synthesize_to_file"
+          android:showAsAction="never"
+          app:showAsAction="never"/>
     <item android:id="@+id/settings"
           android:title="Settings"
           android:showAsAction="never"
