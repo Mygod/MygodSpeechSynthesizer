@@ -44,6 +44,9 @@ public class FileSaveFragment extends DialogFragment implements AdapterView.OnIt
     public void setDefaultFileName(String value) {
         defaultFileName = value;
     }
+    public void setCurrentDirectory(File value) {
+        currentDirectory = value;
+    }
 
     public static FileSaveFragment newInstance(Callbacks value) {
         FileSaveFragment result = new FileSaveFragment();
@@ -91,7 +94,7 @@ public class FileSaveFragment extends DialogFragment implements AdapterView.OnIt
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         View root = getActivity().getLayoutInflater().inflate(R.layout.fragment_file_save, null);
-        currentDirectory = Environment.getExternalStorageDirectory();
+        if (currentDirectory == null) currentDirectory = Environment.getExternalStorageDirectory();
         directoryList = getSubDirectories(currentDirectory);
         DirectoryDisplay displayFormat = new DirectoryDisplay(getActivity(), directoryList);
         (directoryView = (ListView) root.findViewById(R.id.directory_view)).setAdapter(displayFormat);

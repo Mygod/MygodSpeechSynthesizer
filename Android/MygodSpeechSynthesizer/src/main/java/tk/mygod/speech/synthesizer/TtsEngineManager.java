@@ -19,8 +19,8 @@ final class TtsEngineManager {
 
     static AvailableTtsEngines engines;
     private static OnSelectedEngineChangedListener onSelectedEngineChangedListener;
-    private static SharedPreferences pref;
-    private static SharedPreferences.Editor editor;
+    static SharedPreferences pref;
+    static SharedPreferences.Editor editor;
 
     static void init(Context context, OnSelectedEngineChangedListener listener) {
         String engineID = (pref = context.getSharedPreferences("settings", Context.MODE_PRIVATE))

@@ -148,6 +148,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 else {
                     FileSaveFragment fsf = FileSaveFragment.newInstance(this);
                     fsf.setDefaultFileName(fileName);
+                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", "");
+                    if (dir != null && !dir.isEmpty()) fsf.setCurrentDirectory(new File(dir));
                     fsf.show(getFragmentManager(), "test");
                 }
                 return true;
@@ -189,6 +191,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     @Override
     public void onConfirmSave(String absolutePath, String fileName) {
         if (fileName == null || fileName.isEmpty()) return;
+        TtsEngineManager.editor.putString("fileSystem.lastSaveDir", absolutePath);
+        TtsEngineManager.editor.apply();
         synthesisFile = new File(absolutePath, fileName);
         synthesizeToFile();
     }
