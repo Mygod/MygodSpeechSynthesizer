@@ -6,6 +6,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
+import android.speech.tts.TextToSpeech;
 import tk.mygod.preference.IconListPreference;
 import tk.mygod.speech.tts.TtsEngine;
 
@@ -19,12 +20,6 @@ import java.util.Set;
  */
 public class SettingsActivity extends PreferenceActivity {
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        if (TtsEngineManager.engines == null) finish(); // wrong entrance?
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public void onBuildHeaders(List<Header> target) {
         loadHeadersFromResource(R.xml.settings, target);
     }
@@ -37,13 +32,14 @@ public class SettingsActivity extends PreferenceActivity {
     public static class TtsSettingsFragment extends PreferenceFragment {
         private IconListPreference engine;
         private ListPreference lang;
+        private Preference features;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            getPreferenceManager().setSharedPreferencesName("tts");
+            getPreferenceManager().setSharedPreferencesName("settings");
             addPreferencesFromResource(R.xml.settings_tts);
-            (engine = (IconListPreference) findPreference("tts.engine"))
+            (engine = (IconListPreference) findPreference("engine"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -56,15 +52,18 @@ public class SettingsActivity extends PreferenceActivity {
                             return true;
                         }
                     });
-            (lang = (ListPreference) findPreference("tts.lang"))
+            (lang = (ListPreference) findPreference("engine.lang"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectLanguage((String) newValue);
-                            lang.setSummary(TtsEngineManager.engines.selectedEngine.getLanguage().getDisplayName());
+                            Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
+                            lang.setSummary(locale.getDisplayName());
+                            updateFeatures(locale);
                             return true;
                         }
                     });
+            features = findPreference("engine.features");
             int count = TtsEngineManager.engines.size();
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             Drawable[] icons = new Drawable[count];
@@ -94,8 +93,22 @@ public class SettingsActivity extends PreferenceActivity {
             }
             lang.setEntries(names);
             lang.setEntryValues(ids);
-            lang.setValue(TtsEngineManager.engines.selectedEngine.getLanguage().toString());
-            lang.setSummary(TtsEngineManager.engines.selectedEngine.getLanguage().getDisplayName());
+            Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
+            lang.setValue(locale.toString());
+            lang.setSummary(locale.getDisplayName());
+            updateFeatures(locale);
+        }
+
+        private void updateFeatures(Locale locale) {
+            StringBuilder builder = new StringBuilder();
+            for (String feature : TtsEngineManager.engines.selectedEngine.getFeatures(locale)) {
+                if (builder.length() > 0) builder.append(", ");
+                builder.append(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)
+                        ? getText(R.string.settings_tts_features_network)
+                        : TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature)
+                            ? getText(R.string.settings_tts_features_embedded) : feature);
+            }
+            features.setSummary(builder.toString());
         }
     }
 }

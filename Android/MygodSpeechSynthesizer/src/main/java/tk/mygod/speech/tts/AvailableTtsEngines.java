@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 /**
  * Project: MygodSpeechSynthesizer
- * Author:  Mygod (mygod.tk)
+ * @author  Mygod
  */
 public class AvailableTtsEngines extends ArrayList<TtsEngine> {
     public AvailableTtsEngines(Context context) {

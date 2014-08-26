@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
                   android:title="@string/settings_tts">
-    <tk.mygod.preference.IconListPreference android:key="tts.engine"
-                                            android:title="@string/settings_tts_preferred_engine"/>
-    <ListPreference android:key="tts.lang"
-                    android:title="@string/settings_tts_language"/>
+    <PreferenceCategory android:title="@string/settings_tts_engines_languages">
+        <tk.mygod.preference.IconListPreference android:key="engine"
+                                                android:title="@string/settings_tts_preferred_engine"/>
+        <ListPreference android:key="engine.lang"
+                        android:title="@string/settings_tts_language"/>
+        <Preference android:key="engine.features"
+                    android:title="@string/settings_tts_features"/>
+    </PreferenceCategory>
 </PreferenceScreen>

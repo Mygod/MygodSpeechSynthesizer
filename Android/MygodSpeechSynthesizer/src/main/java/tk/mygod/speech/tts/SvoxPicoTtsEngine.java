@@ -3,10 +3,13 @@ package tk.mygod.speech.tts;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.text.TextUtils;
-import tk.mygod.util.LocaleUtil;
+import android.util.Pair;
+import tk.mygod.util.LocaleUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -14,7 +17,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Project: Mygod Speech Synthesizer
- * Author:  Mygod (mygod.tk)
+ * @author  Mygod
  */
 public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     protected TextToSpeech tts;
@@ -24,10 +27,12 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
         tts = new TextToSpeech(context, this);
+        setListener();
     }
     public SvoxPicoTtsEngine(Context context, TextToSpeech.EngineInfo info) {
         initLock.acquireUninterruptibly();
         tts = new TextToSpeech(context, this, (engineInfo = info).name);
+        setListener();
     }
     private Set<Locale> supportedLanguages;
     /**
@@ -39,7 +44,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     @Override
     public void onInit(int status) {
         initStatus = status;
-        supportedLanguages = new TreeSet<Locale>(new LocaleUtil.DisplayNameComparator());
+        supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
         for (Locale locale : Locale.getAvailableLocales()) {
             int test = tts.isLanguageAvailable(locale);
             if (test == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE ||
@@ -68,6 +73,10 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         tts.setLanguage(loc);
         return true;
     }
+    @Override
+    public Set<String> getFeatures(Locale locale) {
+        return tts.getFeatures(locale);
+    }
 
     @Override
     public String getID() {
@@ -83,20 +92,53 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
 
     @Override
-    public void speak(String text, OnTtsSynthesisCallbackListener listener) throws IOException {
-        // TODO: long text splitting
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+    public String getMimeType() {
+        return "audio/x-wav";
     }
 
     @Override
-    public void synthesizeToFile(String text, String filename, OnTtsSynthesisCallbackListener listener) {
+    public void speak(String text) throws IOException {
         // TODO: long text splitting
-        tts.synthesizeToFile(text, null, filename);
+        HashMap<String, String> params = new HashMap<String, String>();
+        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "0," + text.length());
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, params);
     }
-
+    @Override
+    public void synthesizeToFile(String text, String filename) {
+        // TODO: long text splitting
+        HashMap<String, String> params = new HashMap<String, String>();
+        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "0," + text.length());
+        tts.synthesizeToFile(text, params, filename);
+    }
     @Override
     public void stop() {
         tts.stop();
+    }
+
+    private Pair<Integer, Integer> getRange(String id) {
+        String[] parts = id.split(",");
+        return new Pair<Integer, Integer>(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+    }
+    private void setListener() {
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+                Pair<Integer, Integer> pair = getRange(utteranceId);
+                if (listener != null) listener.onTtsSynthesisCallback(pair.first, pair.second);
+            }
+
+            @Override
+            public void onDone(String utteranceId) {
+                Pair<Integer, Integer> pair = getRange(utteranceId);
+                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+                Pair<Integer, Integer> pair = getRange(utteranceId);
+                if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+            }
+        });
     }
 
     @Override

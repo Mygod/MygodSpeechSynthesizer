@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<menu xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" tools:ignore="AppCompatResource">
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      tools:ignore="AppCompatResource">
     <item android:id="@+id/synthesize"
           android:icon="@drawable/ic_action_mic"
           android:title="@string/synthesize"
-          android:showAsAction="ifRoom|withText"
-          app:showAsAction="ifRoom|withText"/>
-    <item android:id="@+id/stop"
-          android:icon="@drawable/ic_action_mic_muted"
-          android:title="@string/stop"
           android:showAsAction="ifRoom|withText"
           app:showAsAction="ifRoom|withText"/>
     <item android:id="@+id/synthesize_to_file"

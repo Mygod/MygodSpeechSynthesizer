@@ -17,6 +17,7 @@ public abstract class TtsEngine {
     public boolean setLanguage(Locale loc) {
         return false;
     }
+    public abstract Set<String> getFeatures(Locale locale);
 
     private Drawable icon;
     public String getID() {
@@ -31,17 +32,20 @@ public abstract class TtsEngine {
     }
     protected abstract Drawable getIconInternal(Context context);
 
-    public final void speak(String text) throws IOException {
-        speak(text, null);
+    protected OnTtsSynthesisCallbackListener listener;
+    public void setSynthesisCallbackListener(OnTtsSynthesisCallbackListener listener) {
+        this.listener = listener;
     }
-    public abstract void speak(String text, OnTtsSynthesisCallbackListener listener) throws IOException;
+    public abstract String getMimeType();
 
-    public final void synthesizeToFile(String text, String filename) {
-        synthesizeToFile(text, filename, null);
-    }
-    public abstract void synthesizeToFile(String text, String filename, OnTtsSynthesisCallbackListener listener);
-
+    public abstract void speak(String text) throws IOException;
+    public abstract void synthesizeToFile(String text, String filename) throws IOException;
     public abstract void stop();
 
     public abstract void onDestroy();
+
+    public static interface OnTtsSynthesisCallbackListener {
+        public void onTtsSynthesisCallback(int start, int end);
+        public void onTtsSynthesisError(int start, int end);
+    }
 }

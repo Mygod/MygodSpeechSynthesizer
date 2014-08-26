@@ -10,10 +10,10 @@ import java.util.regex.Pattern;
 /**
  * @author   Mygod
  */
-public final class LocaleUtil {
+public final class LocaleUtils {
     private static final Pattern localeMatcher = Pattern.compile("^([^_]*)(_([^_]*)(_#(.*))?)?$");
 
-    private LocaleUtil() {
+    private LocaleUtils() {
         throw new AssertionError();
     }
 
