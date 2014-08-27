@@ -19,7 +19,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -114,9 +114,11 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
 
     private SpeakTask speakTask;
     private final class SpeakTask extends AsyncTask<Void, Integer, Exception> {
-        private final LinkedBlockingQueue<Object> playbackQueue = new LinkedBlockingQueue<Object>();
+        // it seems creating 32+ unreleased MediaPlayer will fail miserably with:
+        // java.io.IOException: Prepare failed.: status=0x1
+        private final ArrayBlockingQueue<Object> playbackQueue = new ArrayBlockingQueue<Object>(29);
         private final HashMap<MediaPlayer, Pair<Integer, Integer>>
-                rangeMap = new HashMap<MediaPlayer, Pair<Integer, Integer>>();
+                rangeMap = new HashMap<MediaPlayer, Pair<Integer, Integer>>(32);
         private PlayerThread playThread;
 
         public void stop() {
@@ -135,22 +137,31 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
             public void run() {
                 try {
                     Object obj = playbackQueue.take();
-                    while (obj instanceof MediaPlayer) try {   // not done yet
+                    while (obj instanceof MediaPlayer) {
                         player = (MediaPlayer) obj;
-                        if (!isCancelled()) {
-                            Pair<Integer, Integer> pair = rangeMap.get(player);
-                            listener.onTtsSynthesisCallback(pair.first, pair.second);
-                            player.setOnCompletionListener(this);
-                            player.setOnErrorListener(this);
-                            playLock.acquireUninterruptibly();
-                            player.start();
-                            playLock.acquireUninterruptibly(); // wait for release
-                            playLock.release();
+                        Pair<Integer, Integer> pair = rangeMap.get(player);
+                        try {   // not done yet
+                            if (!isCancelled()) {
+                                listener.onTtsSynthesisCallback(pair.first, pair.second);
+                                player.setOnCompletionListener(this);
+                                player.setOnErrorListener(this);
+                                playLock.acquireUninterruptibly();
+                                player.start();
+                                playLock.acquireUninterruptibly(); // wait for release
+                                playLock.release();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            listener.onTtsSynthesisError(pair.first, pair.second);
+                        } finally {
+                            try {
+                                player.stop();
+                            } catch (IllegalStateException e) {
+                                e.printStackTrace();
+                            }
+                            player.release();
+                            obj = playbackQueue.take();
                         }
-                    } finally {
-                        player.stop();
-                        player.release();
-                        obj = playbackQueue.take();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -190,18 +201,29 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                 last = ranges.get(ranges.size() - 1);
                 if (isCancelled()) return null;
                 (playThread = new PlayerThread()).start();
-                for (Pair<Integer, Integer> range : ranges) try {
+                for (Pair<Integer, Integer> range : ranges) {
                     if (isCancelled()) return null;
-                    MediaPlayer player = new MediaPlayer();
-                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    player.setDataSource(getUrl(currentText.substring(range.first, range.second)));
-                    player.prepare();
-                    if (isCancelled()) return null;
-                    rangeMap.put(player, range);
-                    playbackQueue.add(player);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                    MediaPlayer player = null;
+                    try {
+                        while (true) try {
+                            player = new MediaPlayer();
+                            player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                            player.setDataSource(getUrl(currentText.substring(range.first, range.second)));
+                            player.prepare();
+                            break;
+                        } catch (IOException e) {
+                            if (!"Prepare failed.: status=0x1".equals(e.getMessage())) throw e;
+                            player.release();   // useless copy now
+                            Thread.sleep(1000);
+                        }
+                        if (isCancelled()) return null;
+                        rangeMap.put(player, range);
+                        playbackQueue.add(player);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (player != null) player.release();
+                        if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                    }
                 }
                 return null;
             } catch (Exception e) {

@@ -58,9 +58,9 @@ public abstract class TtsEngine {
     }
 
     private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
-    private static final int splittersCount = 5, bestSplittersEver = 0;
+    private static final int SPLITTERS_COUNT = 5, BEST_SPLITTERS_EVER = 0;
     static {
-        int priority = bestSplittersEver;
+        int priority = BEST_SPLITTERS_EVER;
         for (String group : new String[] { ".?!。？！", ":;：；—", ",()[]{}，（）【】『』［］｛｝、",
                 "'\"‘’“”＇＂<>＜＞《》", " \t\b\n\r\f\b\u000b\u00a0\u2028\u2029/\\|-／＼｜－" }) {
             int length = group.length();
@@ -75,14 +75,14 @@ public abstract class TtsEngine {
         ArrayList<Pair<Integer, Integer>> result = new ArrayList<Pair<Integer, Integer>>();
         while (last < length && splitters.get(text.charAt(last)) != null) ++last;
         while (last < length) {
-            int i = last + 1, maxEnd = last + maxLength, bestPriority = splittersCount;
+            int i = last + 1, maxEnd = last + maxLength, bestPriority = SPLITTERS_COUNT;
             if (maxEnd > length) maxEnd = length;
             int end = maxEnd;
             while (i < maxEnd) {
                 Integer priority = splitters.get(text.charAt(i));
                 if (priority != null && priority <= bestPriority) {
                     end = i;
-                    if ((bestPriority = priority) == bestSplittersEver) break;
+                    if ((bestPriority = priority) == BEST_SPLITTERS_EVER) break;
                 }
                 ++i;
             }
