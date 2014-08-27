@@ -37,7 +37,7 @@ public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlo
 
     @Override
     public void onGlobalLayout() {
-        float y = decorView.findViewById(android.R.id.content).getY() - getResources().getDisplayMetrics().density * 2;
+        float y = decorView.findViewById(android.R.id.content).getY() - getResources().getDisplayMetrics().density * 4;
         progressBar.setY(y);
         butteryProgressBar.setY(y);
         if (Build.VERSION.SDK_INT < 16) {
@@ -71,5 +71,11 @@ public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlo
             progressBar.setProgress(progress);
             butteryProgressBar.setVisibility(View.GONE);
         }
+    }
+    public int getActionBarSecondaryProgress() {
+        return progressBar.getSecondaryProgress();
+    }
+    public void setActionBarSecondaryProgress(int progress) {
+        progressBar.setSecondaryProgress(progress);
     }
 }

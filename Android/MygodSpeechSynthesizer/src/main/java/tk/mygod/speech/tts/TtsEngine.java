@@ -53,6 +53,7 @@ public abstract class TtsEngine {
     public abstract void onDestroy();
 
     public static interface OnTtsSynthesisCallbackListener {
+        public void onTtsSynthesisPrepared(int end);
         public void onTtsSynthesisCallback(int start, int end);
         public void onTtsSynthesisError(int start, int end);
     }

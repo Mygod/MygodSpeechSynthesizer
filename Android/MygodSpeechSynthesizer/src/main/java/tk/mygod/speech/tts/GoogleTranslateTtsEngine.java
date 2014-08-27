@@ -218,7 +218,8 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                         }
                         if (isCancelled()) return null;
                         rangeMap.put(player, range);
-                        playbackQueue.add(player);
+                        playbackQueue.put(player);
+                        if (listener != null) listener.onTtsSynthesisPrepared(range.second);
                     } catch (Exception e) {
                         e.printStackTrace();
                         if (player != null) player.release();

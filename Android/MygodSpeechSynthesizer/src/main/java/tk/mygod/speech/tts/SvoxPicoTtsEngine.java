@@ -189,10 +189,12 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
                     }
                     tts.speak(currentText.substring(range.first, range.second), TextToSpeech.QUEUE_ADD,
                               getParams(range.first, range.second));
+                    if (listener != null) listener.onTtsSynthesisPrepared(range.second);
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
                 }
+                if (isCancelled()) tts.stop();
                 return null;
             } catch (Exception e) {
                 e.printStackTrace();

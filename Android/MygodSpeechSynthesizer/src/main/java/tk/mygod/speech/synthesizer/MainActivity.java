@@ -71,6 +71,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeToFileMenu.setEnabled(false);
         inputText.setFilters(readonlyFilters);
         progressBar.setMax(inputText.getText().length());
+        setActionBarSecondaryProgress(0);
         setActionBarProgress(-1);   // initializing
         working = true;
     }
@@ -213,6 +214,15 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeToFile();
     }
 
+    @Override
+    public void onTtsSynthesisPrepared(final int end) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setActionBarSecondaryProgress(end);
+            }
+        });
+    }
     @Override
     public void onTtsSynthesisCallback(final int start, final int end) {
         runOnUiThread(new Runnable() {

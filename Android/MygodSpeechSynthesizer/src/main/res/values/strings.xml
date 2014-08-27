@@ -16,7 +16,7 @@
     <string name="settings_tweaks">Tweaks</string>
     <string name="settings_pitch">Pitch (1 for normal)</string>
     <string name="settings_speech_rate">Speech rate (1 for normal)</string>
-    <string name="settings_pan">Pan (-1 - 1, 0 for normal)</string>
+    <string name="settings_pan">Pan (between [-1, 1]; 0 for normal)</string>
     <string name="synthesis_error">Synthesis failed: %s</string>
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
     <string name="file_save_title">Choose save location</string>
