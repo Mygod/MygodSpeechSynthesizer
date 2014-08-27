@@ -14,7 +14,8 @@ import tk.mygod.widget.ButteryProgressBar;
  * @author   Mygod
  * Based on: http://stackoverflow.com/a/15073680/2245107
  */
-public class ProgressActivity extends Activity {
+public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlobalLayoutListener {
+    private FrameLayout decorView;
     protected ProgressBar progressBar;
     protected ButteryProgressBar butteryProgressBar;
 
@@ -27,24 +28,25 @@ public class ProgressActivity extends Activity {
         (butteryProgressBar = new ButteryProgressBar(this))
                 .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
                         (int) (getResources().getDisplayMetrics().density * 8)));
-        setActionBarProgress(null);
-        final FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
+        (decorView = (FrameLayout) getWindow().getDecorView()).addView(progressBar);
         decorView.addView(butteryProgressBar);
-        ViewTreeObserver observer = butteryProgressBar.getViewTreeObserver();
-        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                View contentView = decorView.findViewById(android.R.id.content);
-                progressBar.setY(contentView.getY() - getResources().getDisplayMetrics().density * 2);
-                butteryProgressBar.setY(contentView.getY() - getResources().getDisplayMetrics().density * 2);
-                ViewTreeObserver observer = progressBar.getViewTreeObserver();
-                if (Build.VERSION.SDK_INT < 16) observer.removeGlobalOnLayoutListener(this);
-                else observer.removeOnGlobalLayoutListener(this);
-                observer = butteryProgressBar.getViewTreeObserver();
-                if (Build.VERSION.SDK_INT < 16) observer.removeGlobalOnLayoutListener(this);
-                else observer.removeOnGlobalLayoutListener(this);
-            }
-        });
+        progressBar.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        butteryProgressBar.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        setActionBarProgress(null);
+    }
+
+    @Override
+    public void onGlobalLayout() {
+        float y = decorView.findViewById(android.R.id.content).getY() - getResources().getDisplayMetrics().density * 2;
+        progressBar.setY(y);
+        butteryProgressBar.setY(y);
+        if (Build.VERSION.SDK_INT < 16) {
+            progressBar.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+            butteryProgressBar.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+        } else {
+            progressBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            butteryProgressBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        }
     }
 
     public ProgressBar getProgressBar() { return progressBar; }
