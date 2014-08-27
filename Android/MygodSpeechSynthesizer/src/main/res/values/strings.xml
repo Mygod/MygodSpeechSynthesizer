@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Mygod Speech Synthesizer</string>
+    <string name="inputText_default">Thanks for using Mygod Speech Synthesizer!</string>
+    <string name="synthesize">Synthesize</string>
+    <string name="stop">Stop</string>
+    <string name="synthesize_to_file">Synthesize to File</string>
+    <string name="settings">Settings</string>
+    <string name="settings_tts">Text-to-speech settings</string>
+    <string name="settings_tts_engines_languages">Engines &amp; Languages</string>
+    <string name="settings_tts_preferred_engine">Preferred engine</string>
+    <string name="settings_tts_language">Language</string>
+    <string name="settings_tts_features">Supported features</string>
+    <string name="settings_tts_features_network">Online</string>
+    <string name="settings_tts_features_embedded">Offline</string>
+    <string name="synthesis_error">Synthesis failed: %s</string>
+    <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
+    <string name="file_save_title">Choose save location</string>
+    <string name="file_save_file_name_hint">File name</string>
+
+</resources>
