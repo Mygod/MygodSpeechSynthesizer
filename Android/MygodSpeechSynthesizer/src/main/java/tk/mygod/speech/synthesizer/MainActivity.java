@@ -70,7 +70,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeMenu.setTitle(R.string.stop);
         synthesizeToFileMenu.setEnabled(false);
         inputText.setFilters(readonlyFilters);
-        progressBar.setMax(inputText.getText().length());
+        setActionBarProgressMax(inputText.getText().length());
         setActionBarSecondaryProgress(0);
         setActionBarProgress(-1);   // initializing
         working = true;
@@ -82,7 +82,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeToFileMenu.setEnabled(true);
         inputText.setFilters(noFilters);
         if (completed && (synthesisTarget != null || synthesisFile != null)) {
-            setActionBarProgress(progressBar.getMax());
+            setActionBarProgress(getActionBarProgressMax());
             FileInputStream input = null;
             FileOutputStream output = null;
             try {

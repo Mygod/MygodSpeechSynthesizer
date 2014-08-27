@@ -16,8 +16,8 @@ import tk.mygod.widget.ButteryProgressBar;
  */
 public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlobalLayoutListener {
     private FrameLayout decorView;
-    protected ProgressBar progressBar;
-    protected ButteryProgressBar butteryProgressBar;
+    private ProgressBar progressBar;
+    private ButteryProgressBar butteryProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +54,12 @@ public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlo
         return butteryProgressBar;
     }
 
+    public int getActionBarProgressMax() {
+        return progressBar.getMax();
+    }
+    public void setActionBarProgressMax(int value) {
+        progressBar.setMax(value);
+    }
     public Integer getActionBarProgress() {
         if (progressBar.getVisibility() == View.VISIBLE) return progressBar.getProgress();
         if (butteryProgressBar.getVisibility() == View.VISIBLE) return -1;
