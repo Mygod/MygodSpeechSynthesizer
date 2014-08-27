@@ -52,7 +52,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
                             TextUtils.isEmpty(locale.getCountry()) && test == TextToSpeech.LANG_AVAILABLE))
                 supportedLanguages.add(locale);
         } catch (Exception e) { // god damn Samsung TTS
-            continue;
+            e.printStackTrace();
         }
         initLock.release();
     }
