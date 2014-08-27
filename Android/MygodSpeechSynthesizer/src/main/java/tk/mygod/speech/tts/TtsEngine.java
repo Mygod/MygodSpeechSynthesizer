@@ -80,7 +80,7 @@ public abstract class TtsEngine {
             int end = maxEnd;
             while (i < maxEnd) {
                 Integer priority = splitters.get(text.charAt(i));
-                if (priority != null && priority < bestPriority) {
+                if (priority != null && priority <= bestPriority) {
                     end = i;
                     if ((bestPriority = priority) == bestSplittersEver) break;
                 }
