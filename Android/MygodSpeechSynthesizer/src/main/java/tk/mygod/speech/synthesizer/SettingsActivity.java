@@ -1,16 +1,15 @@
 package tk.mygod.speech.synthesizer;
 
+import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
 import tk.mygod.preference.IconListPreference;
 import tk.mygod.speech.tts.TtsEngine;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -18,15 +17,11 @@ import java.util.Set;
  * Project: MygodSpeechSynthesizer
  * Author:  Mygod (mygod.tk)
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends Activity {
     @Override
-    public void onBuildHeaders(List<Header> target) {
-        loadHeadersFromResource(R.xml.settings, target);
-    }
-
-    @Override
-    protected boolean isValidFragment (String fragmentName) {
-        return true;
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getFragmentManager().beginTransaction().replace(android.R.id.content, new TtsSettingsFragment()).commit();
     }
 
     public static class TtsSettingsFragment extends PreferenceFragment {
@@ -38,7 +33,7 @@ public class SettingsActivity extends PreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             getPreferenceManager().setSharedPreferencesName("settings");
-            addPreferencesFromResource(R.xml.settings_tts);
+            addPreferencesFromResource(R.xml.settings);
             (engine = (IconListPreference) findPreference("engine"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
@@ -104,9 +99,9 @@ public class SettingsActivity extends PreferenceActivity {
             for (String feature : TtsEngineManager.engines.selectedEngine.getFeatures(locale)) {
                 if (builder.length() > 0) builder.append(", ");
                 builder.append(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)
-                        ? getText(R.string.settings_tts_features_network)
+                        ? getText(R.string.settings_features_network)
                         : TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature)
-                            ? getText(R.string.settings_tts_features_embedded) : feature);
+                            ? getText(R.string.settings_features_embedded) : feature);
             }
             features.setSummary(builder.toString());
         }

@@ -99,13 +99,13 @@ public class GoogleTranslateTtsEngine extends TtsEngine
     @Override
     public void speak(String text) throws IOException {
         player.reset();
-        // TODO: long text splitting, SPML support
+        // TODO: long text splitting
         player.setDataSource(getUrl(currentText = text));
         player.prepareAsync();
     }
     @Override
     public void synthesizeToFile(String text, String filename) throws IOException {
-        // TODO: long text splitting, SPML support
+        // TODO: long text splitting
         currentText = text;
         new SynthesizeToFileTask().execute(filename);
     }

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
-    <header android:fragment="tk.mygod.speech.synthesizer.SettingsActivity$TtsSettingsFragment"
-            android:title="@string/settings_tts" />
-</preference-headers>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/settings">
+    <PreferenceCategory android:title="@string/settings_engines_languages">
+        <tk.mygod.preference.IconListPreference android:key="engine" android:title="@string/settings_preferred_engine"/>
+        <ListPreference android:key="engine.lang" android:title="@string/settings_language"/>
+        <Preference android:key="engine.features" android:title="@string/settings_features"/>
+    </PreferenceCategory>
+</PreferenceScreen>
