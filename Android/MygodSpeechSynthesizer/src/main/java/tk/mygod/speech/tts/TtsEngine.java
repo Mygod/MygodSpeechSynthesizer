@@ -58,7 +58,7 @@ public abstract class TtsEngine {
     }
 
     private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
-    private static final int splittersCount = 4, bestSplittersEver = 0;
+    private static final int splittersCount = 5, bestSplittersEver = 0;
     static {
         int priority = bestSplittersEver;
         for (String group : new String[] { ".?!。？！", ":;：；—", ",()[]{}，（）【】『』［］｛｝、",
