@@ -5,6 +5,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.text.InputFilter;
+import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.MimeTypeMap;
@@ -33,6 +35,12 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     private boolean working;
     private Uri synthesisTarget;
     private File synthesisFile, tempFile;
+    private static final InputFilter[] noFilters = new InputFilter[0],
+            readonlyFilters = new InputFilter[] { new InputFilter() {
+                public CharSequence filter(CharSequence src, int start, int end, Spanned dest, int dstart, int dend) {
+                    return dest.subSequence(dstart, dend);
+                }
+            } };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
         synthesizeMenu.setTitle(R.string.stop);
         synthesizeToFileMenu.setEnabled(false);
+        inputText.setFilters(readonlyFilters);
         progressBar.setMax(inputText.getText().length());
         setActionBarProgress(-1);   // initializing
         working = true;
@@ -64,6 +73,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
         synthesizeMenu.setTitle(R.string.synthesize);
         synthesizeToFileMenu.setEnabled(true);
+        inputText.setFilters(noFilters);
         if (completed && (synthesisTarget != null || synthesisFile != null)) {
             setActionBarProgress(progressBar.getMax());
             FileInputStream input = null;
@@ -150,7 +160,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                     fsf.setDefaultFileName(fileName);
                     String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", "");
                     if (dir != null && !dir.isEmpty()) fsf.setCurrentDirectory(new File(dir));
-                    fsf.show(getFragmentManager(), "test");
+                    fsf.show(getFragmentManager(), "");
                 }
                 return true;
             case R.id.settings:
