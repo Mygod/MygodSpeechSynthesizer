@@ -6,6 +6,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.speech.tts.TextToSpeech;
+import android.util.Pair;
 import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
 import tk.mygod.util.LocaleUtils;
@@ -17,22 +18,19 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.InvalidParameterException;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 /**
  * Project:  Mygod Speech Synthesizer
  * @author   Mygod
- * Based on: https://github.com/hungtruong/Google-Translate-TTS
  */
-public class GoogleTranslateTtsEngine extends TtsEngine
-        implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
+public class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
     private static Set<String> supportedFeatures;
-    private final MediaPlayer player;
     private String language = "en", currentText;
+    private Pair<Integer, Integer> last;
 
     static {
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
@@ -43,13 +41,6 @@ public class GoogleTranslateTtsEngine extends TtsEngine
             supportedLanguages.add(LocaleUtils.parseLocale(code));
         supportedFeatures = new HashSet<String>(1);
         supportedFeatures.add(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS);
-    }
-    public GoogleTranslateTtsEngine() {
-        player = new MediaPlayer();
-        player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        player.setOnPreparedListener(this);
-        player.setOnCompletionListener(this);
-        player.setOnErrorListener(this);
     }
 
     @Override
@@ -98,44 +89,135 @@ public class GoogleTranslateTtsEngine extends TtsEngine
     }
     @Override
     public void speak(String text) throws IOException {
-        player.reset();
-        // TODO: long text splitting
-        player.setDataSource(getUrl(currentText = text));
-        player.prepareAsync();
+        currentText = text;
+        (speakTask = new SpeakTask()).execute();
     }
     @Override
     public void synthesizeToFile(String text, String filename) throws IOException {
-        // TODO: long text splitting
         currentText = text;
         new SynthesizeToFileTask().execute(filename);
     }
     @Override
     public void stop() {
-        player.stop();
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        if (listener != null) listener.onTtsSynthesisCallback(0, currentText.length());
-        mp.start();
-    }
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        if (listener != null) listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
-    }
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
-        return false;
+        if (speakTask != null) speakTask.stop();
     }
 
     @Override
     public void onDestroy() {
-        player.stop();
-        player.release();
+        stop();
     }
 
-    private class SynthesizeToFileTask extends AsyncTask<String, Integer, Exception> {
+    @Override
+    protected int getMaxLength() {
+        return 100;
+    }
+
+    private SpeakTask speakTask;
+    private final class SpeakTask extends AsyncTask<Void, Integer, Exception> {
+        private final LinkedBlockingQueue<Object> playbackQueue = new LinkedBlockingQueue<Object>();
+        private final HashMap<MediaPlayer, Pair<Integer, Integer>>
+                rangeMap = new HashMap<MediaPlayer, Pair<Integer, Integer>>();
+        private PlayerThread playThread;
+
+        public void stop() {
+            cancel(false);
+            if (playThread == null || playThread.player == null) return;
+            playThread.player.stop();   // playback should be stopped instantly or somebody might get angry
+        }
+
+        private class PlayerThread extends Thread
+                implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
+            private MediaPlayer player;
+            private boolean completed;
+            private final Semaphore playLock = new Semaphore(1);
+
+            @Override
+            public void run() {
+                try {
+                    Object obj = playbackQueue.take();
+                    while (obj instanceof MediaPlayer) try {   // not done yet
+                        player = (MediaPlayer) obj;
+                        if (!isCancelled()) {
+                            Pair<Integer, Integer> pair = rangeMap.get(player);
+                            listener.onTtsSynthesisCallback(pair.first, pair.second);
+                            player.setOnCompletionListener(this);
+                            player.setOnErrorListener(this);
+                            playLock.acquireUninterruptibly();
+                            player.start();
+                            playLock.acquireUninterruptibly(); // wait for release
+                            playLock.release();
+                        }
+                    } finally {
+                        player.stop();
+                        player.release();
+                        obj = playbackQueue.take();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    complete();
+                }
+            }
+
+            private void complete() {
+                if (completed) return;
+                listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+                completed = true;
+            }
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Pair<Integer, Integer> pair = rangeMap.get(mp);
+                if (listener != null)
+                    if (pair.first.equals(last.first) && pair.second.equals(last.second)) complete();
+                    else listener.onTtsSynthesisCallback(pair.second, pair.second);
+                playLock.release();
+            }
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Pair<Integer, Integer> pair = rangeMap.get(mp);
+                if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+                playLock.release();
+                return false;
+            }
+        }
+
+        @Override
+        protected Exception doInBackground(Void... params) {
+            try {
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText);
+                last = ranges.get(ranges.size() - 1);
+                if (isCancelled()) return null;
+                (playThread = new PlayerThread()).start();
+                for (Pair<Integer, Integer> range : ranges) try {
+                    if (isCancelled()) return null;
+                    MediaPlayer player = new MediaPlayer();
+                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    player.setDataSource(getUrl(currentText.substring(range.first, range.second)));
+                    player.prepare();
+                    if (isCancelled()) return null;
+                    rangeMap.put(player, range);
+                    playbackQueue.add(player);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                }
+                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return e;
+            } finally {
+                if (playThread != null) playbackQueue.add(new Object());
+            }
+        }
+
+        protected void onPostExecute(Exception e) {
+            if (listener != null && e != null) listener.onTtsSynthesisError(0, currentText.length());
+        }
+    }
+
+    private class SynthesizeToFileTask extends AsyncTask<String, Integer, Exception> { // TODO: long text splitting
         @Override
         protected Exception doInBackground(String... params) {
             try {

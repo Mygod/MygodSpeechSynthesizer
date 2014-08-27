@@ -230,12 +230,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setActionBarProgress(start);
-                inputText.setSelection(start, end);
-                inputText.moveCursorToVisibleOffset();
-                Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
+                if (start < end) Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
                         inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
-                stopSynthesis(false);   // force stop currently, alternatives possible
             }
         });
     }

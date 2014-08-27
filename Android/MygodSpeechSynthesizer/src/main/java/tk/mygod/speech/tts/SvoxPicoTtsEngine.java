@@ -2,6 +2,8 @@ package tk.mygod.speech.tts;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.text.TextUtils;
@@ -9,10 +11,7 @@ import android.util.Pair;
 import tk.mygod.util.LocaleUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -20,9 +19,10 @@ import java.util.concurrent.Semaphore;
  * @author  Mygod
  */
 public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
-    protected TextToSpeech tts;
     private final Semaphore initLock = new Semaphore(1);
+    protected TextToSpeech tts;
     public int initStatus;
+    private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
@@ -35,6 +35,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         setListener();
     }
     private Set<Locale> supportedLanguages;
+    private String currentText;
     /**
      * Called to signal the completion of the TextToSpeech engine initialization.
      *
@@ -120,8 +121,8 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
     @Override
     public void speak(String text) throws IOException {
-        // TODO: long text splitting
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, getParams(0, text.length()));
+        currentText = text;
+        new SpeakTask().execute();
     }
     @Override
     public void synthesizeToFile(String text, String filename) {
@@ -130,10 +131,11 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
     @Override
     public void stop() {
+        if (speakTask != null) speakTask.cancel(false);
         tts.stop();
     }
 
-    private Pair<Integer, Integer> getRange(String id) {
+    private static Pair<Integer, Integer> getRange(String id) {
         String[] parts = id.split(",");
         return new Pair<Integer, Integer>(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
     }
@@ -148,7 +150,10 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
             @Override
             public void onDone(String utteranceId) {
                 Pair<Integer, Integer> pair = getRange(utteranceId);
-                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
+                if (listener != null)
+                    if (pair.first.equals(last.first) && pair.second.equals(last.second))
+                        listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+                    else listener.onTtsSynthesisCallback(pair.second, pair.second);
             }
 
             @Override
@@ -161,7 +166,69 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
 
     @Override
     public void onDestroy() {
-        tts.stop();
+        stop();
         tts.shutdown();
     }
+
+    @Override
+    protected int getMaxLength() {
+        return Build.VERSION.SDK_INT >= 18 ? tts.getMaxSpeechInputLength() : 4000;  // fallback to default
+    }
+
+    private SpeakTask speakTask;
+    private class SpeakTask extends AsyncTask<Void, Integer, Exception> {
+        @Override
+        protected Exception doInBackground(Void... params) {
+            try {
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText);
+                last = ranges.get(ranges.size() - 1);
+                for (Pair<Integer, Integer> range : ranges) try {
+                    if (isCancelled()) {
+                        tts.stop();
+                        return null;
+                    }
+                    tts.speak(currentText.substring(range.first, range.second), TextToSpeech.QUEUE_ADD,
+                              getParams(range.first, range.second));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                }
+                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return e;
+            }
+        }
+
+        protected void onPostExecute(Exception e) {
+            if (listener != null && e != null) listener.onTtsSynthesisError(0, currentText.length());
+            speakTask = null;
+        }
+    }
+
+    /*private class SynthesizeToFileTask extends AsyncTask<String, Integer, Exception> {
+        @Override
+        protected Exception doInBackground(String... params) {
+            try {
+                if (params.length != 1) throw new InvalidParameterException("There must be and only be 1 param.");
+                for (Pair<Integer, Integer> range : splitSpeech(currentText)) try {
+                    tts.synthesizeToFile(currentText.substring(range.first, range.second), TextToSpeech.QUEUE_ADD,
+                            getParams(range.first, range.second));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                }
+                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return e;
+            }
+        }
+
+        protected void onPostExecute(Exception e) {
+            if (listener == null) return;   // nobody listens?! well YKW fuck it
+            if (e != null) listener.onTtsSynthesisError(0, currentText.length());
+            listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+        }
+    }*/
 }

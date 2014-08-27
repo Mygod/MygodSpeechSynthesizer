@@ -2,14 +2,18 @@ package tk.mygod.speech.tts;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.Pair;
 
 import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Set;
 
 /**
  * Project: Mygod Speech Synthesizer
- * Author:  Mygod (mygod.tk)
+ * @author  Mygod
  */
 public abstract class TtsEngine {
     public abstract Set<Locale> getSupportedLanguages();
@@ -51,5 +55,42 @@ public abstract class TtsEngine {
     public static interface OnTtsSynthesisCallbackListener {
         public void onTtsSynthesisCallback(int start, int end);
         public void onTtsSynthesisError(int start, int end);
+    }
+
+    private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
+    private static final int splittersCount = 4, bestSplittersEver = 0;
+    static {
+        int priority = bestSplittersEver;
+        for (String group : new String[] { ".?!。？！", ":;：；—", ",()[]{}，（）【】『』［］｛｝、",
+                "'\"‘’“”＇＂<>＜＞《》", " \t\b\n\r\f\b\u000b\u00a0\u2028\u2029/\\|-／＼｜－" }) {
+            int length = group.length();
+            for (int i = 0; i < length; ++i) splitters.put(group.charAt(i), priority);
+            ++priority;
+        }
+    }
+    protected abstract int getMaxLength();
+    protected ArrayList<Pair<Integer, Integer>> splitSpeech(String text) {
+        int last = 0, length = text.length(), maxLength = getMaxLength();
+        if (maxLength <= 0) throw new InvalidParameterException("maxLength should be a positive value.");
+        ArrayList<Pair<Integer, Integer>> result = new ArrayList<Pair<Integer, Integer>>();
+        while (last < length && splitters.get(text.charAt(last)) != null) ++last;
+        while (last < length) {
+            int i = last + 1, maxEnd = last + maxLength, bestPriority = splittersCount;
+            if (maxEnd > length) maxEnd = length;
+            int end = maxEnd;
+            while (i < maxEnd) {
+                Integer priority = splitters.get(text.charAt(i));
+                if (priority != null && priority < bestPriority) {
+                    end = i;
+                    if ((bestPriority = priority) == bestSplittersEver) break;
+                }
+                ++i;
+            }
+            while (end < maxEnd && splitters.get(text.charAt(end)) != null) ++end;  // some more punctuations? why not?
+            result.add(new Pair<Integer, Integer>(last, end));
+            last = end;
+            while (last < length && splitters.get(text.charAt(last)) != null) ++last;
+        }
+        return result;
     }
 }
