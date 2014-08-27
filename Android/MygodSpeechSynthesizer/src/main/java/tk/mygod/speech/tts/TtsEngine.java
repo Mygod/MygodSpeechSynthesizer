@@ -33,10 +33,14 @@ public abstract class TtsEngine {
     protected abstract Drawable getIconInternal(Context context);
 
     protected OnTtsSynthesisCallbackListener listener;
-    public void setSynthesisCallbackListener(OnTtsSynthesisCallbackListener listener) {
+    public final void setSynthesisCallbackListener(OnTtsSynthesisCallbackListener listener) {
         this.listener = listener;
     }
     public abstract String getMimeType();
+
+    public void setPitch(float value) { }
+    public void setSpeechRate(float value) { }
+    public void setPan(float value) { }
 
     public abstract void speak(String text) throws IOException;
     public abstract void synthesizeToFile(String text, String filename) throws IOException;

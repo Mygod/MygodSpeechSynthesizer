@@ -98,19 +98,35 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         return "audio/x-wav";
     }
 
+    private Float pan;
+    @Override
+    public void setPitch(float value) {
+        tts.setPitch(value);
+    }
+    @Override
+    public void setSpeechRate(float value) {
+        tts.setSpeechRate(value);
+    }
+    @Override
+    public void setPan(float value) {
+        pan = value;
+    }
+
+    private HashMap<String, String> getParams(int start, int end) {
+        HashMap<String, String> params = new HashMap<String, String>();
+        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, start + "," + end);
+        if (pan != null) params.put(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
+        return params;
+    }
     @Override
     public void speak(String text) throws IOException {
         // TODO: long text splitting
-        HashMap<String, String> params = new HashMap<String, String>();
-        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "0," + text.length());
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, getParams(0, text.length()));
     }
     @Override
     public void synthesizeToFile(String text, String filename) {
         // TODO: long text splitting
-        HashMap<String, String> params = new HashMap<String, String>();
-        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "0," + text.length());
-        tts.synthesizeToFile(text, params, filename);
+        tts.synthesizeToFile(text, getParams(0, text.length()), filename);
     }
     @Override
     public void stop() {

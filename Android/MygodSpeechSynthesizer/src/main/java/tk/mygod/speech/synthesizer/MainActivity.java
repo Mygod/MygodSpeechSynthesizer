@@ -60,6 +60,12 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     }
 
     private void startSynthesis() {
+        TtsEngineManager.engines.selectedEngine
+                .setPitch(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pitch", "1")));
+        TtsEngineManager.engines.selectedEngine
+                .setSpeechRate(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.speechRate", "1")));
+        TtsEngineManager.engines.selectedEngine
+                .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
         synthesizeMenu.setTitle(R.string.stop);
         synthesizeToFileMenu.setEnabled(false);
