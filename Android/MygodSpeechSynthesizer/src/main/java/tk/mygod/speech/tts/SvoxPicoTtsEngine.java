@@ -45,12 +45,14 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     public void onInit(int status) {
         initStatus = status;
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
-        for (Locale locale : Locale.getAvailableLocales()) {
+        for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);
             if (test == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE ||
                     TextUtils.isEmpty(locale.getVariant()) && (test == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
                             TextUtils.isEmpty(locale.getCountry()) && test == TextToSpeech.LANG_AVAILABLE))
                 supportedLanguages.add(locale);
+        } catch (Exception e) { // god damn Samsung TTS
+            continue;
         }
         initLock.release();
     }

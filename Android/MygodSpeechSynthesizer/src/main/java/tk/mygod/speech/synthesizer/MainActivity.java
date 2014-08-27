@@ -229,7 +229,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 inputText.moveCursorToVisibleOffset();
                 Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
                         inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
-                if (start >= inputText.getText().length()) stopSynthesis(false);
+                stopSynthesis(false);   // force stop currently, alternatives possible
             }
         });
     }

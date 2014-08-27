@@ -22,9 +22,11 @@ public class ProgressActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         (progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal))
-                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, 24));
+                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
+                        (int) (getResources().getDisplayMetrics().density * 8)));
         (butteryProgressBar = new ButteryProgressBar(this))
-                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, 24));
+                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
+                        (int) (getResources().getDisplayMetrics().density * 8)));
         setActionBarProgress(null);
         final FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
         decorView.addView(butteryProgressBar);
@@ -33,8 +35,12 @@ public class ProgressActivity extends Activity {
             @Override
             public void onGlobalLayout() {
                 View contentView = decorView.findViewById(android.R.id.content);
-                butteryProgressBar.setY(contentView.getY() - 10);
-                ViewTreeObserver observer = butteryProgressBar.getViewTreeObserver();
+                progressBar.setY(contentView.getY() - getResources().getDisplayMetrics().density * 2);
+                butteryProgressBar.setY(contentView.getY() - getResources().getDisplayMetrics().density * 2);
+                ViewTreeObserver observer = progressBar.getViewTreeObserver();
+                if (Build.VERSION.SDK_INT < 16) observer.removeGlobalOnLayoutListener(this);
+                else observer.removeOnGlobalLayoutListener(this);
+                observer = butteryProgressBar.getViewTreeObserver();
                 if (Build.VERSION.SDK_INT < 16) observer.removeGlobalOnLayoutListener(this);
                 else observer.removeOnGlobalLayoutListener(this);
             }
