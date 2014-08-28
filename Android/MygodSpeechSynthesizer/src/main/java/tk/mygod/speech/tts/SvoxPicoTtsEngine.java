@@ -99,7 +99,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         return super.getID() + ':' + engineInfo.name;
     }
     @Override
-    public CharSequence getName(Context context) {
+    public String getName(Context context) {
         return engineInfo.label;
     }
     @Override

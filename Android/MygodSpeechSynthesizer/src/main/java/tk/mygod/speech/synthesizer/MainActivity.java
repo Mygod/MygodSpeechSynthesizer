@@ -28,9 +28,10 @@ import java.io.FileOutputStream;
  */
 public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
         TtsEngineManager.OnSelectedEngineChangedListener, FileSaveFragment.Callbacks {
-    /**
-     * Answer to The Ultimate Question of Life, the Universe, and Everything.
-     */
+    /**************************************************************************
+     * Answer to The Ultimate Question of Life, the Universe, and Everything. *
+     * By the way, this comment is fancy.                                     *
+     **************************************************************************/
     private static final int SAVE_REQUEST_CODE = 42;
     private EditText inputText;
     private MenuItem synthesizeMenu, synthesizeToFileMenu;
@@ -48,7 +49,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         inputText = (EditText)findViewById(R.id.inputText);
-        TtsEngineManager.init(getApplicationContext(), this);
+        TtsEngineManager.init(this, this);
     }
 
     @Override
@@ -106,7 +107,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString());
                     } catch (Exception e) {
                         e.printStackTrace();
-                        Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(),
+                        Toast.makeText(this, String.format(getString(R.string.synthesis_error),
                                 e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
                         stopSynthesis();
                     }
@@ -146,8 +147,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                     .synthesizeToStream(inputText.getText().toString(), output, getCacheDir());
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(),
-                    e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getLocalizedMessage()),
+                           Toast.LENGTH_LONG).show();
             stopSynthesis();
         }
     }
@@ -161,7 +162,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                             .openFileDescriptor(data.getData(), "w")).getFileDescriptor()));
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                    Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(), e.getMessage()),
+                    Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()),
                                    Toast.LENGTH_LONG).show();
                 }
                 return;
@@ -181,8 +182,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             synthesizeToStream(new FileOutputStream(new File(absolutePath, fileName)));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(), e.getMessage()),
-                           Toast.LENGTH_LONG).show();
+            Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()), Toast.LENGTH_LONG)
+                    .show();
         }
     }
 
@@ -213,7 +214,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             @Override
             public void run() {
                 if (start < end)
-                    Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
+                    Toast.makeText(MainActivity.this, String.format(getString(R.string.synthesis_error),
                                    inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
             }
         });

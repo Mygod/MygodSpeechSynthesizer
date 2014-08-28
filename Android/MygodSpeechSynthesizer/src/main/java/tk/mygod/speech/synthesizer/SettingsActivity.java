@@ -71,11 +71,9 @@ public class SettingsActivity extends Activity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectEngine((String) newValue, getActivity().getApplicationContext());
-                            engine.setSummary(TtsEngineManager.engines.selectedEngine
-                                    .getName(getActivity().getApplicationContext()));
-                            engine.setIcon(TtsEngineManager.engines.selectedEngine
-                                    .getIcon(getActivity().getApplicationContext()));
+                            TtsEngineManager.selectEngine((String) newValue, getActivity());
+                            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
+                            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
                             engine.setValue((String) newValue); // temporary hack
                             updateLanguages();
                             return true;
@@ -98,16 +96,16 @@ public class SettingsActivity extends Activity {
             Drawable[] icons = new Drawable[count];
             for (int i = 0; i < count; ++i) {
                 TtsEngine te = TtsEngineManager.engines.get(i);
-                names[i] = te.getName(getActivity().getApplicationContext());
+                names[i] = te.getName(getActivity());
                 ids[i] = te.getID();
-                icons[i] = te.getIcon(getActivity().getApplicationContext());
+                icons[i] = te.getIcon(getActivity());
             }
             engine.setEntries(names);
             engine.setEntryValues(ids);
             engine.setEntryIcons(icons);
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
-            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity().getApplicationContext()));
-            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity().getApplicationContext()));
+            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
+            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
             updateLanguages();
         }
 
@@ -133,9 +131,9 @@ public class SettingsActivity extends Activity {
             for (String feature : TtsEngineManager.engines.selectedEngine.getFeatures(locale)) {
                 if (builder.length() > 0) builder.append(", ");
                 builder.append(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)
-                        ? getText(R.string.settings_features_network)
+                        ? getString(R.string.settings_features_network)
                         : TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature)
-                            ? getText(R.string.settings_features_embedded) : feature);
+                            ? getString(R.string.settings_features_embedded) : feature);
             }
             features.setSummary(builder.toString());
         }

@@ -56,23 +56,8 @@
       <sourceFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/src/androidTest/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/src/androidTest/jni" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/src/androidTest/rs" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/apk" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/assets" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/dependency-cache" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/dex" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/exploded-aar" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/intermediates" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/libs" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/manifests" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/ndk" />
       <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/outputs" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/pre-dexed" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/res" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/rs" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/source" />
-      <excludeFolder url="file://$MODULE_DIR$/MygodSpeechSynthesizer/build/symbols" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 19 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

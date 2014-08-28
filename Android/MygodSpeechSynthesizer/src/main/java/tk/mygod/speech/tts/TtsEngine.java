@@ -28,7 +28,7 @@ public abstract class TtsEngine {
     public String getID() {
         return getClass().getSimpleName();
     }
-    public CharSequence getName(Context context) {
+    public String getName(Context context) {
         return getID();
     }
     public final Drawable getIcon(Context context) {

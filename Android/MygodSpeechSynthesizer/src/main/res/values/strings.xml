@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Mygod Speech Synthesizer</string>
     <string name="inputText_default">Thanks for using Mygod Speech Synthesizer!</string>
     <string name="synthesize">Synthesize</string>
@@ -20,6 +19,7 @@
     <string name="settings_text">Text</string>
     <string name="settings_ignore_single_line_break">Ignore single line breaks</string>
     <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.
+    </string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_old_timey_save_dialog">Old-timey save dialog</string>
     <string name="settings_old_timey_save_dialog_summary">Use old-timey save dialog instead of the fancy Storage Access
@@ -29,6 +29,4 @@
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
     <string name="file_save_title">Choose save location</string>
     <string name="file_save_file_name_hint">File name</string>
-    </string>
-
 </resources>

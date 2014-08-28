@@ -62,8 +62,8 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     @Override
-    public CharSequence getName(Context context) {
-        return context.getResources().getText(R.string.google_translate_tts_engine_name);
+    public String getName(Context context) {
+        return context.getResources().getString(R.string.google_translate_tts_engine_name);
     }
     @Override
     protected Drawable getIconInternal(Context context) {
