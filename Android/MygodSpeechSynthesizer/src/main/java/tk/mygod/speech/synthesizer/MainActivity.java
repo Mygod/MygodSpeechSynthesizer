@@ -1,7 +1,7 @@
 package tk.mygod.speech.synthesizer;
 
+import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -9,6 +9,7 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -16,9 +17,10 @@ import tk.mygod.app.FileSaveFragment;
 import tk.mygod.app.ProgressActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.FileUtils;
-import tk.mygod.util.IOUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 
 /**
  * Project: Mygod Speech Synthesizer
@@ -33,14 +35,13 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     private EditText inputText;
     private MenuItem synthesizeMenu, synthesizeToFileMenu;
     private boolean working;
-    private Uri synthesisTarget;
-    private File synthesisFile, tempFile;
     private static final InputFilter[] noFilters = new InputFilter[0],
             readonlyFilters = new InputFilter[] { new InputFilter() {
                 public CharSequence filter(CharSequence src, int start, int end, Spanned dest, int dstart, int dend) {
                     return dest.subSequence(dstart, dend);
                 }
             } };
+    private ParcelFileDescriptor descriptor;    // used to keep alive from GC
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,80 +67,39 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 .setSpeechRate(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.speechRate", "1")));
         TtsEngineManager.engines.selectedEngine
                 .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
+        TtsEngineManager.engines.selectedEngine
+                .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
         synthesizeMenu.setTitle(R.string.stop);
         synthesizeToFileMenu.setEnabled(false);
         inputText.setFilters(readonlyFilters);
+        ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(inputText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         setActionBarProgressMax(inputText.getText().length());
         setActionBarSecondaryProgress(0);
         setActionBarProgress(-1);   // initializing
         working = true;
     }
-    private void stopSynthesis(boolean completed) {
+    private void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
         synthesizeMenu.setTitle(R.string.synthesize);
         synthesizeToFileMenu.setEnabled(true);
         inputText.setFilters(noFilters);
-        if (completed && (synthesisTarget != null || synthesisFile != null)) {
-            setActionBarProgress(getActionBarProgressMax());
-            FileInputStream input = null;
-            FileOutputStream output = null;
-            try {
-                input = new FileInputStream(tempFile);
-                if (synthesisTarget != null) {
-                    ParcelFileDescriptor pfd = null;
-                    try {
-                        pfd = getContentResolver().openFileDescriptor(synthesisTarget, "w");
-                        output = new FileOutputStream(pfd.getFileDescriptor());
-                        IOUtils.copy(input, output);
-                    } finally {
-                        if (pfd != null) try {
-                            pfd.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } else {
-                    output = new FileOutputStream(synthesisFile);
-                    IOUtils.copy(input, output);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(),
-                                                   e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
-            } finally {
-                if (input != null) try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if (output != null) try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
         setActionBarProgress(null);
-        synthesisTarget = null;
-        synthesisFile = null;
-        if (tempFile != null && tempFile.exists()) {
-            tempFile.deleteOnExit();
-            tempFile = null;
-        }
+        if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
         working = false;
     }
     @Override
     public void onSelectedEngineChanged() {
-        stopSynthesis(false);
+        stopSynthesis();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.synthesize:
-                if (working) stopSynthesis(false); else {
+                if (working) stopSynthesis(); else {
                     try {
                         startSynthesis();
                         TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
@@ -148,26 +108,27 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         e.printStackTrace();
                         Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(),
                                 e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
-                        stopSynthesis(false);
+                        stopSynthesis();
                     }
                 }
                 return true;
             case R.id.synthesize_to_file:
                 String fileName = FileUtils.getTempFileName() + '.' + MimeTypeMap.getSingleton()
                         .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                if (Build.VERSION.SDK_INT >= 19) {
-                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                    intent.putExtra(Intent.EXTRA_TITLE, fileName);
-                    startActivityForResult(intent, SAVE_REQUEST_CODE);
-                }
-                else {
+                if (Build.VERSION.SDK_INT < 19 ||
+                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", Build.VERSION.SDK_INT < 19)) {
                     FileSaveFragment fsf = FileSaveFragment.newInstance(this);
                     fsf.setDefaultFileName(fileName);
                     String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", "");
                     if (dir != null && !dir.isEmpty()) fsf.setCurrentDirectory(new File(dir));
                     fsf.show(getFragmentManager(), "");
+                }
+                else {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
+                    intent.putExtra(Intent.EXTRA_TITLE, fileName);
+                    startActivityForResult(intent, SAVE_REQUEST_CODE);
                 }
                 return true;
             case R.id.settings:
@@ -177,17 +138,17 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         return super.onOptionsItemSelected(item);
     }
 
-    private void synthesizeToFile() {
+    private void synthesizeToStream(FileOutputStream output) {
         try {
             startSynthesis();
             TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-            TtsEngineManager.engines.selectedEngine.synthesizeToFile(inputText.getText().toString(),
-                    (tempFile = new File(getCacheDir(), FileUtils.getTempFileName())).getAbsolutePath());
+            TtsEngineManager.engines.selectedEngine
+                    .synthesizeToStream(inputText.getText().toString(), output, getCacheDir());
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(),
                     e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
-            stopSynthesis(false);
+            stopSynthesis();
         }
     }
     @Override
@@ -195,8 +156,14 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         switch (requestCode) {
             case SAVE_REQUEST_CODE:
                 if (resultCode != RESULT_OK) return;
-                synthesisTarget = data.getData();
-                synthesizeToFile();
+                try {
+                    synthesizeToStream(new FileOutputStream((descriptor = getContentResolver()
+                            .openFileDescriptor(data.getData(), "w")).getFileDescriptor()));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(), e.getMessage()),
+                                   Toast.LENGTH_LONG).show();
+                }
                 return;
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -210,8 +177,13 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         if (fileName == null || fileName.isEmpty()) return;
         TtsEngineManager.editor.putString("fileSystem.lastSaveDir", absolutePath);
         TtsEngineManager.editor.apply();
-        synthesisFile = new File(absolutePath, fileName);
-        synthesizeToFile();
+        try {
+            synthesizeToStream(new FileOutputStream(new File(absolutePath, fileName)));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(this, String.format(getText(R.string.synthesis_error).toString(), e.getMessage()),
+                           Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -231,7 +203,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 setActionBarProgress(start);
                 inputText.setSelection(start, end);
                 inputText.moveCursorToVisibleOffset();
-                if (start >= inputText.getText().length()) stopSynthesis(true);
+                if (start >= inputText.getText().length()) stopSynthesis();
             }
         });
     }
@@ -240,8 +212,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (start < end) Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
-                        inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
+                if (start < end)
+                    Toast.makeText(MainActivity.this, String.format(getText(R.string.synthesis_error).toString(),
+                                   inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
             }
         });
     }

@@ -13,4 +13,14 @@
         <EditTextPreference android:key="tweaks.pan" android:title="@string/settings_pan"
                             android:defaultValue="0" android:inputType="numberDecimal|numberSigned"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_text">
+        <CheckBoxPreference android:key="text.ignoreSingleLineBreak"
+                            android:title="@string/settings_ignore_single_line_break"
+                            android:summary="@string/settings_ignore_single_line_break_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_appearance">
+        <CheckBoxPreference android:key="appearance.oldTimeySaveDialog"
+                            android:title="@string/settings_old_timey_save_dialog"
+                            android:summary="@string/settings_old_timey_save_dialog_summary"/>
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -8,10 +8,17 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.text.TextUtils;
 import android.util.Pair;
+import tk.mygod.util.FileUtils;
+import tk.mygod.util.IOUtils;
 import tk.mygod.util.LocaleUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -24,6 +31,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     public int initStatus;
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
+
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
         tts = new TextToSpeech(context, this);
@@ -69,12 +77,17 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
     @Override
     public boolean setLanguage(Locale loc) {
-        int test = tts.isLanguageAvailable(loc);
-        if (test == TextToSpeech.LANG_AVAILABLE) loc = new Locale(loc.getLanguage());
-        else if (test == TextToSpeech.LANG_COUNTRY_AVAILABLE) loc = new Locale(loc.getLanguage(), loc.getCountry());
-        else if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE) return false;
-        tts.setLanguage(loc);
-        return true;
+        try {
+            int test = tts.isLanguageAvailable(loc);
+            if (test == TextToSpeech.LANG_AVAILABLE) loc = new Locale(loc.getLanguage());
+            else if (test == TextToSpeech.LANG_COUNTRY_AVAILABLE) loc = new Locale(loc.getLanguage(), loc.getCountry());
+            else if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE) return false;
+            tts.setLanguage(loc);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     @Override
     public Set<String> getFeatures(Locale locale) {
@@ -120,29 +133,29 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         return params;
     }
     @Override
-    public void speak(String text) throws IOException {
+    public void speak(String text) {
         currentText = text;
-        new SpeakTask().execute();
+        synthesizeToStreamTask = null;
+        (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToFile(String text, String filename) {
-        // TODO: long text splitting
-        tts.synthesizeToFile(text, getParams(0, text.length()), filename);
+    public void synthesizeToStream(String text, FileOutputStream output, File cacheDir) {
+        currentText = text;
+        speakTask = null;
+        (synthesizeToStreamTask = new SynthesizeToStreamTask()).execute(output, cacheDir);
     }
     @Override
     public void stop() {
         if (speakTask != null) speakTask.cancel(false);
+        if (synthesizeToStreamTask != null) synthesizeToStreamTask.cancel(false);
         tts.stop();
     }
 
-    private static Pair<Integer, Integer> getRange(String id) {
-        String[] parts = id.split(",");
-        return new Pair<Integer, Integer>(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-    }
     private void setListener() {
         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
             public void onStart(String utteranceId) {
+                if (speakTask == null) return;
                 Pair<Integer, Integer> pair = getRange(utteranceId);
                 if (listener != null) listener.onTtsSynthesisCallback(pair.first, pair.second);
             }
@@ -150,9 +163,16 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
             @Override
             public void onDone(String utteranceId) {
                 Pair<Integer, Integer> pair = getRange(utteranceId);
-                if (listener != null)
-                    if (pair.first.equals(last.first) && pair.second.equals(last.second))
+                if (synthesizeToStreamTask != null) {
+                    synthesizeToStreamTask.mergeQueue.add(utteranceId);
+                    synthesizeToStreamTask.synthesizeLock.release();
+                    if (listener != null) listener.onTtsSynthesisPrepared(pair.second);
+                }
+                else if (speakTask != null && listener != null)
+                    if (pair.first.equals(last.first) && pair.second.equals(last.second)) {
                         listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+                        speakTask = null;
+                    }
                     else listener.onTtsSynthesisCallback(pair.second, pair.second);
             }
 
@@ -160,6 +180,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
             public void onError(String utteranceId) {
                 Pair<Integer, Integer> pair = getRange(utteranceId);
                 if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+                if (synthesizeToStreamTask != null) synthesizeToStreamTask.synthesizeLock.release();
             }
         });
     }
@@ -172,65 +193,145 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
 
     @Override
     protected int getMaxLength() {
-        return Build.VERSION.SDK_INT >= 18 ? tts.getMaxSpeechInputLength() : 4000;  // fallback to default
+        return Build.VERSION.SDK_INT >= 18 ? TextToSpeech.getMaxSpeechInputLength() : 4000;  // fallback to default
     }
 
     private SpeakTask speakTask;
-    private class SpeakTask extends AsyncTask<Void, Integer, Exception> {
+    private SynthesizeToStreamTask synthesizeToStreamTask;
+
+    private class SpeakTask extends AsyncTask<Void, Void, Void> {
         @Override
-        protected Exception doInBackground(Void... params) {
+        protected Void doInBackground(Void... params) {
             try {
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText);
-                last = ranges.get(ranges.size() - 1);
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, true);
+                last = null;
                 for (Pair<Integer, Integer> range : ranges) try {
                     if (isCancelled()) {
                         tts.stop();
                         return null;
                     }
-                    tts.speak(currentText.substring(range.first, range.second), TextToSpeech.QUEUE_ADD,
+                    tts.speak(processText(currentText.substring(range.first, range.second)), TextToSpeech.QUEUE_ADD,
                               getParams(range.first, range.second));
+                    last = range;   // assuming preparer is faster than speaker, which is often the case
                     if (listener != null) listener.onTtsSynthesisPrepared(range.second);
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
                 }
                 if (isCancelled()) tts.stop();
-                return null;
             } catch (Exception e) {
                 e.printStackTrace();
-                return e;
+                if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
             }
-        }
-
-        protected void onPostExecute(Exception e) {
-            if (listener != null && e != null) listener.onTtsSynthesisError(0, currentText.length());
-            speakTask = null;
+            if (last == null && listener != null)   // nothing speakable, end now
+                listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+            return null;
         }
     }
 
-    /*private class SynthesizeToFileTask extends AsyncTask<String, Integer, Exception> {
+    private class SynthesizeToStreamTask extends AsyncTask<Object, Void, Void> {
+        private FileOutputStream output;
+        private final LinkedBlockingDeque<String> mergeQueue = new LinkedBlockingDeque<String>();
+        private final HashMap<String, File> pathMap = new HashMap<String, File>();
+        public final Semaphore synthesizeLock = new Semaphore(1);
+
         @Override
-        protected Exception doInBackground(String... params) {
+        protected Void doInBackground(Object... params) {
+            Thread merger = null;
             try {
-                if (params.length != 1) throw new InvalidParameterException("There must be and only be 1 param.");
-                for (Pair<Integer, Integer> range : splitSpeech(currentText)) try {
-                    tts.synthesizeToFile(currentText.substring(range.first, range.second), TextToSpeech.QUEUE_ADD,
-                            getParams(range.first, range.second));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                if (params.length != 2 || !(params[0] instanceof FileOutputStream) || !(params[1] instanceof File))
+                    throw new InvalidParameterException("Params incorrect.");
+                output = (FileOutputStream) params[0];
+                File cacheDir = (File) params[1];
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, false);
+                if (isCancelled()) return null;
+                (merger = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            String id;
+                            byte[] header = null;
+                            long length = 0;
+                            while (!(id = mergeQueue.take()).isEmpty()) {
+                                Pair<Integer, Integer> pair = getRange(id);
+                                File cache = pathMap.get(id);
+                                FileInputStream input = null;
+                                try {
+                                    if (!isCancelled()) {
+                                        if (listener != null) listener.onTtsSynthesisCallback(pair.first, pair.second);
+                                        input = new FileInputStream(cache);
+                                        if (header == null) {
+                                            header = new byte[44];
+                                            if (input.read(header, 0, 44) != 44)
+                                                throw new IOException("File malformed.");
+                                            output.write(header, 0, 44);
+                                        } else if (input.skip(44) != 44) throw new IOException("File malformed.");
+                                        length += IOUtils.copy(input, output);
+                                        if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+                                } finally {
+                                    if (input != null) try {
+                                        input.close();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    pathMap.remove(id);
+                                    if (!cache.delete()) cache.deleteOnExit();
+                                }
+                            }
+                            if (header != null) {                   // update the header even if the operation is
+                                header[40] = (byte) length;         // cancelled so that saved part can be read
+                                header[41] = (byte) (length >> 8);
+                                header[42] = (byte) (length >> 16);
+                                header[43] = (byte) (length >> 24);
+                                length += 36;
+                                header[4] = (byte) length;
+                                header[5] = (byte) (length >> 8);
+                                header[6] = (byte) (length >> 16);
+                                header[7] = (byte) (length >> 24);
+                                output.getChannel().position(0);
+                                output.write(header, 0, 44);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
+                        } finally {
+                            try {
+                                output.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (!isCancelled() && listener != null)
+                            listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+                        synthesizeToStreamTask = null;
+                    }
+                }).start();
+                for (Pair<Integer, Integer> range : ranges) {
+                    if (isCancelled()) return null;
+                    try {
+                        File cache = new File(cacheDir, FileUtils.getTempFileName() + range.first);
+                        pathMap.put(range.first + "," + range.second, cache);
+                        synthesizeLock.acquireUninterruptibly();
+                        tts.synthesizeToFile(processText(currentText.substring(range.first, range.second)),
+                                             getParams(range.first, range.second), cache.getAbsolutePath());
+                        synthesizeLock.acquireUninterruptibly();    // wait for synthesis
+                        synthesizeLock.release();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                    }
                 }
-                return null;
             } catch (Exception e) {
                 e.printStackTrace();
-                return e;
+                if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
+            } finally {
+                if (merger != null) mergeQueue.add(""); // end sign
             }
+            return null;
         }
-
-        protected void onPostExecute(Exception e) {
-            if (listener == null) return;   // nobody listens?! well YKW fuck it
-            if (e != null) listener.onTtsSynthesisError(0, currentText.length());
-            listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
-        }
-    }*/
+    }
 }

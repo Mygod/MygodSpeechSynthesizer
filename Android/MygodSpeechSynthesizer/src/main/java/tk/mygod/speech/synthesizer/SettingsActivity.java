@@ -2,7 +2,9 @@ package tk.mygod.speech.synthesizer;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -34,6 +36,10 @@ public class SettingsActivity extends Activity {
             super.onCreate(savedInstanceState);
             getPreferenceManager().setSharedPreferencesName("settings");
             addPreferencesFromResource(R.xml.settings);
+            boolean forceOld = Build.VERSION.SDK_INT < 19;
+            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveDialog");
+            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", forceOld));
+            if (forceOld) oldTimeySaveDialog.setEnabled(false);
             (pitch = findPreference("tweaks.pitch"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
@@ -70,6 +76,7 @@ public class SettingsActivity extends Activity {
                                     .getName(getActivity().getApplicationContext()));
                             engine.setIcon(TtsEngineManager.engines.selectedEngine
                                     .getIcon(getActivity().getApplicationContext()));
+                            engine.setValue((String) newValue); // temporary hack
                             updateLanguages();
                             return true;
                         }

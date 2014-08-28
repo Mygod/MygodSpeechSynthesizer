@@ -11,10 +11,7 @@ import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
 import tk.mygod.util.LocaleUtils;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.InvalidParameterException;
@@ -30,7 +27,6 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
     private static Set<String> supportedFeatures;
     private String language = "en", currentText;
-    private Pair<Integer, Integer> last;
 
     static {
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
@@ -85,21 +81,24 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
 
     private String getUrl(String text) throws UnsupportedEncodingException {
         return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + language +
-               "&q=" + URLEncoder.encode(text, "UTF-8");
+               "&q=" + URLEncoder.encode(processText(text), "UTF-8");
     }
     @Override
-    public void speak(String text) throws IOException {
+    public void speak(String text) {
         currentText = text;
+        synthesizeToStreamTask = null;
         (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToFile(String text, String filename) throws IOException {
+    public void synthesizeToStream(String text, FileOutputStream output, File cacheDir) {
         currentText = text;
-        new SynthesizeToFileTask().execute(filename);
+        speakTask = null;
+        new SynthesizeToStreamTask().execute(output);
     }
     @Override
     public void stop() {
         if (speakTask != null) speakTask.stop();
+        if (synthesizeToStreamTask != null) synthesizeToStreamTask.cancel(false);
     }
 
     @Override
@@ -113,7 +112,9 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     private SpeakTask speakTask;
-    private final class SpeakTask extends AsyncTask<Void, Integer, Exception> {
+    private SynthesizeToStreamTask synthesizeToStreamTask;
+
+    private final class SpeakTask extends AsyncTask<Void, Void, Void> {
         // it seems creating 32+ unreleased MediaPlayer will fail miserably with:
         // java.io.IOException: Prepare failed.: status=0x1
         private final ArrayBlockingQueue<Object> playbackQueue = new ArrayBlockingQueue<Object>(29);
@@ -130,7 +131,6 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
         private class PlayerThread extends Thread
                 implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
             private MediaPlayer player;
-            private boolean completed;
             private final Semaphore playLock = new Semaphore(1);
 
             @Override
@@ -142,17 +142,18 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                         Pair<Integer, Integer> pair = rangeMap.get(player);
                         try {   // not done yet
                             if (!isCancelled()) {
-                                listener.onTtsSynthesisCallback(pair.first, pair.second);
+                                if (listener != null) listener.onTtsSynthesisCallback(pair.first, pair.second);
                                 player.setOnCompletionListener(this);
                                 player.setOnErrorListener(this);
                                 playLock.acquireUninterruptibly();
                                 player.start();
                                 playLock.acquireUninterruptibly(); // wait for release
                                 playLock.release();
+                                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
-                            listener.onTtsSynthesisError(pair.first, pair.second);
+                            if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
                         } finally {
                             try {
                                 player.stop();
@@ -163,25 +164,18 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                             obj = playbackQueue.take();
                         }
                     }
+                    if (!isCancelled() && listener != null)
+                        listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+                    speakTask = null;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                } finally {
-                    complete();
                 }
-            }
-
-            private void complete() {
-                if (completed) return;
-                listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
-                completed = true;
             }
 
             @Override
             public void onCompletion(MediaPlayer mp) {
                 Pair<Integer, Integer> pair = rangeMap.get(mp);
-                if (listener != null)
-                    if (pair.first.equals(last.first) && pair.second.equals(last.second)) complete();
-                    else listener.onTtsSynthesisCallback(pair.second, pair.second);
+                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
                 playLock.release();
             }
 
@@ -195,10 +189,9 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
         }
 
         @Override
-        protected Exception doInBackground(Void... params) {
+        protected Void doInBackground(Void... params) {
             try {
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText);
-                last = ranges.get(ranges.size() - 1);
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, false); // less MediaPlayer usage
                 if (isCancelled()) return null;
                 (playThread = new PlayerThread()).start();
                 for (Pair<Integer, Integer> range : ranges) {
@@ -226,55 +219,56 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                         if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
                     }
                 }
-                return null;
             } catch (Exception e) {
                 e.printStackTrace();
-                return e;
+                if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
             } finally {
-                if (playThread != null) playbackQueue.add(new Object());
+                if (playThread != null) playbackQueue.add(new Object());    // put end sign no matter what
             }
-        }
-
-        protected void onPostExecute(Exception e) {
-            if (listener != null && e != null) listener.onTtsSynthesisError(0, currentText.length());
+            return null;
         }
     }
 
-    private class SynthesizeToFileTask extends AsyncTask<String, Integer, Exception> { // TODO: long text splitting
+    private class SynthesizeToStreamTask extends AsyncTask<FileOutputStream, Void, Void> {
         @Override
-        protected Exception doInBackground(String... params) {
+        protected Void doInBackground(FileOutputStream... params) {
+            if (params.length != 1) throw new InvalidParameterException("Params incorrect.");
+            FileOutputStream output = params[0];
             try {
-                if (params.length != 1) throw new InvalidParameterException("There must be and only be 1 param.");
-                InputStream input = null;
-                FileOutputStream output = null;
-                if (listener != null) listener.onTtsSynthesisCallback(0, currentText.length());
-                try {
-                    IOUtils.copy(input = new URL(getUrl(currentText)).openStream(),
-                                 output = new FileOutputStream(params[0]));
-                    if (listener != null) listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
-                } finally {
-                    if (input != null) try {
-                        input.close();
-                    } catch (IOException e) {
+                for (Pair<Integer, Integer> range : splitSpeech(currentText, false)) {
+                    if (isCancelled()) return null;
+                    InputStream input = null;
+                    try {
+                        IOUtils.copy(input = new URL(getUrl(currentText.substring(range.first, range.second)))
+                                .openStream(), output);
+                        if (listener != null) listener.onTtsSynthesisCallback(range.second, range.second);
+                    } catch (Exception e) {
                         e.printStackTrace();
-                    }
-                    if (output != null) try {
-                        output.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                    } finally {
+                        if (input != null) try {
+                            input.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-                return null;
+                if (listener != null) listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
             } catch (Exception e) {
                 e.printStackTrace();
-                return e;
+                if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
+            } finally {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+            return null;
         }
 
-        protected void onPostExecute(Exception e) {
-            if (listener == null) return;   // nobody listens?! well YKW fuck it
-            if (e != null) listener.onTtsSynthesisError(0, currentText.length());
-            listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
+        protected void onPostExecute(Void arg) {
+            synthesizeToStreamTask = null;
         }
     }
 }

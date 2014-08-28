@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.preference.ListPreference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,8 +23,6 @@ public class IconListPreference extends ListPreference {
     private Context mContext;
     private LayoutInflater mInflater;
     private Drawable[] mEntryIcons = null;
-    private SharedPreferences prefs;
-    private SharedPreferences.Editor editor;
     private String mKey;
     private int selectedEntry = -1;
 
@@ -41,8 +38,6 @@ public class IconListPreference extends ListPreference {
         if (entryIconsResId != -1) setEntryIcons(entryIconsResId);
         mInflater = LayoutInflater.from(context);
         mKey = getKey();
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        editor = prefs.edit();
         a.recycle();
     }
 
@@ -67,7 +62,7 @@ public class IconListPreference extends ListPreference {
                 ("IconListPreference requires the icons entries array be the same length than entries or null");
         IconListPreferenceScreenAdapter iconListPreferenceAdapter = new IconListPreferenceScreenAdapter();
         if (mEntryIcons != null) {
-            String selectedValue = prefs.getString(mKey, "");
+            String selectedValue = getPreferenceManager().getSharedPreferences().getString(mKey, "");
             for (int i = 0; i < entryValues.length; i++) {
                 if (selectedValue.compareTo((String) entryValues[i]) == 0) {
                     selectedEntry = i;
@@ -105,7 +100,7 @@ public class IconListPreference extends ListPreference {
         }
 
         public View getView(int position, View convertView, ViewGroup parent) {
-            convertView = mInflater.inflate(Resources.getSystem()
+            if (convertView == null) convertView = mInflater.inflate(Resources.getSystem()
                             .getIdentifier("select_dialog_singlechoice_holo", "layout", "android"), parent, false);
             CustomHolder holder;
             final int p = position;
@@ -116,9 +111,10 @@ public class IconListPreference extends ListPreference {
                     v.requestFocus();
                     getDialog().dismiss();
                     IconListPreference.this.callChangeListener(getEntryValues()[p]);
+                    SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
                     editor.putString(mKey, getEntryValues()[p].toString());
                     selectedEntry = p;
-                    editor.commit();
+                    editor.apply();
                 }
             });
             return convertView;
