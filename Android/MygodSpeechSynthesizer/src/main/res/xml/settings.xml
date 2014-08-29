@@ -19,6 +19,12 @@
                             android:summary="@string/settings_ignore_single_line_break_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_appearance">
+        <CheckBoxPreference android:key="appearance.notificationIcon" android:defaultValue="true"
+                            android:title="@string/settings_show_notification_icon"
+                            android:summary="@string/settings_show_notification_icon_summary"/>
+        <CheckBoxPreference android:key="appearance.ticker"
+                            android:title="@string/settings_show_ticker"
+                            android:summary="@string/settings_show_ticker_summary"/>
         <CheckBoxPreference android:key="appearance.oldTimeySaveDialog"
                             android:title="@string/settings_old_timey_save_dialog"
                             android:summary="@string/settings_old_timey_save_dialog_summary"/>

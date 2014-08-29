@@ -21,6 +21,10 @@
     <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.
     </string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_show_notification_icon">Show notification icon</string>
+    <string name="settings_show_notification_icon_summary">Hiding notification icon is only available in 4.1+.</string>
+    <string name="settings_show_ticker">Enable text scrolling</string>
+    <string name="settings_show_ticker_summary">Scroll text that is being spoken on the status bar.</string>
     <string name="settings_old_timey_save_dialog">Old-timey save dialog</string>
     <string name="settings_old_timey_save_dialog_summary">Use old-timey save dialog instead of the fancy Storage Access
         Framework in 4.4+.
@@ -29,4 +33,5 @@
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
     <string name="file_save_title">Choose save location</string>
     <string name="file_save_file_name_hint">File name</string>
+    <string name="notification_title">Synthesizing</string>
 </resources>

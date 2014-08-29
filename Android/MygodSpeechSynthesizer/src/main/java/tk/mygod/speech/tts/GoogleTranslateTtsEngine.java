@@ -239,6 +239,7 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                     if (isCancelled()) return null;
                     InputStream input = null;
                     try {
+                        if (listener != null) listener.onTtsSynthesisCallback(range.first, range.second);
                         IOUtils.copy(input = new URL(getUrl(currentText.substring(range.first, range.second)))
                                 .openStream(), output);
                         if (listener != null) listener.onTtsSynthesisCallback(range.second, range.second);

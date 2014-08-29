@@ -21,11 +21,12 @@ final class TtsEngineManager {
     private static OnSelectedEngineChangedListener onSelectedEngineChangedListener;
     static SharedPreferences pref;
     static SharedPreferences.Editor editor;
+    static MainActivity mainActivity;
 
-    static void init(Context context, OnSelectedEngineChangedListener listener) {
+    static void init(MainActivity context, OnSelectedEngineChangedListener listener) {
         String engineID = (pref = context.getSharedPreferences("settings", Context.MODE_PRIVATE))
                 .getString("engine", "");
-        engines = new AvailableTtsEngines(context);
+        engines = new AvailableTtsEngines(mainActivity = context);
         editor = pref.edit();
         selectEngine(engineID, context);
         onSelectedEngineChangedListener = listener; // well I don't want it fired right away

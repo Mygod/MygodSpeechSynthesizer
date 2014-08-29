@@ -9,16 +9,20 @@
     <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
     <application android:allowBackup="true" android:icon="@drawable/ic_launcher"
                  android:label="@string/app_name" android:theme="@style/android:Theme.Holo.Light">
-        <activity android:name="tk.mygod.speech.synthesizer.MainActivity"
+        <activity android:name=".MainActivity" android:launchMode="singleTask"
                   android:label="@string/app_name" android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="tk.mygod.speech.synthesizer.SettingsActivity" android:label="@string/settings">
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
-                       android:value="tk.mygod.speech.synthesizer.MainActivity" />
+        <activity android:name=".SettingsActivity" android:parentActivityName=".MainActivity" android:label="@string/settings">
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
+        <receiver android:name=".NotificationHandler" >
+            <intent-filter>
+                <action android:name="tk.mygod.speech.synthesizer.action.STOP" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

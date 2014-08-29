@@ -1,5 +1,6 @@
 package tk.mygod.speech.synthesizer;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -24,7 +25,8 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) actionBar.setDisplayHomeAsUpEnabled(true);
         getFragmentManager().beginTransaction().replace(android.R.id.content, new TtsSettingsFragment()).commit();
     }
 
@@ -48,15 +50,11 @@ public class SettingsActivity extends Activity {
             super.onCreate(savedInstanceState);
             getPreferenceManager().setSharedPreferencesName("settings");
             addPreferencesFromResource(R.xml.settings);
-            boolean forceOld = Build.VERSION.SDK_INT < 19;
-            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveDialog");
-            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", forceOld));
-            if (forceOld) oldTimeySaveDialog.setEnabled(false);
             (pitch = findPreference("tweaks.pitch"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            pitch.setSummary((String) newValue);
+                            pitch.setSummary(newValue.toString());
                             return true;
                         }
                     });
@@ -65,7 +63,7 @@ public class SettingsActivity extends Activity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            speechRate.setSummary((String) newValue);
+                            speechRate.setSummary(newValue.toString());
                             return true;
                         }
                     });
@@ -74,7 +72,7 @@ public class SettingsActivity extends Activity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            pan.setSummary((String) newValue);
+                            pan.setSummary(newValue.toString());
                             return true;
                         }
                     });
@@ -83,7 +81,7 @@ public class SettingsActivity extends Activity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectEngine((String) newValue, getActivity());
+                            TtsEngineManager.selectEngine(newValue.toString(), getActivity());
                             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
                             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
                             engine.setValue((String) newValue); // temporary hack
@@ -95,7 +93,7 @@ public class SettingsActivity extends Activity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectLanguage((String) newValue);
+                            TtsEngineManager.selectLanguage(newValue.toString());
                             Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
                             lang.setSummary(locale.getDisplayName());
                             updateFeatures(locale);
@@ -119,6 +117,10 @@ public class SettingsActivity extends Activity {
             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
             updateLanguages();
+            boolean forceOld = Build.VERSION.SDK_INT < 19;
+            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveDialog");
+            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", forceOld));
+            if (forceOld) oldTimeySaveDialog.setEnabled(false);
         }
 
         private void updateLanguages() {

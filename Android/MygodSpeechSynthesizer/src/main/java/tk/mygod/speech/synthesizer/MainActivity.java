@@ -1,7 +1,11 @@
 package tk.mygod.speech.synthesizer;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -32,10 +36,11 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
      * Answer to The Ultimate Question of Life, the Universe, and Everything. *
      * By the way, this comment is fancy.                                     *
      **************************************************************************/
-    private static final int SAVE_REQUEST_CODE = 42;
+    private static final int SAVE_REQUEST_CODE = 42, IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private EditText inputText;
     private MenuItem synthesizeMenu, synthesizeToFileMenu;
-    private boolean working;
+    private int status;
+    private boolean inBackground;
     private static final InputFilter[] noFilters = new InputFilter[0],
             readonlyFilters = new InputFilter[] { new InputFilter() {
                 public CharSequence filter(CharSequence src, int start, int end, Spanned dest, int dstart, int dend) {
@@ -43,6 +48,25 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 }
             } };
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
+    private Notification.Builder builder;
+
+    private String lastText;
+    private void showNotification(CharSequence text) {
+        if (status != SPEAKING) lastText = null;
+        else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
+        if (!inBackground) return;
+        builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
+               .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null);
+        if (Build.VERSION.SDK_INT >= 16) builder.setPriority(TtsEngineManager.pref.getBoolean
+                ("appearance.notificationIcon", true) ? Notification.PRIORITY_DEFAULT : Notification.PRIORITY_MIN);
+        else builder.setContentText(null).setTicker(null);
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, Build.VERSION.SDK_INT >= 16
+                ? new Notification.BigTextStyle(builder).bigText(lastText).build() : builder.getNotification());
+    }
+    private void cancelNotification() {
+        inBackground = false;   // which disables further notifications
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(0);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +74,28 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         setContentView(R.layout.activity_main);
         inputText = (EditText)findViewById(R.id.inputText);
         TtsEngineManager.init(this, this);
+        Intent intent = new Intent();
+        intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
+        builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
+                .setAutoCancel(true).setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
+                        PendingIntent.FLAG_UPDATE_CURRENT))
+                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0))
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_notification));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (status == IDLE) return;
+        inBackground = true;
+        showNotification(null);
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        cancelNotification();
     }
 
     @Override
@@ -59,6 +105,12 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         synthesizeMenu = menu.findItem(R.id.synthesize);
         synthesizeToFileMenu = menu.findItem(R.id.synthesize_to_file);
         return true;
+    }
+
+    private void reportProgress(int value) {
+        setActionBarProgress(value);
+        if (value < 0) builder.setProgress(0, 0, true);
+        else builder.setProgress(getActionBarProgressMax(), value, false);
     }
 
     private void startSynthesis() {
@@ -78,10 +130,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 .hideSoftInputFromWindow(inputText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         setActionBarProgressMax(inputText.getText().length());
         setActionBarSecondaryProgress(0);
-        setActionBarProgress(-1);   // initializing
-        working = true;
+        reportProgress(-1); // initializing
     }
-    private void stopSynthesis() {
+    public void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
         synthesizeMenu.setTitle(R.string.synthesize);
@@ -89,7 +140,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         inputText.setFilters(noFilters);
         setActionBarProgress(null);
         if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
-        working = false;
+        status = IDLE;
+        cancelNotification();
     }
     @Override
     public void onSelectedEngineChanged() {
@@ -100,8 +152,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.synthesize:
-                if (working) stopSynthesis(); else {
+                if (status == IDLE) {
                     try {
+                        status = SPEAKING;
                         startSynthesis();
                         TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
                         TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString());
@@ -111,7 +164,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                                 e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
                         stopSynthesis();
                     }
-                }
+                } else stopSynthesis();
                 return true;
             case R.id.synthesize_to_file:
                 String fileName = FileUtils.getTempFileName() + '.' + MimeTypeMap.getSingleton()
@@ -141,6 +194,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     private void synthesizeToStream(FileOutputStream output) {
         try {
+            status = SYNTHESIZING;
             startSynthesis();
             TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
             TtsEngineManager.engines.selectedEngine
@@ -201,10 +255,11 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setActionBarProgress(start);
+                reportProgress(start);
                 inputText.setSelection(start, end);
                 inputText.moveCursorToVisibleOffset();
-                if (start >= inputText.getText().length()) stopSynthesis();
+                if (start < inputText.getText().length()) showNotification(inputText.getText().subSequence(start, end));
+                else stopSynthesis();
             }
         });
     }
@@ -213,7 +268,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (start < end)
+                if (start < end)    // not failing on an empty string
                     Toast.makeText(MainActivity.this, String.format(getString(R.string.synthesis_error),
                                    inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
             }
