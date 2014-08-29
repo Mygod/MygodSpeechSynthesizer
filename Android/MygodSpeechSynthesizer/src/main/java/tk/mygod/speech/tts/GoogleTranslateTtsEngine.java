@@ -27,6 +27,7 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
     private static Set<String> supportedFeatures;
     private String language = "en", currentText;
+    private int startOffset;
 
     static {
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
@@ -84,14 +85,16 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                "&q=" + URLEncoder.encode(processText(text), "UTF-8");
     }
     @Override
-    public void speak(String text) {
+    public void speak(String text, int startOffset) {
         currentText = text;
+        this.startOffset = startOffset;
         synthesizeToStreamTask = null;
         (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToStream(String text, FileOutputStream output, File cacheDir) {
+    public void synthesizeToStream(String text, int startOffset, FileOutputStream output, File cacheDir) {
         currentText = text;
+        this.startOffset = startOffset;
         speakTask = null;
         new SynthesizeToStreamTask().execute(output);
     }
@@ -191,7 +194,8 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, false); // less MediaPlayer usage
+                // Disabling aggressive mode to reduce MediaPlayers
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, startOffset, false);
                 if (isCancelled()) return null;
                 (playThread = new PlayerThread()).start();
                 for (Pair<Integer, Integer> range : ranges) {
@@ -235,7 +239,7 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
             if (params.length != 1) throw new InvalidParameterException("Params incorrect.");
             FileOutputStream output = params[0];
             try {
-                for (Pair<Integer, Integer> range : splitSpeech(currentText, false)) {
+                for (Pair<Integer, Integer> range : splitSpeech(currentText, startOffset, false)) {
                     if (isCancelled()) return null;
                     InputStream input = null;
                     try {

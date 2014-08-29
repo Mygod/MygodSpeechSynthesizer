@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="settings_start_from">
+        <item>开头</item>
+        <item>选中文本之前</item>
+        <item>选中文本之后</item>
+    </string-array>
+</resources>

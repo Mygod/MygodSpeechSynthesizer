@@ -42,7 +42,7 @@ public class SettingsActivity extends Activity {
 
     public static class TtsSettingsFragment extends PreferenceFragment {
         private IconListPreference engine;
-        private ListPreference lang;
+        private ListPreference lang, start;
         private Preference features, pitch, speechRate, pan;
 
         @Override
@@ -117,6 +117,17 @@ public class SettingsActivity extends Activity {
             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
             updateLanguages();
+            (start = (ListPreference)findPreference("text.start")).setOnPreferenceChangeListener(
+                    new Preference.OnPreferenceChangeListener() {
+                        @Override
+                        public boolean onPreferenceChange(Preference preference, Object newValue) {
+                            start.setValue(newValue.toString());
+                            start.setSummary(start.getEntry());
+                            return true;
+                        }
+                    }
+            );
+            start.setSummary(start.getEntry());
             boolean forceOld = Build.VERSION.SDK_INT < 19;
             CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveDialog");
             oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", forceOld));

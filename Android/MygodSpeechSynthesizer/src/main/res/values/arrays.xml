@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="settings_start_from">
+        <item>Beginning</item>
+        <item>Selected text\'s start position</item>
+        <item>Selected text\'s end position</item>
+    </string-array>
+    <string-array name="settings_start_from_values" translatable="false">
+        <item>beginning</item>
+        <item>selection_start</item>
+        <item>selection_end</item>
+    </string-array>
+</resources>

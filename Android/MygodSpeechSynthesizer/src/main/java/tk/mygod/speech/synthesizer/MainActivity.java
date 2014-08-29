@@ -72,7 +72,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        inputText = (EditText)findViewById(R.id.inputText);
+        inputText = (EditText)findViewById(R.id.input_text);
         TtsEngineManager.init(this, this);
         Intent intent = new Intent();
         intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
@@ -148,6 +148,13 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         stopSynthesis();
     }
 
+    private int getStartOffset() {
+        String start = TtsEngineManager.pref.getString("text.start", "beginning");
+        if ("selection_start".equals(start)) return inputText.getSelectionStart();
+        if ("selection_end".equals(start)) return inputText.getSelectionEnd();
+        return 0;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -157,7 +164,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         status = SPEAKING;
                         startSynthesis();
                         TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                        TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString());
+                        TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString(), getStartOffset());
                     } catch (Exception e) {
                         e.printStackTrace();
                         Toast.makeText(this, String.format(getString(R.string.synthesis_error),
@@ -198,7 +205,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             startSynthesis();
             TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
             TtsEngineManager.engines.selectedEngine
-                    .synthesizeToStream(inputText.getText().toString(), output, getCacheDir());
+                    .synthesizeToStream(inputText.getText().toString(), getStartOffset(), output, getCacheDir());
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getLocalizedMessage()),

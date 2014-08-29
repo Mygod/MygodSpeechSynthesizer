@@ -17,6 +17,7 @@
     <string name="settings_speech_rate">语速 (正常为 1)</string>
     <string name="settings_pan">平衡 (介于 [-1, 1] 之间，正常为 0)</string>
     <string name="settings_text">文本处理</string>
+    <string name="settings_start_from">开始位置</string>
     <string name="settings_ignore_single_line_break">忽略单个换行</string>
     <string name="settings_ignore_single_line_break_summary">忽略单个换行，但保留连续换行。</string>
     <string name="settings_appearance">外观</string>

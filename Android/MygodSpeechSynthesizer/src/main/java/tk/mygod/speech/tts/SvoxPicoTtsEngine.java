@@ -28,9 +28,10 @@ import java.util.concurrent.Semaphore;
 public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Semaphore initLock = new Semaphore(1);
     protected TextToSpeech tts;
-    public int initStatus;
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
+    private String currentText;
+    private int initStatus, startOffset;
 
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
@@ -43,7 +44,6 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         setListener();
     }
     private Set<Locale> supportedLanguages;
-    private String currentText;
     /**
      * Called to signal the completion of the TextToSpeech engine initialization.
      *
@@ -133,14 +133,16 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         return params;
     }
     @Override
-    public void speak(String text) {
+    public void speak(String text, int startOffset) {
         currentText = text;
+        this.startOffset = startOffset;
         synthesizeToStreamTask = null;
         (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToStream(String text, FileOutputStream output, File cacheDir) {
+    public void synthesizeToStream(String text, int startOffset, FileOutputStream output, File cacheDir) {
         currentText = text;
+        this.startOffset = startOffset;
         speakTask = null;
         (synthesizeToStreamTask = new SynthesizeToStreamTask()).execute(output, cacheDir);
     }
@@ -203,7 +205,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, true);
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, startOffset, true);
                 last = null;
                 for (Pair<Integer, Integer> range : ranges) try {
                     if (isCancelled()) {
@@ -243,7 +245,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
                     throw new InvalidParameterException("Params incorrect.");
                 output = (FileOutputStream) params[0];
                 File cacheDir = (File) params[1];
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, false);
+                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, startOffset, false);
                 if (isCancelled()) return null;
                 (merger = new Thread() {
                     @Override

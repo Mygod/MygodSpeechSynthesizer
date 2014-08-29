@@ -96,8 +96,8 @@ public class FileSaveFragment extends DialogFragment implements AdapterView.OnIt
         View root = getActivity().getLayoutInflater().inflate(R.layout.fragment_file_save, null);
         if (currentDirectory == null) currentDirectory = Environment.getExternalStorageDirectory();
         directoryList = getSubDirectories(currentDirectory);
-        DirectoryDisplay displayFormat = new DirectoryDisplay(getActivity(), directoryList);
-        (directoryView = (ListView) root.findViewById(R.id.directory_view)).setAdapter(displayFormat);
+        (directoryView = (ListView) root.findViewById(R.id.directory_view))
+                .setAdapter(new DirectoryDisplay(getActivity(), directoryList));
         directoryView.setOnItemClickListener(this);
         (currentPath = (TextView) root.findViewById(R.id.current_path))
                 .setText(currentDirectory.getAbsolutePath() + "/");

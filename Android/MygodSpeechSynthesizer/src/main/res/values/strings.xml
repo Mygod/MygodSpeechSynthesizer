@@ -17,6 +17,7 @@
     <string name="settings_speech_rate">Speech rate (1 for normal)</string>
     <string name="settings_pan">Pan (between [-1, 1]; 0 for normal)</string>
     <string name="settings_text">Text</string>
+    <string name="settings_start_from">Start from</string>
     <string name="settings_ignore_single_line_break">Ignore single line breaks</string>
     <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.
     </string>
