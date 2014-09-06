@@ -18,12 +18,11 @@ import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.Toast;
 import tk.mygod.CurrentApp;
-import tk.mygod.app.FileSaveFragment;
 import tk.mygod.app.ProgressActivity;
+import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.FileUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -33,7 +32,7 @@ import java.text.SimpleDateFormat;
  * @author  Mygod
  */
 public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
-        TtsEngineManager.OnSelectedEngineChangedListener, FileSaveFragment.Callbacks {
+        TtsEngineManager.OnSelectedEngineChangedListener {
     /**************************************************************************
      * Answer to The Ultimate Question of Life, the Universe, and Everything. *
      * By the way, this comment is fancy.                                     *
@@ -90,10 +89,11 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     @Override
     protected void onStop() {
+        if (status != IDLE) {
+            inBackground = true;
+            showNotification(null);
+        }
         super.onStop();
-        if (status == IDLE) return;
-        inBackground = true;
-        showNotification(null);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         TtsEngineManager.engines.selectedEngine
                 .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
-        synthesizeMenu.setTitle(R.string.stop);
+        synthesizeMenu.setTitle(R.string.action_stop);
         synthesizeToFileMenu.setEnabled(false);
         inputText.setFilters(readonlyFilters);
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
@@ -139,7 +139,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     public void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
-        synthesizeMenu.setTitle(R.string.synthesize);
+        synthesizeMenu.setTitle(R.string.action_synthesize);
         synthesizeToFileMenu.setEnabled(true);
         inputText.setFilters(noFilters);
         setActionBarProgress(null);
@@ -180,21 +180,17 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             case R.id.synthesize_to_file:
                 String fileName = FileUtils.getTempFileName() + '.' + MimeTypeMap.getSingleton()
                         .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
+                Intent intent;
                 if (Build.VERSION.SDK_INT < 19 ||
                         TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", Build.VERSION.SDK_INT < 19)) {
-                    FileSaveFragment fsf = FileSaveFragment.newInstance(this);
-                    fsf.setDefaultFileName(fileName);
-                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", "");
-                    if (dir != null && !dir.isEmpty()) fsf.setCurrentDirectory(new File(dir));
-                    fsf.show(getFragmentManager(), "");
+                    intent = new Intent(this, SaveFileActivity.class);
+                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
+                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
                 }
-                else {
-                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                    intent.putExtra(Intent.EXTRA_TITLE, fileName);
-                    startActivityForResult(intent, SAVE_REQUEST_CODE);
-                }
+                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_TITLE, fileName);
+                intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
+                startActivityForResult(intent, SAVE_REQUEST_CODE);
                 return true;
             case R.id.settings:
                 startActivity(new Intent(this, SettingsActivity.class));
@@ -203,53 +199,27 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         return super.onOptionsItemSelected(item);
     }
 
-    private void synthesizeToStream(FileOutputStream output) {
-        try {
-            status = SYNTHESIZING;
-            startSynthesis();
-            TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-            TtsEngineManager.engines.selectedEngine
-                    .synthesizeToStream(inputText.getText().toString(), getStartOffset(), output, getCacheDir());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getLocalizedMessage()),
-                           Toast.LENGTH_LONG).show();
-            stopSynthesis();
-        }
-    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case SAVE_REQUEST_CODE:
                 if (resultCode != RESULT_OK) return;
                 try {
-                    synthesizeToStream(new FileOutputStream((descriptor = getContentResolver()
-                            .openFileDescriptor(data.getData(), "w")).getFileDescriptor()));
+                    status = SYNTHESIZING;
+                    startSynthesis();
+                    TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
+                    TtsEngineManager.engines.selectedEngine.synthesizeToStream(inputText.getText().toString(),
+                            getStartOffset(), new FileOutputStream((descriptor = getContentResolver()
+                                    .openFileDescriptor(data.getData(), "w")).getFileDescriptor()), getCacheDir());
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                     Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()),
-                                   Toast.LENGTH_LONG).show();
+                            Toast.LENGTH_LONG).show();
+                    stopSynthesis();
                 }
                 return;
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
-    @Override
-    public boolean onCanSave(String absolutePath, String fileName) {
-        return true;
-    }
-    @Override
-    public void onConfirmSave(String absolutePath, String fileName) {
-        if (fileName == null || fileName.isEmpty()) return;
-        TtsEngineManager.editor.putString("fileSystem.lastSaveDir", absolutePath);
-        TtsEngineManager.editor.apply();
-        try {
-            synthesizeToStream(new FileOutputStream(new File(absolutePath, fileName)));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()), Toast.LENGTH_LONG)
-                    .show();
-        }
     }
 
     @Override

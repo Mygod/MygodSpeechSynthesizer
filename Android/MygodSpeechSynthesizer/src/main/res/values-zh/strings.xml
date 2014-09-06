@@ -4,9 +4,9 @@
     <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于
         %2$s。\n\n常见问题：如果出现“合成失败”的错误，如果你使用的是在线合成请检查您的互联网连接，或尝试换一个引擎。一些引擎可能并未提供完整的支持，如三星
         TTS 似乎不支持合成到文件。</string>
-    <string name="synthesize">合成</string>
-    <string name="stop">停止</string>
-    <string name="synthesize_to_file">合成到文件</string>
+    <string name="action_synthesize">合成</string>
+    <string name="action_stop">停止</string>
+    <string name="action_synthesize_to_file">合成到文件</string>
     <string name="settings">设置</string>
     <string name="settings_engines_languages">引擎与语言</string>
     <string name="settings_preferred_engine">使用引擎</string>
@@ -31,7 +31,11 @@
     <string name="settings_old_timey_save_dialog_summary">使用怀旧风格保存对话框替代 4.4+ 的 SAF 框架。</string>
     <string name="synthesis_error">合成失败：%s</string>
     <string name="google_translate_tts_engine_name">Google 翻译在线合成</string>
-    <string name="file_save_title">选择保存位置</string>
-    <string name="file_save_file_name_hint">文件名</string>
     <string name="notification_title">合成中 (滑动停止)</string>
+
+    <string name="title_activity_save_file">选择保存位置</string>
+    <string name="file_save_file_name_hint">文件名</string>
+    <string name="action_create_dir">创建目录</string>
+    <string name="dialog_overwrite_confirm_title">确定要覆盖此文件吗？</string>
+    <string name="dialog_create_dir_title">请输入目录名：</string>
 </resources>

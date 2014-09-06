@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Mygod Speech Synthesizer</string>
     <string name="input_text_default">Thanks for using Mygod Speech Synthesizer %1$s! The current version was compiled
         at %2$s.\n\nFAQ: If synthesis fails, check your Internet connection in case of online synthesis or try using
         another engine. Some engines might not work properly in some cases, for example, Samsung TTS doesn\'t seem to
-        support synthesizing to file.
-    </string>
-    <string name="synthesize">Synthesize</string>
-    <string name="stop">Stop</string>
-    <string name="synthesize_to_file">Synthesize to File</string>
+        support synthesizing to file.</string>
+    <string name="action_synthesize">Synthesize</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_synthesize_to_file">Synthesize to File</string>
     <string name="settings">Settings</string>
     <string name="settings_engines_languages">Engines &amp; Languages</string>
     <string name="settings_preferred_engine">Preferred engine</string>
@@ -23,8 +23,7 @@
     <string name="settings_text">Text</string>
     <string name="settings_start_from">Start from</string>
     <string name="settings_ignore_single_line_break">Ignore single line breaks</string>
-    <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.
-    </string>
+    <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_show_notification_icon">Show notification icon</string>
     <string name="settings_show_notification_icon_summary">Hiding notification icon is only available in 4.1+.</string>
@@ -32,11 +31,15 @@
     <string name="settings_show_ticker_summary">Scroll text that is being spoken on the status bar.</string>
     <string name="settings_old_timey_save_dialog">Old-timey save dialog</string>
     <string name="settings_old_timey_save_dialog_summary">Use old-timey save dialog instead of the fancy Storage Access
-        Framework in 4.4+.
-    </string>
+        Framework in 4.4+.</string>
     <string name="synthesis_error">Synthesis failed: %s</string>
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
-    <string name="file_save_title">Choose save location</string>
-    <string name="file_save_file_name_hint">File name</string>
     <string name="notification_title">Synthesizing (swipe to stop)</string>
+
+    <string name="title_activity_save_file">Choose save location</string>
+    <string name="file_save_file_name_hint">File name</string>
+    <string name="action_create_dir">Create folder</string>
+    <string name="dialog_overwrite_confirm_title">Are you sure you want to overwrite this file?</string>
+    <string name="dialog_create_dir_title">Enter the directory name:</string>
+
 </resources>

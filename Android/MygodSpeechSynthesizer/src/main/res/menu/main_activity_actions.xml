@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/synthesize" android:icon="@drawable/ic_action_mic" android:title="@string/synthesize"
-          android:showAsAction="ifRoom|withText" android:alphabeticShortcut="s" android:numericShortcut="1"/>
-    <item android:id="@+id/synthesize_to_file" android:title="@string/synthesize_to_file"
+<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+      tools:context="tk.mygod.speech.synthesizer.MainActivity">
+    <item android:id="@+id/synthesize" android:icon="@drawable/ic_action_mic" android:title="@string/action_synthesize"
+          android:showAsAction="always" android:alphabeticShortcut="s" android:numericShortcut="1"/>
+    <item android:id="@+id/synthesize_to_file" android:title="@string/action_synthesize_to_file"
           android:showAsAction="never" android:alphabeticShortcut="f" android:numericShortcut="2"/>
     <item android:id="@+id/settings" android:title="@string/settings"
           android:showAsAction="never" android:alphabeticShortcut="p" android:numericShortcut="3"/>

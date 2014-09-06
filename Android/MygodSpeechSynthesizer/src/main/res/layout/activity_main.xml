@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+            tools:context="tk.mygod.speech.synthesizer.MainActivity"
             android:layout_width="fill_parent" android:layout_height="fill_parent">
     <EditText android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="#00000000"
               android:id="@+id/input_text" android:paddingTop="10dp" android:paddingBottom="10dp"
