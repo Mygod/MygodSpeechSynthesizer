@@ -33,7 +33,7 @@ public final class CurrentApp {
         ZipFile file = null;
         try {
             file = new ZipFile(context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir);
-            return new Date(file.getEntry("classes.dex").getTime());
+            return new Date(file.getEntry("META-INF/MANIFEST.MF").getTime());
         } catch (Exception e) {
             e.printStackTrace();
             return new Date();

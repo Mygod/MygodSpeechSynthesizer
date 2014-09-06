@@ -2,7 +2,9 @@
 <resources>
     <string name="app_name">Mygod Speech Synthesizer</string>
     <string name="input_text_default">Thanks for using Mygod Speech Synthesizer %1$s! The current version was compiled
-        at %2$s.
+        at %2$s.\n\nFAQ: If synthesis fails, check your Internet connection in case of online synthesis or try using
+        another engine. Some engines might not work properly in some cases, for example, Samsung TTS doesn\'t seem to
+        support synthesizing to file.
     </string>
     <string name="synthesize">Synthesize</string>
     <string name="stop">Stop</string>

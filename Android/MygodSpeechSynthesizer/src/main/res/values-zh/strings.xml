@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mygod 语音合成器</string>
-    <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于 %2$s。</string>
+    <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于
+        %2$s。\n\n常见问题：如果出现“合成失败”的错误，如果你使用的是在线合成请检查您的互联网连接，或尝试换一个引擎。一些引擎可能并未提供完整的支持，如三星
+        TTS 似乎不支持合成到文件。</string>
     <string name="synthesize">合成</string>
     <string name="stop">停止</string>
     <string name="synthesize_to_file">合成到文件</string>
