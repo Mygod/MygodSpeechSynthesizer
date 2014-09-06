@@ -129,8 +129,8 @@ public class SettingsActivity extends Activity {
             );
             start.setSummary(start.getEntry());
             boolean forceOld = Build.VERSION.SDK_INT < 19;
-            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveDialog");
-            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", forceOld));
+            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveUI");
+            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", forceOld));
             if (forceOld) oldTimeySaveDialog.setEnabled(false);
         }
 

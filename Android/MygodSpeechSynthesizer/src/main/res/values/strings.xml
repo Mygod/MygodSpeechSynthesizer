@@ -40,9 +40,9 @@
     <string name="settings_show_notification_icon_summary">Hiding notification icon is only available in 4.1+.</string>
     <string name="settings_show_ticker">Enable text scrolling</string>
     <string name="settings_show_ticker_summary">Scroll text that is being spoken on the status bar.</string>
-    <string name="settings_old_timey_save_dialog">Old-timey save dialog</string>
-    <string name="settings_old_timey_save_dialog_summary">Use old-timey save dialog instead of the fancy Storage Access
-        Framework in 4.4+.</string>
+    <string name="settings_old_timey_save_ui">Old-timey save user interface</string>
+    <string name="settings_old_timey_save_ui_summary">Use old-timey save user interface instead of the fancy Storage
+        Access Framework in 4.4+.</string>
 
     <string name="title_activity_save_file">Choose save location</string>
     <string name="file_save_file_name_hint">File name</string>

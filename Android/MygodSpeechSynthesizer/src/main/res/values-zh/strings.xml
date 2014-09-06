@@ -37,8 +37,8 @@
     <string name="settings_show_notification_icon_summary">只有在 4.1 或更高版本的系统中可以隐藏状态栏图标。</string>
     <string name="settings_show_ticker">启用滚动文本</string>
     <string name="settings_show_ticker_summary">在状态栏中滚动当前正在阅读的文本。</string>
-    <string name="settings_old_timey_save_dialog">怀旧风格保存对话框</string>
-    <string name="settings_old_timey_save_dialog_summary">使用怀旧风格保存对话框替代 4.4+ 的 SAF 框架。</string>
+    <string name="settings_old_timey_save_ui">怀旧风格保存界面</string>
+    <string name="settings_old_timey_save_ui_summary">使用怀旧风格保存界面替代 4.4+ 的 SAF 框架。</string>
 
     <string name="title_activity_save_file">选择保存位置</string>
     <string name="file_save_file_name_hint">文件名</string>

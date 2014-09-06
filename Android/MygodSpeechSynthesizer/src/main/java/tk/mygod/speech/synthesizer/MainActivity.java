@@ -219,7 +219,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
                 Intent intent;
                 if (Build.VERSION.SDK_INT < 19 ||
-                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", Build.VERSION.SDK_INT < 19)) {
+                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19)) {
                     intent = new Intent(this, SaveFileActivity.class);
                     String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
                     if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
@@ -243,7 +243,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 if (!fileName.toLowerCase().endsWith(".txt")) fileName += ".txt";
                 Intent intent;
                 if (Build.VERSION.SDK_INT < 19 ||
-                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", Build.VERSION.SDK_INT < 19)) {
+                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19)) {
                     intent = new Intent(this, SaveFileActivity.class);
                     String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
                     if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
