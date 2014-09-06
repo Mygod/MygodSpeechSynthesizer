@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mygod Speech Synthesizer</string>
-    <string name="inputText_default">Thanks for using Mygod Speech Synthesizer!</string>
+    <string name="input_text_default">Thanks for using Mygod Speech Synthesizer %1$s! The current version was compiled
+        at %2$s.
+    </string>
     <string name="synthesize">Synthesize</string>
     <string name="stop">Stop</string>
     <string name="synthesize_to_file">Synthesize to File</string>

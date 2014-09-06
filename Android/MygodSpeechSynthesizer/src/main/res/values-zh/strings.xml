@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mygod 语音合成器</string>
-    <string name="inputText_default">感谢您使用 Mygod 语音合成器！</string>
+    <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于 %2$s。</string>
     <string name="synthesize">合成</string>
     <string name="stop">停止</string>
     <string name="synthesize_to_file">合成到文件</string>

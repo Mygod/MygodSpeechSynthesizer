@@ -17,6 +17,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.Toast;
+import tk.mygod.CurrentApp;
 import tk.mygod.app.FileSaveFragment;
 import tk.mygod.app.ProgressActivity;
 import tk.mygod.speech.tts.TtsEngine;
@@ -25,6 +26,7 @@ import tk.mygod.util.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 
 /**
  * Project: Mygod Speech Synthesizer
@@ -72,7 +74,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        inputText = (EditText)findViewById(R.id.input_text);
+        (inputText = (EditText)findViewById(R.id.input_text))
+                .setText(String.format(getText(R.string.input_text_default).toString(), CurrentApp.getVersionName(this),
+                                       SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
         TtsEngineManager.init(this, this);
         Intent intent = new Intent();
         intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
