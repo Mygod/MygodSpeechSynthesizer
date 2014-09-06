@@ -36,5 +36,5 @@
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
     <string name="file_save_title">Choose save location</string>
     <string name="file_save_file_name_hint">File name</string>
-    <string name="notification_title">Synthesizing</string>
+    <string name="notification_title">Synthesizing (swipe to stop)</string>
 </resources>
