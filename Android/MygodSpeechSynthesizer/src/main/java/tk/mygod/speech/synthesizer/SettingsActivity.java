@@ -160,6 +160,7 @@ public class SettingsActivity extends Activity {
                         : TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature)
                             ? getString(R.string.settings_features_embedded) : feature);
             }
+            if (builder.length() <= 0) builder.append(getString(R.string.settings_features_none));
             features.setSummary(builder.toString());
         }
     }
