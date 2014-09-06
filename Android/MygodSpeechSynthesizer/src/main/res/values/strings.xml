@@ -12,7 +12,7 @@
     <string name="settings_features">Supported features</string>
     <string name="settings_features_network">Online</string>
     <string name="settings_features_embedded">Offline</string>
-    <string name="settings_tweaks">Tweaks</string>
+    <string name="settings_tweaks">Tweaks (engine might not support)</string>
     <string name="settings_pitch">Pitch (1 for normal)</string>
     <string name="settings_speech_rate">Speech rate (1 for normal)</string>
     <string name="settings_pan">Pan (between [-1, 1]; 0 for normal)</string>

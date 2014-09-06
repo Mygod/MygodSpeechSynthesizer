@@ -12,7 +12,7 @@
     <string name="settings_features">支持功能</string>
     <string name="settings_features_network">在线</string>
     <string name="settings_features_embedded">离线</string>
-    <string name="settings_tweaks">调整</string>
+    <string name="settings_tweaks">调整 (可能不支持)</string>
     <string name="settings_pitch">音高 (正常为 1)</string>
     <string name="settings_speech_rate">语速 (正常为 1)</string>
     <string name="settings_pan">平衡 (介于 [-1, 1] 之间，正常为 0)</string>
