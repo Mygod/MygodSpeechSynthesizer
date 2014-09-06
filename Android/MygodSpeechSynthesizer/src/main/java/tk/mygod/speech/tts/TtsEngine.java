@@ -75,11 +75,12 @@ public abstract class TtsEngine {
     }
 
     private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
-    private static final int SPLITTERS_COUNT = 5, BEST_SPLITTERS_EVER = 0;
+    private static final int SPLITTERS_COUNT = 6, BEST_SPLITTERS_EVER = 0, SPACE_FOR_THE_BEST = 1;
     static {
         int priority = BEST_SPLITTERS_EVER;
-        for (String group : new String[] { ".?!。？！…", ":;：；—", ",()[]{}，（）【】『』［］｛｝、",
-                "'\"‘’“”＇＂<>＜＞《》", " \t\b\n\r\f\b\u000b\u00a0\u2028\u2029/\\|-／＼｜－" }) {
+        for (String group : new String[] { "!。？！…", ".?", ":;：；—", ",()[]{}，（）【】『』［］｛｝、",
+                "'\"‘’“”＇＂<>＜＞《》",
+                " \t\b\n\r\f\r\u000b\u001c\u001d\u001e\u001f\u00a0\u2028\u2029/\\|-／＼｜－" }) {
             int length = group.length();
             for (int i = 0; i < length; ++i) splitters.put(group.charAt(i), priority);
             ++priority;
@@ -97,10 +98,16 @@ public abstract class TtsEngine {
             int end = maxEnd;
             while (i < maxEnd) {
                 Integer priority = splitters.get(text.charAt(i));
-                if (priority != null && priority <= bestPriority) {
-                    end = i;
-                    bestPriority = priority;
-                    if (aggressiveMode && priority == BEST_SPLITTERS_EVER) break;
+                if (priority != null) {
+                    if (priority == SPACE_FOR_THE_BEST) {
+                        int next = i + 1;
+                        if (next >= length || Character.isWhitespace(text.charAt(next))) priority = BEST_SPLITTERS_EVER;
+                    }
+                    if (priority <= bestPriority) {
+                        end = i;
+                        bestPriority = priority;
+                        if (aggressiveMode && priority == BEST_SPLITTERS_EVER) break;
+                    }
                 }
                 ++i;
             }
