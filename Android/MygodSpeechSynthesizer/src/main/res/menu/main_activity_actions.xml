@@ -2,7 +2,9 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/synthesize" android:icon="@drawable/ic_action_mic" android:title="@string/synthesize"
-          android:showAsAction="ifRoom|withText"/>
-    <item android:id="@+id/synthesize_to_file" android:title="@string/synthesize_to_file" android:showAsAction="never"/>
-    <item android:id="@+id/settings" android:title="@string/settings" android:showAsAction="never"/>
+          android:showAsAction="ifRoom|withText" android:alphabeticShortcut="s" android:numericShortcut="1"/>
+    <item android:id="@+id/synthesize_to_file" android:title="@string/synthesize_to_file"
+          android:showAsAction="never" android:alphabeticShortcut="f" android:numericShortcut="2"/>
+    <item android:id="@+id/settings" android:title="@string/settings"
+          android:showAsAction="never" android:alphabeticShortcut="p" android:numericShortcut="3"/>
 </menu>
