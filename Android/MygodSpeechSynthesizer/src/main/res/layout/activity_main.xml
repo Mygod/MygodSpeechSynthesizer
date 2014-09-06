@@ -4,5 +4,5 @@
     <EditText android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="#00000000"
               android:id="@+id/input_text" android:paddingTop="10dp" android:paddingBottom="10dp"
               android:paddingLeft="15dp" android:gravity="top" android:paddingRight="15dp"
-              android:inputType="textMultiLine"/>
+              android:inputType="textMultiLine" android:imeOptions="flagNoFullscreen"/>
 </ScrollView>
