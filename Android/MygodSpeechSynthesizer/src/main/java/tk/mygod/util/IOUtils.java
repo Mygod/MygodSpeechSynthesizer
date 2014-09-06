@@ -1,8 +1,6 @@
 package tk.mygod.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author Mygod
@@ -22,5 +20,28 @@ public class IOUtils {
             total += r;
         }
         return total;
+    }
+
+    public static String readAllText(InputStream stream) throws IOException {
+        InputStreamReader inputStreamReader = null;
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(inputStreamReader = new InputStreamReader(stream));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) builder.append(line);
+            return builder.toString();
+        } finally {
+            if (inputStreamReader != null) try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (reader != null) try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

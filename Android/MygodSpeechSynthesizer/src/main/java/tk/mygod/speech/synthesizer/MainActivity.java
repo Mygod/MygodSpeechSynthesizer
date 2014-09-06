@@ -5,10 +5,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.view.Menu;
@@ -22,9 +25,9 @@ import tk.mygod.app.ProgressActivity;
 import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.FileUtils;
+import tk.mygod.util.IOUtils;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 
 /**
@@ -33,11 +36,8 @@ import java.text.SimpleDateFormat;
  */
 public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
         TtsEngineManager.OnSelectedEngineChangedListener {
-    /**************************************************************************
-     * Answer to The Ultimate Question of Life, the Universe, and Everything. *
-     * By the way, this comment is fancy.                                     *
-     **************************************************************************/
-    private static final int SAVE_REQUEST_CODE = 42, IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
+    private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
+                             IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private EditText inputText;
     private MenuItem synthesizeMenu, synthesizeToFileMenu;
     private int status;
@@ -51,7 +51,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
     private Notification.Builder builder;
 
-    private String lastText;
+    private String lastText, displayName;
     private void showNotification(CharSequence text) {
         if (status != SPEAKING) lastText = null;
         else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
@@ -106,8 +106,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        synthesizeMenu = menu.findItem(R.id.synthesize);
-        synthesizeToFileMenu = menu.findItem(R.id.synthesize_to_file);
+        synthesizeMenu = menu.findItem(R.id.action_synthesize);
+        synthesizeToFileMenu = menu.findItem(R.id.action_synthesize_to_file);
         return true;
     }
 
@@ -159,10 +159,14 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         return 0;
     }
 
+    private String getSaveFileName() {
+        return displayName == null ? FileUtils.getTempFileName() : displayName;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.synthesize:
+            case R.id.action_synthesize:
                 if (status == IDLE) {
                     try {
                         status = SPEAKING;
@@ -177,8 +181,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                     }
                 } else stopSynthesis();
                 return true;
-            case R.id.synthesize_to_file:
-                String fileName = FileUtils.getTempFileName() + '.' + MimeTypeMap.getSingleton()
+            case R.id.action_synthesize_to_file: {
+                String fileName = getSaveFileName() + '.' + MimeTypeMap.getSingleton()
                         .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
                 Intent intent;
                 if (Build.VERSION.SDK_INT < 19 ||
@@ -190,9 +194,34 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
                 intent.putExtra(Intent.EXTRA_TITLE, fileName);
                 intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                startActivityForResult(intent, SAVE_REQUEST_CODE);
+                startActivityForResult(intent, SAVE_SYNTHESIS_CODE);
                 return true;
-            case R.id.settings:
+            }
+            case R.id.action_open: {
+                Intent intent = new Intent(Build.VERSION.SDK_INT < 19 ? Intent.ACTION_GET_CONTENT
+                                                                      : Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("text/plain");
+                startActivityForResult(intent, OPEN_TEXT_CODE);
+                return true;
+            }
+            case R.id.action_save: {
+                String fileName = getSaveFileName();
+                if (!fileName.toLowerCase().endsWith(".txt")) fileName += ".txt";
+                Intent intent;
+                if (Build.VERSION.SDK_INT < 19 ||
+                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveDialog", Build.VERSION.SDK_INT < 19)) {
+                    intent = new Intent(this, SaveFileActivity.class);
+                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
+                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
+                }
+                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_TITLE, fileName);
+                intent.setType("text/plain");
+                startActivityForResult(intent, SAVE_TEXT_CODE);
+                return true;
+            }
+            case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
         }
@@ -201,9 +230,47 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != RESULT_OK) return;
         switch (requestCode) {
-            case SAVE_REQUEST_CODE:
-                if (resultCode != RESULT_OK) return;
+            case OPEN_TEXT_CODE:
+                InputStream input = null;
+                try {
+                    Uri uri = data.getData();
+                    inputText.setText(IOUtils.readAllText(input = getContentResolver()
+                             .openInputStream(uri)));
+                    Cursor cursor = getContentResolver().query(uri, null, null, null, null, null);
+                    if (cursor != null && cursor.moveToFirst())
+                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, String.format(getString(R.string.open_error), e.getMessage()),
+                            Toast.LENGTH_LONG).show();
+                } finally {
+                    if (input != null) try {
+                        input.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return;
+            case SAVE_TEXT_CODE:
+                OutputStream output = null;
+                try {
+                    (output = getContentResolver().openOutputStream(data.getData()))
+                            .write(inputText.getText().toString().getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, String.format(getString(R.string.save_error), e.getMessage()),
+                            Toast.LENGTH_LONG).show();
+                } finally {
+                    if (output != null) try {
+                        output.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return;
+            case SAVE_SYNTHESIS_CODE:
                 try {
                     status = SYNTHESIZING;
                     startSynthesis();

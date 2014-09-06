@@ -20,7 +20,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 19
         versionCode 290
-        versionName "1.0.5.290"
+        versionName "1.1.5.290"
     }
     buildTypes {
         release {
