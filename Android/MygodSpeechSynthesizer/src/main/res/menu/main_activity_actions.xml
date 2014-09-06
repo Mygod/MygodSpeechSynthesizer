@@ -5,10 +5,12 @@
     <item android:id="@+id/action_synthesize" android:icon="@drawable/ic_action_mic"
           android:title="@string/action_synthesize" android:showAsAction="always"
           android:alphabeticShortcut="p" android:numericShortcut="1"/>
-    <item android:id="@+id/action_synthesize_to_file" android:title="@string/action_synthesize_to_file"
-          android:showAsAction="never" android:alphabeticShortcut="f" android:numericShortcut="2"/>
-    <item android:id="@+id/action_open" android:title="@string/action_open"
-          android:showAsAction="never" android:alphabeticShortcut="o" android:numericShortcut="3"/>
+    <group android:id="@+id/disabled_when_synthesizing">
+        <item android:id="@+id/action_synthesize_to_file" android:title="@string/action_synthesize_to_file"
+              android:showAsAction="never" android:alphabeticShortcut="f" android:numericShortcut="2"/>
+        <item android:id="@+id/action_open" android:title="@string/action_open"
+              android:showAsAction="never" android:alphabeticShortcut="o" android:numericShortcut="3"/>
+    </group>
     <item android:id="@+id/action_save" android:title="@string/action_save"
           android:showAsAction="never" android:alphabeticShortcut="s" android:numericShortcut="4"/>
     <item android:id="@+id/action_settings" android:title="@string/settings"

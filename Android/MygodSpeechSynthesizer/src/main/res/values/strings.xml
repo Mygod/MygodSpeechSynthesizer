@@ -14,6 +14,8 @@
     <string name="open_error">Open failed: %s</string>
     <string name="save_error">Save failed: %s</string>
     <string name="synthesis_error">Synthesis failed: %s</string>
+    <string name="error_synthesis_in_progress">Synthesis in progress, please wait or stop current synthesis first.
+    </string>
     <string name="google_translate_tts_engine_name">Google Translate TTS Engine (Online)</string>
     <string name="notification_title">Synthesizing (swipe to stop)</string>
 

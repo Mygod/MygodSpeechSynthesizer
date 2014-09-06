@@ -39,7 +39,8 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private EditText inputText;
-    private MenuItem synthesizeMenu, synthesizeToFileMenu;
+    private Menu menu;
+    private MenuItem synthesizeMenu;
     private int status;
     private boolean inBackground;
     private static final InputFilter[] noFilters = new InputFilter[0],
@@ -85,6 +86,39 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         PendingIntent.FLAG_UPDATE_CURRENT))
                 .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0))
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_notification));
+        intent = getIntent();
+        if (intent.getData() != null) onNewIntent(intent);
+    }
+
+    @Override
+    protected void onNewIntent(Intent data) {
+        if (data == null) return;
+        InputStream input = null;
+        try {
+            Uri uri = data.getData();
+            if (uri == null) return;
+            if (status != IDLE) {
+                Toast.makeText(this, getString(R.string.error_synthesis_in_progress), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            inputText.setText(IOUtils.readAllText(input = getContentResolver().openInputStream(uri)));
+            if ("file".equalsIgnoreCase(uri.getScheme())) displayName = uri.getLastPathSegment();
+            else {
+                Cursor cursor = getContentResolver().query(uri, null, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst())
+                    displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, String.format(getString(R.string.open_error), e.getMessage()), Toast.LENGTH_LONG)
+                    .show();
+        } finally {
+            if (input != null) try {
+                input.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -104,10 +138,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
+        super.onCreateOptionsMenu(this.menu = menu);
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         synthesizeMenu = menu.findItem(R.id.action_synthesize);
-        synthesizeToFileMenu = menu.findItem(R.id.action_synthesize_to_file);
         return true;
     }
 
@@ -128,7 +161,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
         synthesizeMenu.setTitle(R.string.action_stop);
-        synthesizeToFileMenu.setEnabled(false);
+        menu.setGroupEnabled(R.id.disabled_when_synthesizing, false);
         inputText.setFilters(readonlyFilters);
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(inputText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
@@ -140,7 +173,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         TtsEngineManager.engines.selectedEngine.stop();
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
         synthesizeMenu.setTitle(R.string.action_synthesize);
-        synthesizeToFileMenu.setEnabled(true);
+        menu.setGroupEnabled(R.id.disabled_when_synthesizing, true);
         inputText.setFilters(noFilters);
         setActionBarProgress(null);
         if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
@@ -233,25 +266,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         if (resultCode != RESULT_OK) return;
         switch (requestCode) {
             case OPEN_TEXT_CODE:
-                InputStream input = null;
-                try {
-                    Uri uri = data.getData();
-                    inputText.setText(IOUtils.readAllText(input = getContentResolver()
-                             .openInputStream(uri)));
-                    Cursor cursor = getContentResolver().query(uri, null, null, null, null, null);
-                    if (cursor != null && cursor.moveToFirst())
-                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, String.format(getString(R.string.open_error), e.getMessage()),
-                            Toast.LENGTH_LONG).show();
-                } finally {
-                    if (input != null) try {
-                        input.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                onNewIntent(data);
                 return;
             case SAVE_TEXT_CODE:
                 OutputStream output = null;
