@@ -3,7 +3,7 @@
     <option name="myName" value="Project Default" />
     <option name="myLocal" value="false" />
     <inspection_tool class="AndroidLintInlinedApi" enabled="true" level="INFO" enabled_by_default="true" />
-    <inspection_tool class="AndroidLintNewApi" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="AndroidLintNewApi" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintUnusedAttribute" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="Annotator" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="Deprecation" enabled="true" level="INFO" enabled_by_default="true" />

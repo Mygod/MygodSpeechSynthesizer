@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -104,9 +105,17 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             inputText.setText(IOUtils.readAllText(input = getContentResolver().openInputStream(uri)));
             if ("file".equalsIgnoreCase(uri.getScheme())) displayName = uri.getLastPathSegment();
             else {
-                Cursor cursor = getContentResolver().query(uri, null, null, null, null, null);
-                if (cursor != null && cursor.moveToFirst())
-                    displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                String[] projection = { OpenableColumns.DISPLAY_NAME, MediaStore.Images.Media.TITLE };
+                Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                        if (index >= 0 && (displayName = cursor.getString(index)) == null &&
+                                (index = cursor.getColumnIndex(MediaStore.Images.Media.TITLE)) >= 0)
+                            displayName = cursor.getString(index);
+                    }
+                    cursor.close();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -231,8 +240,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 return true;
             }
             case R.id.action_open: {
-                Intent intent = new Intent(Build.VERSION.SDK_INT < 19 ? Intent.ACTION_GET_CONTENT
-                                                                      : Intent.ACTION_OPEN_DOCUMENT);
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("text/plain");
                 startActivityForResult(intent, OPEN_TEXT_CODE);
