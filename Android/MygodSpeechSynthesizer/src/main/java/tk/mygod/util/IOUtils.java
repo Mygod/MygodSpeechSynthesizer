@@ -1,6 +1,7 @@
 package tk.mygod.util;
 
 import java.io.*;
+import java.util.Scanner;
 
 /**
  * @author Mygod
@@ -23,25 +24,7 @@ public class IOUtils {
     }
 
     public static String readAllText(InputStream stream) throws IOException {
-        InputStreamReader inputStreamReader = null;
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(inputStreamReader = new InputStreamReader(stream));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) builder.append(line);
-            return builder.toString();
-        } finally {
-            if (inputStreamReader != null) try {
-                inputStreamReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            if (reader != null) try {
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        Scanner scanner = new Scanner(stream).useDelimiter("\\a");
+        return scanner.hasNext() ? scanner.next() : "";
     }
 }
