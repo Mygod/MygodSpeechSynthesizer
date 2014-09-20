@@ -119,8 +119,10 @@ public class SettingsActivity extends Activity {
             lang.setEntries(names);
             lang.setEntryValues(ids);
             Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
-            lang.setValue(locale.toString());
-            lang.setSummary(locale.getDisplayName());
+            if (locale != null) {
+                lang.setValue(locale.toString());
+                lang.setSummary(locale.getDisplayName());
+            }
             updateFeatures(locale);
         }
 

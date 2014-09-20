@@ -2,11 +2,9 @@ package tk.mygod.speech.synthesizer;
 
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,13 +34,11 @@ import java.text.SimpleDateFormat;
  * @author  Mygod
  */
 public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
-        TtsEngineManager.OnSelectedEngineChangingListener {
-    private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
-                             IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
+        TtsEngineManager.OnTerminatedListener {
+    private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2;
     private EditText inputText;
     private Menu menu;
     private MenuItem synthesizeMenu;
-    private int status;
     private boolean inBackground;
     private static final InputFilter[] noFilters = new InputFilter[0],
             readonlyFilters = new InputFilter[] { new InputFilter() {
@@ -51,20 +47,19 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 }
             } };
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
-    private Notification.Builder builder;
 
     private String lastText, displayName;
     private void showNotification(CharSequence text) {
-        if (status != SPEAKING) lastText = null;
+        if (TtsEngineManager.status != TtsEngineManager.SPEAKING) lastText = null;
         else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
         if (!inBackground) return;
-        builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
+        App.builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
                .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null);
-        if (Build.VERSION.SDK_INT >= 16) builder.setPriority(TtsEngineManager.pref.getBoolean
+        if (Build.VERSION.SDK_INT >= 16) App.builder.setPriority(TtsEngineManager.pref.getBoolean
                 ("appearance.notificationIcon", true) ? Notification.PRIORITY_DEFAULT : Notification.PRIORITY_MIN);
-        else builder.setContentText(null).setTicker(null);
+        else App.builder.setContentText(null).setTicker(null);
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, Build.VERSION.SDK_INT >= 16
-                ? new Notification.BigTextStyle(builder).bigText(lastText).build() : builder.getNotification());
+                ? new Notification.BigTextStyle(App.builder).bigText(lastText).build() : App.builder.getNotification());
     }
     private void cancelNotification() {
         inBackground = false;   // which disables further notifications
@@ -75,19 +70,14 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        (inputText = (EditText)findViewById(R.id.input_text))
-                .setText(String.format(getText(R.string.input_text_default).toString(), CurrentApp.getVersionName(this),
-                                       SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
-        TtsEngineManager.init(this, this);
-        Intent intent = new Intent();
-        intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
-        builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
-                .setAutoCancel(true).setSmallIcon(R.drawable.ic_notification)
-                .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
-                        PendingIntent.FLAG_UPDATE_CURRENT))
-                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0))
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_notification));
-        intent = getIntent();
+        TtsEngineManager.setOnTerminatedListener(this);
+        (inputText = (EditText)findViewById(R.id.input_text)).setText(savedInstanceState != null &&
+                savedInstanceState.containsKey("text") ? savedInstanceState.getCharSequence("text")
+                    : String.format(getText(R.string.input_text_default).toString(), CurrentApp.getVersionName(this),
+                                    SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
+        if (savedInstanceState != null && savedInstanceState.containsKey("selectionStart")) inputText.setSelection
+                (savedInstanceState.getInt("selectionStart"), savedInstanceState.getInt("selectionStop"));
+        Intent intent = getIntent();
         if (intent.getData() != null) onNewIntent(intent);
     }
 
@@ -98,7 +88,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         try {
             Uri uri = data.getData();
             if (uri == null) return;
-            if (status != IDLE) {
+            if (TtsEngineManager.status != TtsEngineManager.IDLE) {
                 Toast.makeText(this, getString(R.string.error_synthesis_in_progress), Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -132,7 +122,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     @Override
     protected void onStop() {
-        if (status != IDLE) {
+        if (TtsEngineManager.status != TtsEngineManager.IDLE) {
             inBackground = true;
             showNotification(null);
         }
@@ -146,6 +136,14 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putCharSequence("text", inputText.getText());
+        outState.putInt("selectionStart", inputText.getSelectionStart());
+        outState.putInt("selectionStop", inputText.getSelectionEnd());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(this.menu = menu);
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
@@ -155,19 +153,12 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     private void reportProgress(int value) {
         setActionBarProgress(value);
-        if (value < 0) builder.setProgress(0, 0, true);
-        else builder.setProgress(getActionBarProgressMax(), value, false);
+        if (value < 0) App.builder.setProgress(0, 0, true);
+        else App.builder.setProgress(getActionBarProgressMax(), value, false);
     }
 
     private void startSynthesis() {
-        TtsEngineManager.engines.selectedEngine
-                .setPitch(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pitch", "1")));
-        TtsEngineManager.engines.selectedEngine
-                .setSpeechRate(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.speechRate", "1")));
-        TtsEngineManager.engines.selectedEngine
-                .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
-        TtsEngineManager.engines.selectedEngine
-                .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
+        TtsEngineManager.configureEngine();
         synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
         synthesizeMenu.setTitle(R.string.action_stop);
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, false);
@@ -178,20 +169,16 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         setActionBarSecondaryProgress(0);
         reportProgress(-1); // initializing
     }
-    public void stopSynthesis() {
-        TtsEngineManager.engines.selectedEngine.stop();
+    @Override
+    public void onTerminated() {
         synthesizeMenu.setIcon(R.drawable.ic_action_mic);
         synthesizeMenu.setTitle(R.string.action_synthesize);
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, true);
         inputText.setFilters(noFilters);
         setActionBarProgress(null);
         if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
-        status = IDLE;
+        TtsEngineManager.status = TtsEngineManager.IDLE;
         cancelNotification();
-    }
-    @Override
-    public void onSelectedEngineChanging() {
-        stopSynthesis();
     }
 
     private int getStartOffset() {
@@ -209,9 +196,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_synthesize:
-                if (status == IDLE) {
+                if (TtsEngineManager.status == TtsEngineManager.IDLE) {
                     try {
-                        status = SPEAKING;
+                        TtsEngineManager.status = TtsEngineManager.SPEAKING;
                         startSynthesis();
                         TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
                         TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString(), getStartOffset());
@@ -219,9 +206,9 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                         e.printStackTrace();
                         Toast.makeText(this, String.format(getString(R.string.synthesis_error),
                                 e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
-                        stopSynthesis();
+                        TtsEngineManager.terminate();
                     }
-                } else stopSynthesis();
+                } else TtsEngineManager.terminate();
                 return true;
             case R.id.action_synthesize_to_file: {
                 String fileName = getSaveFileName() + '.' + MimeTypeMap.getSingleton()
@@ -295,7 +282,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 return;
             case SAVE_SYNTHESIS_CODE:
                 try {
-                    status = SYNTHESIZING;
+                    TtsEngineManager.status = TtsEngineManager.SYNTHESIZING;
                     startSynthesis();
                     TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
                     TtsEngineManager.engines.selectedEngine.synthesizeToStream(inputText.getText().toString(),
@@ -305,7 +292,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                     e.printStackTrace();
                     Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()),
                             Toast.LENGTH_LONG).show();
-                    stopSynthesis();
+                    TtsEngineManager.terminate();
                 }
                 return;
         }
@@ -330,7 +317,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 inputText.setSelection(start, end);
                 inputText.moveCursorToVisibleOffset();
                 if (start < inputText.getText().length()) showNotification(inputText.getText().subSequence(start, end));
-                else stopSynthesis();
+                else TtsEngineManager.terminate();
             }
         });
     }
@@ -344,11 +331,5 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                                    inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    @Override
-    public void onDestroy() {
-        TtsEngineManager.engines.onDestroy();
-        super.onDestroy();
     }
 }

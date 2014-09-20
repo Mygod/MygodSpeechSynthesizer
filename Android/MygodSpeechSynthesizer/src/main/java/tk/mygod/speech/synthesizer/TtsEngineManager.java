@@ -17,23 +17,37 @@ final class TtsEngineManager {
         throw new AssertionError();
     }
 
+    static final int IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
+
     static AvailableTtsEngines engines;
-    private static OnSelectedEngineChangingListener onSelectedEngineChangingListener;
+    private static OnTerminatedListener onTerminatedListener;
     static SharedPreferences pref;
     static SharedPreferences.Editor editor;
-    static MainActivity mainActivity;
+    static int status;
 
-    static void init(MainActivity context, OnSelectedEngineChangingListener listener) {
+    static void setOnTerminatedListener(OnTerminatedListener listener) {
+        onTerminatedListener = listener;
+    }
+    static void init(Context context) {
         String engineID = (pref = context.getSharedPreferences("settings", Context.MODE_PRIVATE))
                 .getString("engine", "");
-        engines = new AvailableTtsEngines(mainActivity = context);
+        engines = new AvailableTtsEngines(context);
         editor = pref.edit();
         selectEngine(engineID, context);
-        onSelectedEngineChangingListener = listener;    // well I don't want it fired right away
+    }
+    static void configureEngine() {
+        engines.selectedEngine.setPitch(Float.parseFloat(pref.getString("tweaks.pitch", "1")));
+        engines.selectedEngine.setSpeechRate(Float.parseFloat(pref.getString("tweaks.speechRate", "1")));
+        engines.selectedEngine.setPan(Float.parseFloat(pref.getString("tweaks.pan", "0")));
+        engines.selectedEngine.setIgnoreSingleLineBreaks(pref.getBoolean("text.ignoreSingleLineBreak", false));
+    }
+    static void terminate() {
+        if (engines.selectedEngine != null) engines.selectedEngine.stop();
+        if (onTerminatedListener != null) onTerminatedListener.onTerminated();
     }
 
     static void selectEngine(String id, Context context) {
-        if (onSelectedEngineChangingListener != null) onSelectedEngineChangingListener.onSelectedEngineChanging();
+        terminate();
         if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID(), context);
         editor.putString("engine", id);
         editor.apply();
@@ -58,7 +72,7 @@ final class TtsEngineManager {
         editor.apply();
     }
 
-    public static interface OnSelectedEngineChangingListener {
-        void onSelectedEngineChanging();
+    public static interface OnTerminatedListener {
+        void onTerminated();
     }
 }

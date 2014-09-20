@@ -11,8 +11,6 @@ import android.content.Intent;
 public class NotificationHandler extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (TtsEngineManager.mainActivity != null &&
-                "tk.mygod.speech.synthesizer.action.STOP".equals(intent.getAction()))
-            TtsEngineManager.mainActivity.stopSynthesis();
+        if ("tk.mygod.speech.synthesizer.action.STOP".equals(intent.getAction())) TtsEngineManager.terminate();
     }
 }
