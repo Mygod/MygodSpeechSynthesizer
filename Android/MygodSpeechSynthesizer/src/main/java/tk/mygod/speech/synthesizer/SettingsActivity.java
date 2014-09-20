@@ -43,40 +43,13 @@ public class SettingsActivity extends Activity {
     public static class TtsSettingsFragment extends PreferenceFragment {
         private IconListPreference engine;
         private ListPreference lang, start;
-        private Preference features, pitch, speechRate, pan;
+        private Preference features;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             getPreferenceManager().setSharedPreferencesName("settings");
             addPreferencesFromResource(R.xml.settings);
-            (pitch = findPreference("tweaks.pitch"))
-                    .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            pitch.setSummary(newValue.toString());
-                            return true;
-                        }
-                    });
-            pitch.setSummary(TtsEngineManager.pref.getString("tweaks.pitch", "1"));
-            (speechRate = findPreference("tweaks.speechRate"))
-                    .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            speechRate.setSummary(newValue.toString());
-                            return true;
-                        }
-                    });
-            speechRate.setSummary(TtsEngineManager.pref.getString("tweaks.speechRate", "1"));
-            (pan = findPreference("tweaks.pan"))
-                    .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            pan.setSummary(newValue.toString());
-                            return true;
-                        }
-                    });
-            pan.setSummary(TtsEngineManager.pref.getString("tweaks.pan", "1"));
             (engine = (IconListPreference) findPreference("engine"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override

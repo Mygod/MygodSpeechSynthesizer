@@ -6,12 +6,15 @@
         <Preference android:key="engine.features" android:title="@string/settings_features"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_tweaks">
-        <EditTextPreference android:key="tweaks.pitch" android:title="@string/settings_pitch"
-                            android:defaultValue="1" android:inputType="numberDecimal|numberSigned"/>
-        <EditTextPreference android:key="tweaks.speechRate" android:title="@string/settings_speech_rate"
-                            android:defaultValue="1" android:inputType="numberDecimal|numberSigned"/>
-        <EditTextPreference android:key="tweaks.pan" android:title="@string/settings_pan"
-                            android:defaultValue="0" android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.pitch" android:defaultValue="1"
+                                                              android:title="@string/settings_pitch"
+                                                              android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.speechRate" android:defaultValue="1"
+                                                              android:title="@string/settings_speech_rate"
+                                                              android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.pan" android:defaultValue="0"
+                                                              android:title="@string/settings_pan"
+                                                              android:inputType="numberDecimal|numberSigned"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_text">
         <ListPreference android:key="text.start" android:title="@string/settings_start_from"
