@@ -18,21 +18,22 @@ final class TtsEngineManager {
     }
 
     static AvailableTtsEngines engines;
-    private static OnSelectedEngineChangedListener onSelectedEngineChangedListener;
+    private static OnSelectedEngineChangingListener onSelectedEngineChangingListener;
     static SharedPreferences pref;
     static SharedPreferences.Editor editor;
     static MainActivity mainActivity;
 
-    static void init(MainActivity context, OnSelectedEngineChangedListener listener) {
+    static void init(MainActivity context, OnSelectedEngineChangingListener listener) {
         String engineID = (pref = context.getSharedPreferences("settings", Context.MODE_PRIVATE))
                 .getString("engine", "");
         engines = new AvailableTtsEngines(mainActivity = context);
         editor = pref.edit();
         selectEngine(engineID, context);
-        onSelectedEngineChangedListener = listener; // well I don't want it fired right away
+        onSelectedEngineChangingListener = listener;    // well I don't want it fired right away
     }
 
     static void selectEngine(String id, Context context) {
+        if (onSelectedEngineChangingListener != null) onSelectedEngineChangingListener.onSelectedEngineChanging();
         if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID(), context);
         editor.putString("engine", id);
         editor.apply();
@@ -46,7 +47,6 @@ final class TtsEngineManager {
             engines.selectedEngine.setLanguage(context.getResources().getConfiguration().locale);
         Locale targetLang = engines.selectedEngine.getLanguage();
         if (targetLang != null && sourceLang != targetLang) selectLanguage(targetLang.toString());
-        if (onSelectedEngineChangedListener != null) onSelectedEngineChangedListener.onSelectedEngineChanged();
     }
 
     static void selectLanguage(String lang) {
@@ -58,7 +58,7 @@ final class TtsEngineManager {
         editor.apply();
     }
 
-    public static interface OnSelectedEngineChangedListener {
-        void onSelectedEngineChanged();
+    public static interface OnSelectedEngineChangingListener {
+        void onSelectedEngineChanging();
     }
 }

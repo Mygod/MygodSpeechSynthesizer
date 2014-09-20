@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat;
  * @author  Mygod
  */
 public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
-        TtsEngineManager.OnSelectedEngineChangedListener {
+        TtsEngineManager.OnSelectedEngineChangingListener {
     private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private EditText inputText;
@@ -181,7 +181,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         cancelNotification();
     }
     @Override
-    public void onSelectedEngineChanged() {
+    public void onSelectedEngineChanging() {
         stopSynthesis();
     }
 
