@@ -154,7 +154,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     }
 
     private void reportProgress(int value) {
-        setActionBarProgress(value);
+        if (status != IDLE) setActionBarProgress(value);
         if (value < 0) builder.setProgress(0, 0, true);
         else builder.setProgress(getActionBarProgressMax(), value, false);
     }
@@ -348,6 +348,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
 
     @Override
     public void onDestroy() {
+        stopSynthesis();
         TtsEngineManager.engines.onDestroy();
         super.onDestroy();
     }

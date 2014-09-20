@@ -2,7 +2,6 @@ package tk.mygod.app;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -40,13 +39,6 @@ public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlo
         float y = decorView.findViewById(android.R.id.content).getY() - getResources().getDisplayMetrics().density * 4;
         progressBar.setY(y);
         butteryProgressBar.setY(y);
-        if (Build.VERSION.SDK_INT < 16) {
-            progressBar.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-            butteryProgressBar.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-        } else {
-            progressBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            butteryProgressBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        }
     }
 
     public ProgressBar getProgressBar() { return progressBar; }
