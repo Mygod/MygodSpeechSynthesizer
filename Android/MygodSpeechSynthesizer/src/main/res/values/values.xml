@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="material_purple_300">#BA68C8</color>
+    <color name="material_purple_500">#9C27B0</color>
+    <color name="material_purple_700">#7B1FA2</color>
+    <style name="Theme.Material.Purple" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/material_purple_500</item>
+        <item name="colorPrimaryDark">@color/material_purple_700</item>
+        <item name="colorAccent">@color/material_purple_300</item>
+        <item name="colorButtonNormal">@color/material_purple_500</item>
+    </style>
+</resources>

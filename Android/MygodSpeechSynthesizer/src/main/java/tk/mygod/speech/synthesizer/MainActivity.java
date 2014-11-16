@@ -13,20 +13,25 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.melnykov.fab.FloatingActionButton;
 import tk.mygod.CurrentApp;
 import tk.mygod.app.ProgressActivity;
 import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
+import tk.mygod.widget.ObservableScrollView;
+import tk.mygod.widget.ScrollViewListener;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -41,7 +46,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private EditText inputText;
     private Menu menu;
-    private MenuItem synthesizeMenu;
+    private FloatingActionButton fab;
     private int status;
     private boolean inBackground;
     private static final InputFilter[] noFilters = new InputFilter[0],
@@ -75,9 +80,18 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        (inputText = (EditText)findViewById(R.id.input_text))
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        ((ObservableScrollView) findViewById(R.id.scroller)).setScrollViewListener(new ScrollViewListener() {
+            @Override
+            public void onScrollChanged(ObservableScrollView scrollView, int x, int y, int oldx, int oldy) {
+                if (y > oldy) fab.hide();
+                else if (y < oldy) fab.show();
+            }
+        });
+        (inputText = (EditText) findViewById(R.id.input_text))
                 .setText(String.format(getText(R.string.input_text_default).toString(), CurrentApp.getVersionName(this),
-                                       SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
+                        SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
         TtsEngineManager.init(this, this);
         Intent intent = new Intent();
         intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
@@ -149,7 +163,6 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(this.menu = menu);
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        synthesizeMenu = menu.findItem(R.id.action_synthesize);
         return true;
     }
 
@@ -168,8 +181,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
         TtsEngineManager.engines.selectedEngine
                 .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
-        synthesizeMenu.setIcon(R.drawable.ic_action_mic_muted);
-        synthesizeMenu.setTitle(R.string.action_stop);
+        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_mic_muted));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, false);
         inputText.setFilters(readonlyFilters);
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
@@ -180,8 +192,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     }
     public void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
-        synthesizeMenu.setIcon(R.drawable.ic_action_mic);
-        synthesizeMenu.setTitle(R.string.action_synthesize);
+        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_mic));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, true);
         inputText.setFilters(noFilters);
         setActionBarProgress(null);
@@ -205,24 +216,25 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         return displayName == null ? FileUtils.getTempFileName() : displayName;
     }
 
+    public void synthesize(View view) {
+        if (status == IDLE) {
+            try {
+                status = SPEAKING;
+                startSynthesis();
+                TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
+                TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString(), getStartOffset());
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, String.format(getString(R.string.synthesis_error),
+                        e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
+                stopSynthesis();
+            }
+        } else stopSynthesis();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_synthesize:
-                if (status == IDLE) {
-                    try {
-                        status = SPEAKING;
-                        startSynthesis();
-                        TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                        TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString(), getStartOffset());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, String.format(getString(R.string.synthesis_error),
-                                e.getLocalizedMessage()), Toast.LENGTH_LONG).show();
-                        stopSynthesis();
-                    }
-                } else stopSynthesis();
-                return true;
             case R.id.action_synthesize_to_file: {
                 String fileName = getSaveFileName() + '.' + MimeTypeMap.getSingleton()
                         .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
@@ -341,7 +353,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
             public void run() {
                 if (start < end)    // not failing on an empty string
                     Toast.makeText(MainActivity.this, String.format(getString(R.string.synthesis_error),
-                                   inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
+                            inputText.getText().toString().substring(start, end)), Toast.LENGTH_LONG).show();
             }
         });
     }

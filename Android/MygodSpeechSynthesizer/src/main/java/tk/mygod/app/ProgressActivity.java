@@ -1,19 +1,21 @@
 package tk.mygod.app;
 
-import android.app.ActionBar;
-import android.app.Activity;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import tk.mygod.speech.synthesizer.R;
 import tk.mygod.widget.ButteryProgressBar;
 
 /**
  * @author   Mygod
  * Based on: http://stackoverflow.com/a/15073680/2245107
  */
-public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlobalLayoutListener {
+public class ProgressActivity extends ActionBarActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     private FrameLayout decorView;
     private ProgressBar progressBar;
     private ButteryProgressBar butteryProgressBar;
@@ -21,22 +23,22 @@ public class ProgressActivity extends Activity implements ViewTreeObserver.OnGlo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        (progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal))
-                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
-                        (int) (getResources().getDisplayMetrics().density * 8)));
-        (butteryProgressBar = new ButteryProgressBar(this))
-                .setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
-                        (int) (getResources().getDisplayMetrics().density * 8)));
+        ActionBar.LayoutParams params = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
+                (int) (getResources().getDisplayMetrics().density * 8));
+        (progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)).setLayoutParams(params);
+        (butteryProgressBar = new ButteryProgressBar(this)).setLayoutParams(params);
         (decorView = (FrameLayout) getWindow().getDecorView()).addView(progressBar);
         decorView.addView(butteryProgressBar);
-        progressBar.getViewTreeObserver().addOnGlobalLayoutListener(this);
-        butteryProgressBar.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        decorView.getViewTreeObserver().addOnGlobalLayoutListener(this);
         setActionBarProgress(null);
     }
 
     @Override
     public void onGlobalLayout() {
-        float y = decorView.findViewById(android.R.id.content).getY() - getResources().getDisplayMetrics().density * 4;
+        Rect rect = new Rect();
+        decorView.getWindowVisibleDisplayFrame(rect);
+        float y = rect.top + decorView.findViewById(R.id.content).getY() -
+                getResources().getDisplayMetrics().density * 4;
         progressBar.setY(y);
         butteryProgressBar.setY(y);
     }

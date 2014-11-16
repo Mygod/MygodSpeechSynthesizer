@@ -1,7 +1,5 @@
 package tk.mygod.app;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,12 +7,15 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.*;
+import com.melnykov.fab.FloatingActionButton;
 import tk.mygod.speech.synthesizer.R;
 
 import java.io.File;
@@ -23,21 +24,21 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public final class SaveFileActivity extends Activity implements AdapterView.OnItemClickListener, Comparator<File> {
+public final class SaveFileActivity extends ActionBarActivity
+        implements AdapterView.OnItemClickListener, Comparator<File> {
     public static final String EXTRA_CURRENT_DIRECTORY = "tk.mygod.intent.extra.CurrentDirectory";
     private String mimeType;
     private File currentDirectory;
     private ArrayList<File> directoryList;
     private EditText fileName;
     private ListView directoryView;
-    private ActionBar actionBar;
 
     private void setCurrentDirectory(File directory) {
         if (directory != null) {
             currentDirectory = directory;
             String path = currentDirectory.getAbsolutePath();
             if (currentDirectory.getParent() != null) path += "/";
-            actionBar.setSubtitle(path);
+            getSupportActionBar().setSubtitle(path);
         }
         directoryList = new ArrayList<File>();
         File[] files = currentDirectory.listFiles();
@@ -49,7 +50,7 @@ public final class SaveFileActivity extends Activity implements AdapterView.OnIt
         directoryView.setAdapter(new DirectoryDisplay(this, directoryList));
     }
 
-    private void submit() {
+    public void submit(View view) {
         if (new File(currentDirectory, fileName.getText().toString()).exists())
             new AlertDialog.Builder(this).setTitle(R.string.dialog_overwrite_confirm_title)
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -72,8 +73,10 @@ public final class SaveFileActivity extends Activity implements AdapterView.OnIt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_file);
-        if ((actionBar = getActionBar()) != null) actionBar.setDisplayHomeAsUpEnabled(true);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         (directoryView = (ListView) findViewById(R.id.directory_view)).setOnItemClickListener(this);
+        // ((FloatingActionButton) findViewById(R.id.fab)).attachToListView(directoryView);
         fileName = (EditText) findViewById(R.id.file_name);
         Intent intent = getIntent();
         mimeType = intent.getType();
@@ -107,9 +110,6 @@ public final class SaveFileActivity extends Activity implements AdapterView.OnIt
                             }
                         }).setNegativeButton(android.R.string.cancel, null).show();
                 return true;
-            case R.id.action_accept:
-                submit();
-                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -120,16 +120,15 @@ public final class SaveFileActivity extends Activity implements AdapterView.OnIt
         File selected = directoryList.get(position);
         if (selected.isFile()) {
             fileName.setText(selected.getName());
-            submit();
+            submit(null);
         }
         else setCurrentDirectory("..".equals(selected.getName()) ? currentDirectory.getParentFile() : selected);
     }
 
     @Override
     public int compare(File lhs, File rhs) {
-        int result = Boolean.compare(lhs.isFile(), rhs.isFile());
-        return result != 0 ? result
-                : (result = lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase())) == 0
+        int result = ((Boolean) lhs.isFile()).compareTo(rhs.isFile());
+        return result == 0 && (result = lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase())) == 0
                 ? lhs.getName().compareTo(rhs.getName()) : result;
     }
 

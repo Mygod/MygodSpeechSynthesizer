@@ -1,7 +1,5 @@
 package tk.mygod.speech.synthesizer;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,6 +8,8 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import tk.mygod.preference.IconListPreference;
 import tk.mygod.speech.tts.TtsEngine;
@@ -21,13 +21,13 @@ import java.util.Set;
  * Project: MygodSpeechSynthesizer
  * @author  Mygod
  */
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActionBar actionBar = getActionBar();
-        if (actionBar != null) actionBar.setDisplayHomeAsUpEnabled(true);
-        getFragmentManager().beginTransaction().replace(android.R.id.content, new TtsSettingsFragment()).commit();
+        setContentView(R.layout.activity_settings);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
