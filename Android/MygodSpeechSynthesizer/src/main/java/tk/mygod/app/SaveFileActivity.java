@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.*;
-import com.melnykov.fab.FloatingActionButton;
 import tk.mygod.speech.synthesizer.R;
 
 import java.io.File;
@@ -76,7 +75,6 @@ public final class SaveFileActivity extends ActionBarActivity
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         (directoryView = (ListView) findViewById(R.id.directory_view)).setOnItemClickListener(this);
-        // ((FloatingActionButton) findViewById(R.id.fab)).attachToListView(directoryView);
         fileName = (EditText) findViewById(R.id.file_name);
         Intent intent = getIntent();
         mimeType = intent.getType();

@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.GradientDrawable;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.Interpolator;
@@ -34,7 +35,6 @@ public class ButteryProgressBar extends View {
 
     private final Paint mPaint = new Paint();
 
-    private final int mBarColor;
     private final int mSolidBarHeight;
     private final int mSolidBarDetentWidth;
 
@@ -71,6 +71,7 @@ public class ButteryProgressBar extends View {
         mDensity = c.getResources().getDisplayMetrics().density;
 
         final TypedArray ta = c.obtainStyledAttributes(attrs, R.styleable.ButteryProgressBar);
+        int mBarColor;
         try {
             mBarColor = ta.getColor(R.styleable.ButteryProgressBar_barColor,
                     c.getResources().getColor(android.R.color.holo_blue_light));
@@ -146,7 +147,7 @@ public class ButteryProgressBar extends View {
     }
 
     @Override
-    protected void onVisibilityChanged(View changedView, int visibility) {
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
         super.onVisibilityChanged(changedView, visibility);
 
         if (visibility == VISIBLE) {

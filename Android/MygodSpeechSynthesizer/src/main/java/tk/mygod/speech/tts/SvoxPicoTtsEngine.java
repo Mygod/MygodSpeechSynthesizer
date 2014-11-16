@@ -31,7 +31,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
     private String currentText;
-    private int initStatus, startOffset;
+    private int startOffset;
 
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
@@ -52,7 +52,6 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
      */
     @Override
     public void onInit(int status) {
-        initStatus = status;
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
         for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);

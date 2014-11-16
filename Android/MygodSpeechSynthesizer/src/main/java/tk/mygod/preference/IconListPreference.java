@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.preference.ListPreference;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,7 +55,7 @@ public class IconListPreference extends ListPreference {
     }
 
     @Override
-    protected void onPrepareDialogBuilder(Builder builder) {
+    protected void onPrepareDialogBuilder(@NonNull Builder builder) {
         CharSequence[] entries = getEntries(), entryValues = getEntryValues();
         if (entries.length != entryValues.length) throw new IllegalStateException
                 ("ListPreference requires an entries array and an entryValues array which are both the same length");
