@@ -96,11 +96,10 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         Intent intent = new Intent();
         intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
         builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
-                .setAutoCancel(true).setSmallIcon(R.drawable.ic_notification)
+                .setAutoCancel(true).setSmallIcon(R.drawable.ic_communication_message)
                 .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
-                        PendingIntent.FLAG_UPDATE_CURRENT))
-                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0))
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_notification));
+                                  PendingIntent.FLAG_UPDATE_CURRENT))
+                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0));
         intent = getIntent();
         if (intent.getData() != null) onNewIntent(intent);
     }
@@ -181,7 +180,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
                 .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
         TtsEngineManager.engines.selectedEngine
                 .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
-        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_mic_muted));
+        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_av_mic));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, false);
         inputText.setFilters(readonlyFilters);
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
@@ -192,7 +191,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
     }
     public void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
-        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_mic));
+        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_av_mic_none));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, true);
         inputText.setFilters(noFilters);
         setActionBarProgress(null);

@@ -142,7 +142,7 @@ public final class SaveFileActivity extends ActionBarActivity
             if (selected != null) {
                 ((TextView) convertView.findViewById(android.R.id.text1)).setText(selected.getName());
                 ((ImageView) convertView.findViewById(android.R.id.icon)).setImageResource
-                        (selected.isFile() ? R.drawable.ic_doc_generic_am : R.drawable.ic_root_folder_am);
+                        (selected.isFile() ? R.drawable.ic_doc_generic_am_alpha : R.drawable.ic_doc_folder_alpha);
             }
             return convertView;
         }
