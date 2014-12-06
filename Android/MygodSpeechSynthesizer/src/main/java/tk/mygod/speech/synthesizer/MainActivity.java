@@ -6,13 +6,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -22,10 +22,10 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import com.melnykov.fab.FloatingActionButton;
 import tk.mygod.CurrentApp;
-import tk.mygod.app.ProgressActivity;
 import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.FileUtils;
@@ -40,10 +40,11 @@ import java.text.SimpleDateFormat;
  * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
-public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
+public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
         TtsEngineManager.OnSelectedEngineChangingListener {
     private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
+    private ProgressBar progressBar;
     private EditText inputText;
     private Menu menu;
     private FloatingActionButton fab;
@@ -81,6 +82,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         ((ObservableScrollView) findViewById(R.id.scroller)).setScrollViewListener(new ScrollViewListener() {
             @Override
@@ -98,7 +100,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
                 .setAutoCancel(true).setSmallIcon(R.drawable.ic_communication_message)
                 .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
-                                  PendingIntent.FLAG_UPDATE_CURRENT))
+                        PendingIntent.FLAG_UPDATE_CURRENT))
                 .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0));
         intent = getIntent();
         if (intent.getData() != null) onNewIntent(intent);
@@ -165,12 +167,6 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         return true;
     }
 
-    private void reportProgress(int value) {
-        if (status != IDLE) setActionBarProgress(value);
-        if (value < 0) builder.setProgress(0, 0, true);
-        else builder.setProgress(getActionBarProgressMax(), value, false);
-    }
-
     private void startSynthesis() {
         TtsEngineManager.engines.selectedEngine
                 .setPitch(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pitch", "1")));
@@ -185,16 +181,19 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         inputText.setFilters(readonlyFilters);
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(inputText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        setActionBarProgressMax(inputText.getText().length());
-        setActionBarSecondaryProgress(0);
-        reportProgress(-1); // initializing
+        builder.setProgress(0, 0, true);
+        progressBar.setIndeterminate(true);
+        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setMax(inputText.getText().length());
+        progressBar.setProgress(0);
+        progressBar.setSecondaryProgress(0);
     }
     public void stopSynthesis() {
         TtsEngineManager.engines.selectedEngine.stop();
         fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_av_mic_none));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, true);
         inputText.setFilters(noFilters);
-        setActionBarProgress(null);
+        progressBar.setVisibility(View.INVISIBLE);
         if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
         status = IDLE;
         cancelNotification();
@@ -328,7 +327,7 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setActionBarSecondaryProgress(end);
+                progressBar.setSecondaryProgress(end);
             }
         });
     }
@@ -337,7 +336,11 @@ public class MainActivity extends ProgressActivity implements TtsEngine.OnTtsSyn
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                reportProgress(start);
+                if (status != IDLE) {
+                    progressBar.setProgress(start);
+                    progressBar.setIndeterminate(false);
+                }
+                builder.setProgress(progressBar.getMax(), start, false);
                 inputText.setSelection(start, end);
                 inputText.moveCursorToVisibleOffset();
                 if (start < inputText.getText().length()) showNotification(inputText.getText().subSequence(start, end));

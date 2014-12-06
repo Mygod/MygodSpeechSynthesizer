@@ -43,12 +43,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         setListener();
     }
     private Set<Locale> supportedLanguages;
-    /**
-     * Called to signal the completion of the TextToSpeech engine initialization.
-     *
-     * @param status {@link android.speech.tts.TextToSpeech#SUCCESS}
-     * or {@link android.speech.tts.TextToSpeech#ERROR}.
-     */
+
     @Override
     public void onInit(int status) {
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());

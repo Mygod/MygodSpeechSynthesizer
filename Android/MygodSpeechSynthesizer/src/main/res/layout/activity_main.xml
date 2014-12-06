@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
-              xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent" android:layout_height="match_parent"
-              tools:context="tk.mygod.speech.synthesizer.MainActivity">
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent" android:layout_height="match_parent">
     <include layout="@layout/toolbar" />
     <FrameLayout android:id="@+id/content" android:layout_width="match_parent" android:layout_height="match_parent">
         <tk.mygod.widget.ObservableScrollView android:id="@+id/scroller" android:fillViewport="true"
@@ -13,6 +12,9 @@
                       android:paddingBottom="82dp" android:inputType="textMultiLine"
                       android:imeOptions="flagNoFullscreen"/>
         </tk.mygod.widget.ObservableScrollView>
+        <ProgressBar android:id="@+id/progressBar" style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                     android:layout_width="match_parent" android:layout_height="wrap_content"
+                     android:visibility="invisible" android:layout_marginTop="-8dp" />
         <com.melnykov.fab.FloatingActionButton android:id="@+id/fab" android:layout_gravity="end|bottom|right"
                                                android:layout_width="wrap_content" android:layout_height="wrap_content"
                                                android:src="@drawable/ic_av_mic_none" android:onClick="synthesize"
