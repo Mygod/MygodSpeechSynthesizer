@@ -26,7 +26,7 @@ import java.util.concurrent.Semaphore;
  * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
-public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
+public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
         @Override
         public int compare(TtsVoice lhs, TtsVoice rhs) {
@@ -110,13 +110,12 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
     @Override
     public TtsVoice getVoice() {
-        if (Build.VERSION.SDK_INT < 21) return super.getVoice();
-        try {
+        if (Build.VERSION.SDK_INT >= 21) try {
             return new VoiceWrapper(tts.getVoice());
         } catch (Exception exc) {
             exc.printStackTrace();
-            return super.getVoice();
         }
+        return new LocaleVoice(getLanguage());
     }
     @Override
     public boolean setVoice(TtsVoice voice) {
@@ -247,7 +246,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    static class VoiceWrapper extends TtsVoice {
+    static final class VoiceWrapper extends TtsVoice {
         private Voice voice;
 
         VoiceWrapper(Voice voice) {
@@ -289,7 +288,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         }
     }
     @SuppressWarnings("deprecation")
-    class LocaleVoice extends LocaleWrapper {
+    final class LocaleVoice extends LocaleWrapper {
         LocaleVoice(Locale loc) {
             super(loc);
         }
@@ -309,7 +308,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     private SpeakTask speakTask;
     private SynthesizeToStreamTask synthesizeToStreamTask;
 
-    private class SpeakTask extends AsyncTask<Void, Void, Void> {
+    private final class SpeakTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
             try {
@@ -339,7 +338,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         }
     }
 
-    private class SynthesizeToStreamTask extends AsyncTask<Object, Void, Void> {
+    private final class SynthesizeToStreamTask extends AsyncTask<Object, Void, Void> {
         private FileOutputStream output;
         private final LinkedBlockingDeque<String> mergeQueue = new LinkedBlockingDeque<String>();
         private final HashMap<String, File> pathMap = new HashMap<String, File>();

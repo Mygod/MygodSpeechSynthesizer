@@ -9,5 +9,6 @@
         <item name="colorPrimaryDark">@color/material_purple_700</item>
         <item name="colorAccent">@color/material_purple_300</item>
         <item name="colorButtonNormal">@color/material_purple_500</item>
+        <item name="android:alertDialogTheme">@style/Theme.Material.Purple.AlertDialog</item>
     </style>
 </resources>

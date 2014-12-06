@@ -7,10 +7,15 @@ import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.TextAppearanceSpan;
 import android.view.MenuItem;
 import tk.mygod.preference.IconListPreference;
+import tk.mygod.speech.tts.LocaleWrapper;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.speech.tts.TtsVoice;
 
@@ -41,8 +46,8 @@ public class SettingsActivity extends ActionBarActivity {
     }
 
     public static class TtsSettingsFragment extends PreferenceFragment {
-        private IconListPreference engine;
-        private ListPreference lang, voice, start;
+        private IconListPreference engine, voice;
+        private ListPreference lang, start;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -71,13 +76,14 @@ public class SettingsActivity extends ActionBarActivity {
                             return true;
                         }
                     });
-            (voice = (ListPreference) findPreference("engine.voice"))
+            (voice = (IconListPreference) findPreference("engine.voice"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectVoice(newValue.toString());
                             voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice()
                                     .getDisplayName(TtsSettingsFragment.this.getActivity()));
+                            voice.setValue((String) newValue);  // yet another temporary hack
                             return false;
                         }
                     });
@@ -137,7 +143,26 @@ public class SettingsActivity extends ActionBarActivity {
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             int i = 0;
             for (TtsVoice voice : voices) {
-                names[i] = voice.getDisplayName(getActivity());
+                SpannableStringBuilder builder = new SpannableStringBuilder();
+                builder.append(voice.getDisplayName(getActivity()));
+                int start = builder.length();
+                Set<String> features = voice.getFeatures();
+                if (!(voice instanceof LocaleWrapper)) builder.append(String.format("\nName: %s\nQuality: %d (higher = better)\nLatency: %d (lower = better)", voice.getName(), voice.getQuality(), voice.getLatency()));
+                boolean first = true;
+                for (String feature : features)
+                    if (!TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature) &&
+                            !TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)) {
+                        if (first) {
+                            first = false;
+                            builder.append("\nFeatures: ");
+                        } else builder.append(", ");
+                        builder.append(feature);
+                    }
+                if (voice.isNetworkConnectionRequired()) builder.append("\nNetwork connection required");
+                if (builder.length() != start) builder.setSpan(new TextAppearanceSpan(getActivity(),
+                                android.R.style.TextAppearance_Small), start + 1, builder.length(),
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                names[i] = builder;
                 ids[i++] = voice.getName();
             }
             voice.setEntries(names);

@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 
-class LocaleWrapper extends TtsVoice {
+public class LocaleWrapper extends TtsVoice {
     protected Locale locale;
 
     LocaleWrapper(Locale loc) {

@@ -63,22 +63,20 @@ public class IconListPreference extends ListPreference {
         if (mEntryIcons != null && entries.length != mEntryIcons.length) throw new IllegalStateException
                 ("IconListPreference requires the icons entries array be the same length than entries or null");
         IconListPreferenceScreenAdapter iconListPreferenceAdapter = new IconListPreferenceScreenAdapter();
-        if (mEntryIcons != null) {
-            String selectedValue = getPreferenceManager().getSharedPreferences().getString(mKey, "");
-            for (int i = 0; i < entryValues.length; i++) {
-                if (selectedValue.compareTo((String) entryValues[i]) == 0) {
-                    selectedEntry = i;
-                    break;
-                }
+        String selectedValue = getPreferenceManager().getSharedPreferences().getString(mKey, "");
+        for (int i = 0; i < entryValues.length; i++) {
+            if (selectedValue.compareTo((String) entryValues[i]) == 0) {
+                selectedEntry = i;
+                break;
             }
-            builder.setAdapter(iconListPreferenceAdapter, null);
         }
+        builder.setAdapter(iconListPreferenceAdapter, null);
         super.onPrepareDialogBuilder(builder);
     }
 
     private class IconListPreferenceScreenAdapter extends BaseAdapter {
         public int getCount() {
-            return mEntryIcons.length;
+            return getEntries().length;
         }
 
         class CustomHolder {
