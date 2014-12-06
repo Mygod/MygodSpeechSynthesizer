@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.preference.ListPreference;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
@@ -102,7 +103,8 @@ public class IconListPreference extends ListPreference {
 
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) convertView = mInflater.inflate(Resources.getSystem()
-                            .getIdentifier("select_dialog_singlechoice_holo", "layout", "android"), parent, false);
+                            .getIdentifier(Build.VERSION.SDK_INT >= 21 ? "select_dialog_singlechoice_material"
+                                    : "select_dialog_singlechoice_holo", "layout", "android"), parent, false);
             CustomHolder holder;
             final int p = position;
             holder = new CustomHolder(convertView, position);
