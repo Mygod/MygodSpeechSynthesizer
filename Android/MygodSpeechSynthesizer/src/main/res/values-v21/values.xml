@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="flatButtonText">@color/material_purple_500</color>
+    <style name="Theme.Material.Purple" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:alertDialogTheme">@style/Theme.Material.Purple.AlertDialog</item>
+    </style>
     <style name="Theme.Material.Purple.AlertDialog" parent="android:Theme.Material.Light.Dialog.Alert">
         <item name="android:colorPrimary">@color/material_purple_500</item>
         <item name="android:colorPrimaryDark">@color/material_purple_700</item>
