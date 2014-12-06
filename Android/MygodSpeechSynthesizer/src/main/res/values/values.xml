@@ -4,11 +4,12 @@
     <color name="material_purple_500">#9C27B0</color>
     <color name="material_purple_700">#7B1FA2</color>
     <color name="flatButtonText">#000</color>
-    <style name="Theme.Material.Purple" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.Material.PurpleBase" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/material_purple_500</item>
         <item name="colorPrimaryDark">@color/material_purple_700</item>
         <item name="colorAccent">@color/material_purple_300</item>
         <item name="colorButtonNormal">@color/material_purple_500</item>
         <item name="android:navigationBarColor">@color/material_purple_700</item>
     </style>
+    <style name="Theme.Material.Purple" parent="Theme.Material.PurpleBase" />
 </resources>
