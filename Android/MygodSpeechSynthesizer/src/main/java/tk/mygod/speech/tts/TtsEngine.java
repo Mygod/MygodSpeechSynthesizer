@@ -7,10 +7,7 @@ import android.util.Pair;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Project: Mygod Speech Synthesizer
@@ -22,7 +19,21 @@ public abstract class TtsEngine {
     public boolean setLanguage(Locale loc) {
         return false;
     }
-    public abstract Set<String> getFeatures(Locale locale);
+
+    public Set<TtsVoice> getVoices() {
+        HashSet<TtsVoice> result = new HashSet<TtsVoice>();
+        result.add(getVoice());
+        return result;
+    }
+    public TtsVoice getVoice() {
+        return new LocaleWrapper(getLanguage());
+    }
+    public boolean setVoice(TtsVoice voice) {
+        return voice instanceof LocaleWrapper && voice.getLocale() == getLanguage();
+    }
+    public boolean setVoice(String voice) {
+        return "Default".equals(voice);
+    }
 
     private Drawable icon;
     public String getID() {

@@ -1,11 +1,13 @@
 package tk.mygod.speech.tts;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.util.Pair;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
@@ -25,16 +27,26 @@ import java.util.concurrent.Semaphore;
  * @author  Mygod
  */
 public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
+    private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
+        @Override
+        public int compare(TtsVoice lhs, TtsVoice rhs) {
+            String l = lhs.getDisplayName(context), r = rhs.getDisplayName(context);
+            int result = l.compareToIgnoreCase(r);
+            return result == 0 ? l.compareTo(r) : result;
+        }
+    };
     private final Semaphore initLock = new Semaphore(1);
     protected TextToSpeech tts;
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
     private String currentText;
+    private Locale lastLanguage;
+    private Context context;
     private int startOffset;
 
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
-        tts = new TextToSpeech(context, this);
+        tts = new TextToSpeech(this.context = context, this);
         setListener();
     }
     public SvoxPicoTtsEngine(Context context, TextToSpeech.EngineInfo info) {
@@ -56,6 +68,8 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         } catch (Exception e) { // god damn Samsung TTS
             e.printStackTrace();
         }
+        setLanguage(lastLanguage == null ? Build.VERSION.SDK_INT >= 18
+                ? tts.getDefaultLanguage() : context.getResources().getConfiguration().locale : lastLanguage);
         initLock.release();
     }
     @Override
@@ -71,16 +85,61 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     @Override
     public boolean setLanguage(Locale loc) {
         try {
-            tts.setLanguage(loc);
+            int test = tts.isLanguageAvailable(loc);
+            if (test != TextToSpeech.LANG_AVAILABLE && test != TextToSpeech.LANG_COUNTRY_AVAILABLE &&
+                test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE) return false;
+            tts.setLanguage(lastLanguage = loc);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+
     @Override
-    public Set<String> getFeatures(Locale locale) {
-        return tts.getFeatures(locale);
+    public Set<TtsVoice> getVoices() {
+        if (Build.VERSION.SDK_INT < 21) return super.getVoices();
+        try {
+            TreeSet<TtsVoice> voices = new TreeSet<TtsVoice>(voiceComparator);
+            for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
+            return voices;
+        } catch (Exception exc) {
+            exc.printStackTrace();
+            return super.getVoices();
+        }
+    }
+    @Override
+    public TtsVoice getVoice() {
+        if (Build.VERSION.SDK_INT < 21) return super.getVoice();
+        try {
+            return new VoiceWrapper(tts.getVoice());
+        } catch (Exception exc) {
+            exc.printStackTrace();
+            return super.getVoice();
+        }
+    }
+    @Override
+    public boolean setVoice(TtsVoice voice) {
+        if (Build.VERSION.SDK_INT >= 21 && voice instanceof VoiceWrapper) try {
+            tts.setVoice(((VoiceWrapper) voice).voice);
+            return true;
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
+        return super.setVoice(voice);
+    }
+    @Override
+    public boolean setVoice(String voiceName) {
+        if (Build.VERSION.SDK_INT >= 21) try {
+            for (Voice voice : tts.getVoices()) if (voice.getName().equals(voiceName)) {
+                tts.setVoice(voice);
+                return true;
+            }
+            return false;
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
+        return super.setVoice(voiceName);
     }
 
     @Override
@@ -185,6 +244,66 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     @Override
     protected int getMaxLength() {
         return Build.VERSION.SDK_INT >= 18 ? TextToSpeech.getMaxSpeechInputLength() : 4000;  // fallback to default
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    static class VoiceWrapper extends TtsVoice {
+        private Voice voice;
+
+        VoiceWrapper(Voice voice) {
+            this.voice = voice;
+        }
+
+        @Override
+        public Set<String> getFeatures() {
+            return voice.getFeatures();
+        }
+        @Override
+        public int getLatency() {
+            return voice.getLatency();
+        }
+        @Override
+        public Locale getLocale() {
+            return voice.getLocale();
+        }
+        @Override
+        public String getName() {
+            return voice.getName();
+        }
+        @Override
+        public int getQuality() {
+            return voice.getQuality();
+        }
+        @Override
+        public boolean isNetworkConnectionRequired() {
+            return voice.isNetworkConnectionRequired();
+        }
+        @Override
+        public String getDisplayName(Context context) {
+            return String.format("%s (%s)", voice.getName(), voice.getLocale().getDisplayName());
+        }
+
+        @Override
+        public String toString() {
+            return voice.getName();
+        }
+    }
+    @SuppressWarnings("deprecation")
+    class LocaleVoice extends LocaleWrapper {
+        LocaleVoice(Locale loc) {
+            super(loc);
+        }
+
+        @Override
+        public Set<String> getFeatures() {
+            return tts.getFeatures(locale);
+        }
+        @Override
+        public boolean isNetworkConnectionRequired() {
+            Set<String> features = getFeatures();
+            return features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS) &&
+                    !features.contains(TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS);
+        }
     }
 
     private SpeakTask speakTask;

@@ -20,6 +20,8 @@
     <string name="settings_engines_languages">引擎与语言</string>
     <string name="settings_preferred_engine">使用引擎</string>
     <string name="settings_language">语言</string>
+    <string name="settings_voice">声音</string>
+    <string name="settings_voice_default">默认</string>
     <string name="settings_features">支持功能</string>
     <string name="settings_features_none">未知</string>
     <string name="settings_features_network">在线</string>

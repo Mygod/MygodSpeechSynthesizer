@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.speech.tts.TextToSpeech;
 import android.util.Pair;
 import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
@@ -25,7 +24,6 @@ import java.util.concurrent.Semaphore;
  */
 public class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
-    private static Set<String> supportedFeatures;
     private String language = "en", currentText;
     private int startOffset;
 
@@ -36,8 +34,6 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                 "de", "el", "ht", "hi", "hu", "is", "id", "it", "ja", "la", "lv", "mk", "no", "pl", "pt", "ro", "ru",
                 "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" })
             supportedLanguages.add(LocaleUtils.parseLocale(code));
-        supportedFeatures = new HashSet<String>(1);
-        supportedFeatures.add(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS);
     }
 
     @Override
@@ -56,10 +52,6 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
             return true;
         }
         return false;
-    }
-    @Override
-    public Set<String> getFeatures(Locale locale) {
-        return supportedFeatures;
     }
 
     @Override
