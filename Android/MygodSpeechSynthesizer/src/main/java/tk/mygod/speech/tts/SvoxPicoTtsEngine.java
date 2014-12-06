@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.text.TextUtils;
 import android.util.Pair;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
@@ -55,10 +54,10 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
         for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);
-            if (test == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE ||
-                    TextUtils.isEmpty(locale.getVariant()) && (test == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
-                            TextUtils.isEmpty(locale.getCountry()) && test == TextToSpeech.LANG_AVAILABLE))
-                supportedLanguages.add(locale);
+            if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE && test != TextToSpeech.LANG_COUNTRY_AVAILABLE &&
+                test != TextToSpeech.LANG_AVAILABLE) continue;
+            tts.setLanguage(locale);
+            supportedLanguages.add(tts.getLanguage());
         } catch (Exception e) { // god damn Samsung TTS
             e.printStackTrace();
         }
@@ -77,10 +76,6 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
     @Override
     public boolean setLanguage(Locale loc) {
         try {
-            int test = tts.isLanguageAvailable(loc);
-            if (test == TextToSpeech.LANG_AVAILABLE) loc = new Locale(loc.getLanguage());
-            else if (test == TextToSpeech.LANG_COUNTRY_AVAILABLE) loc = new Locale(loc.getLanguage(), loc.getCountry());
-            else if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE) return false;
             tts.setLanguage(loc);
             return true;
         } catch (Exception e) {
