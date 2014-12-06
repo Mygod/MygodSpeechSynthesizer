@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -17,12 +16,14 @@ import java.util.Set;
  * @author  Mygod
  */
 public abstract class TtsEngine {
-    public abstract Set<Locale> getSupportedLanguages();
-    public abstract Locale getLanguage();
-    public boolean setLanguage(Locale loc) {
+    public abstract Set<TtsVoice> getVoices();
+    public abstract TtsVoice getVoice();
+    public boolean setVoice(TtsVoice voice) {
         return false;
     }
-    public abstract Set<String> getFeatures(Locale locale);
+    public boolean setVoice(String name) {
+        return false;
+    }
 
     private Drawable icon;
     public String getID() {

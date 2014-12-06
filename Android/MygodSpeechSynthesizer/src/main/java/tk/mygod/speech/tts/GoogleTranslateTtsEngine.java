@@ -5,11 +5,9 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.speech.tts.TextToSpeech;
 import android.util.Pair;
 import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
-import tk.mygod.util.LocaleUtils;
 
 import java.io.*;
 import java.net.URL;
@@ -24,42 +22,45 @@ import java.util.concurrent.Semaphore;
  * @author   Mygod
  */
 public class GoogleTranslateTtsEngine extends TtsEngine {
-    private static Set<Locale> supportedLanguages;
-    private static Set<String> supportedFeatures;
+    private static final Comparator<LocaleWrapper> nameComparator = new Comparator<LocaleWrapper>() {
+        @Override
+        public int compare(LocaleWrapper lhs, LocaleWrapper rhs) {
+            String l = lhs.getName(), r = rhs.getName();
+            int result = l.compareToIgnoreCase(r);
+            return result == 0 && (result = l.compareTo(r)) == 0 ? lhs.toString().compareTo(rhs.toString()) : result;
+        }
+    };
+    private static Set<LocaleWrapper> voices;
     private String language = "en", currentText;
     private int startOffset;
 
     static {
-        supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
+        voices = new TreeSet<LocaleWrapper>(nameComparator);
         for (String code : new String[] {
                 "af", "sq", "ar", "hy", "bs", "ca", "zh-CN", "zh-TW", "hr", "cs", "da", "nl", "en", "eo", "fi", "fr",
                 "de", "el", "ht", "hi", "hu", "is", "id", "it", "ja", "la", "lv", "mk", "no", "pl", "pt", "ro", "ru",
-                "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" })
-            supportedLanguages.add(LocaleUtils.parseLocale(code));
-        supportedFeatures = new HashSet<String>(1);
-        supportedFeatures.add(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS);
+                "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" }) voices.add(new LocaleWrapper(code));
     }
 
     @Override
-    public Set<Locale> getSupportedLanguages() {
-        return supportedLanguages;
+    public Set<TtsVoice> getVoices() {
+        return (Set<TtsVoice>) (Set<?>) voices;
     }
     @Override
-    public Locale getLanguage() {
-        return LocaleUtils.parseLocale(language);
+    public TtsVoice getVoice() {
+        return new LocaleWrapper(language);
     }
     @Override
-    public boolean setLanguage(Locale loc) {
-        String lang = loc.toString().replace('_', '-');
-        if (supportedLanguages.contains(loc)) {
-            language = lang;
+    public boolean setVoice(TtsVoice voice) {
+        if (voice instanceof LocaleWrapper && voices.contains(voice)) {
+            language = voice.toString();
             return true;
         }
         return false;
     }
     @Override
-    public Set<String> getFeatures(Locale locale) {
-        return supportedFeatures;
+    public boolean setVoice(String name) {
+        return setVoice(new LocaleWrapper(name));
     }
 
     @Override

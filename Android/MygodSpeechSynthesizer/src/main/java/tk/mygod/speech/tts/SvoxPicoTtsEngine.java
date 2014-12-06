@@ -1,11 +1,13 @@
 package tk.mygod.speech.tts;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.text.TextUtils;
 import android.util.Pair;
 import tk.mygod.util.FileUtils;
@@ -26,11 +28,21 @@ import java.util.concurrent.Semaphore;
  * @author  Mygod
  */
 public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
+    private static final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
+        @Override
+        public int compare(TtsVoice lhs, TtsVoice rhs) {
+            int result = 0;
+            return Build.VERSION.SDK_INT >= 21 && (result = lhs.getName().compareToIgnoreCase(rhs.getName())) == 0 &&
+                    (result = lhs.getName().compareTo(rhs.getName())) == 0
+                    ? lhs.getLocale().getDisplayName().compareTo(rhs.getLocale().getDisplayName()) : result;
+        }
+    };
+
     private final Semaphore initLock = new Semaphore(1);
     protected TextToSpeech tts;
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
-    private String currentText;
+    private String currentText, voiceName;
     private int startOffset;
 
     public SvoxPicoTtsEngine(final Context context) {
@@ -43,7 +55,7 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         tts = new TextToSpeech(context, this, (engineInfo = info).name);
         setListener();
     }
-    private Set<Locale> supportedLanguages;
+    private Set<TtsVoice> voices;
     /**
      * Called to signal the completion of the TextToSpeech engine initialization.
      *
@@ -52,30 +64,43 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
      */
     @Override
     public void onInit(int status) {
-        supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
-        for (Locale locale : Locale.getAvailableLocales()) try {
+        voices = new TreeSet<TtsVoice>(voiceComparator);
+        if (Build.VERSION.SDK_INT >= 21) try {
+            for (Voice voice : tts.getVoices()) {
+                voices.add(new VoiceWrapper(voice));
+                if (voiceName != null && voiceName.equals(voice.getName())) tts.setVoice(voice);
+            }
+        } catch (NullPointerException exc) {
+            exc.printStackTrace();
+        }
+        else for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);
             if (test == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE ||
                     TextUtils.isEmpty(locale.getVariant()) && (test == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
                             TextUtils.isEmpty(locale.getCountry()) && test == TextToSpeech.LANG_AVAILABLE))
-                supportedLanguages.add(locale);
-        } catch (Exception e) { // god damn Samsung TTS
+                voices.add(new LocaleWrapper(locale));
+        } catch (Exception e) { // god damn stupid Samsung TTS
             e.printStackTrace();
         }
         initLock.release();
     }
     @Override
-    public Set<Locale> getSupportedLanguages() {
+    public Set<TtsVoice> getVoices() {
         initLock.acquireUninterruptibly();
         initLock.release();
-        return supportedLanguages;
+        return voices;
     }
     @Override
-    public Locale getLanguage() {
-        return tts.getLanguage();
+    public TtsVoice getVoice() {
+        try {
+            return Build.VERSION.SDK_INT >= 21 ? new VoiceWrapper(tts.getVoice())
+                                               : new LocaleWrapper(tts.getLanguage());
+        } catch (NullPointerException exc) {
+            exc.printStackTrace();
+            return null;
+        }
     }
-    @Override
-    public boolean setLanguage(Locale loc) {
+    private boolean setLocale(Locale loc) {
         try {
             int test = tts.isLanguageAvailable(loc);
             if (test == TextToSpeech.LANG_AVAILABLE) loc = new Locale(loc.getLanguage());
@@ -89,8 +114,20 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
         }
     }
     @Override
-    public Set<String> getFeatures(Locale locale) {
-        return tts.getFeatures(locale);
+    public boolean setVoice(TtsVoice voice) {
+        if (Build.VERSION.SDK_INT >= 21) {
+            tts.setVoice(((VoiceWrapper) voice).voice);
+            return true;
+        }
+        else return setLocale(voice.getLocale());
+    }
+    @Override
+    public boolean setVoice(String name) {
+        if (Build.VERSION.SDK_INT >= 21) {
+            if (voices == null) voiceName = name;   // lazy init
+            else for (TtsVoice voice : voices) if (name.equals(voice.getName())) return setVoice(voice);
+            return false;
+        } else return setLocale(LocaleUtils.parseLocale(name));
     }
 
     @Override
@@ -199,6 +236,65 @@ public class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitL
 
     private SpeakTask speakTask;
     private SynthesizeToStreamTask synthesizeToStreamTask;
+
+    @SuppressWarnings("deprecation")
+    class LocaleWrapper extends tk.mygod.speech.tts.LocaleWrapper {
+        LocaleWrapper(Locale loc) {
+            super(loc);
+        }
+
+        @Override
+        public Set<String> getFeatures() {
+            return tts.getFeatures(locale);
+        }
+        @Override
+        public boolean isNetworkConnectionRequired() {
+            return !tts.getFeatures(locale).contains(TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    static class VoiceWrapper extends TtsVoice {
+        Voice voice;
+
+        VoiceWrapper(Voice voice) {
+            this.voice = voice;
+        }
+
+        @Override
+        public Set<String> getFeatures() {
+            return voice.getFeatures();
+        }
+        @Override
+        public int getLatency() {
+            return voice.getLatency();
+        }
+        @Override
+        public Locale getLocale() {
+            return voice.getLocale();
+        }
+        @Override
+        public String getName() {
+            return voice.getName();
+        }
+        @Override
+        public int getQuality() {
+            return voice.getQuality();
+        }
+        @Override
+        public boolean isNetworkConnectionRequired() {
+            return voice.isNetworkConnectionRequired();
+        }
+        @Override
+        public String getDisplayName() {
+            return String.format("%s (%s)", voice.getName(), voice.getLocale().getDisplayName());
+        }
+
+        @Override
+        public String toString() {
+            return voice.getName();
+        }
+    }
 
     private class SpeakTask extends AsyncTask<Void, Void, Void> {
         @Override

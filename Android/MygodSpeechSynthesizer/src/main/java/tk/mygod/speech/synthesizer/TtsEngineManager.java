@@ -4,9 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import tk.mygod.speech.tts.AvailableTtsEngines;
 import tk.mygod.speech.tts.TtsEngine;
-import tk.mygod.util.LocaleUtils;
-
-import java.util.Locale;
 
 /**
  * Project: MygodSpeechSynthesizer
@@ -28,33 +25,26 @@ final class TtsEngineManager {
                 .getString("engine", "");
         engines = new AvailableTtsEngines(mainActivity = context);
         editor = pref.edit();
-        selectEngine(engineID, context);
+        selectEngine(engineID);
         onSelectedEngineChangingListener = listener;    // well I don't want it fired right away
     }
 
-    static void selectEngine(String id, Context context) {
+    static void selectEngine(String id) {
         if (onSelectedEngineChangingListener != null) onSelectedEngineChangingListener.onSelectedEngineChanging();
-        if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID(), context);
+        if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID());
         editor.putString("engine", id);
         editor.apply();
-        String engineLang = "engine." + id + ".lang";
-        Locale sourceLang = LocaleUtils.parseLocale(pref.getString(engineLang, ""));
-        if (sourceLang == null) {
-            sourceLang = LocaleUtils.parseLocale(pref.getString("engine.lang", ""));
-            if (sourceLang == null) sourceLang = context.getResources().getConfiguration().locale;
-        }
-        if (!engines.selectedEngine.setLanguage(sourceLang))
-            engines.selectedEngine.setLanguage(context.getResources().getConfiguration().locale);
-        Locale targetLang = engines.selectedEngine.getLanguage();
-        if (targetLang != null && sourceLang != targetLang) selectLanguage(targetLang.toString());
+        String engineVoice = "engine." + id + ".voice", sourceVoice = pref.getString(engineVoice, "");
+        if (sourceVoice == null || "".equals(sourceVoice)) sourceVoice = pref.getString("engine.voice", "");
+        engines.selectedEngine.setVoice(sourceVoice);
     }
 
-    static void selectLanguage(String lang) {
-        selectLanguage(engines.selectedEngine, lang);
+    static void selectVoice(String name) {
+        selectVoice(engines.selectedEngine, name);
     }
-    static void selectLanguage(TtsEngine engine, String lang) {
-        engine.setLanguage(LocaleUtils.parseLocale(lang));
-        editor.putString("engine." + engine.getID() + ".lang", lang);
+    static void selectVoice(TtsEngine engine, String name) {
+        engine.setVoice(name);
+        editor.putString("engine." + engine.getID() + ".voice", name);
         editor.apply();
     }
 

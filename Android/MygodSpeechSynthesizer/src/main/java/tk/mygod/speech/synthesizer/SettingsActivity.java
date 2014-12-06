@@ -13,8 +13,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import tk.mygod.preference.IconListPreference;
 import tk.mygod.speech.tts.TtsEngine;
+import tk.mygod.speech.tts.TtsVoice;
 
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -42,7 +42,7 @@ public class SettingsActivity extends ActionBarActivity {
 
     public static class TtsSettingsFragment extends PreferenceFragment {
         private IconListPreference engine;
-        private ListPreference lang, start;
+        private ListPreference voice, start;
         private Preference features;
 
         @Override
@@ -54,22 +54,22 @@ public class SettingsActivity extends ActionBarActivity {
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectEngine(newValue.toString(), getActivity());
+                            TtsEngineManager.selectEngine(newValue.toString());
                             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
                             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
                             engine.setValue((String) newValue); // temporary hack
-                            updateLanguages();
+                            updateVoices();
                             return true;
                         }
                     });
-            (lang = (ListPreference) findPreference("engine.lang"))
+            (voice = (ListPreference) findPreference("engine.voice"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectLanguage(newValue.toString());
-                            Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
-                            lang.setSummary(locale.getDisplayName());
-                            updateFeatures(locale);
+                            TtsEngineManager.selectVoice(newValue.toString());
+                            TtsVoice v = TtsEngineManager.engines.selectedEngine.getVoice();
+                            voice.setSummary(v.getDisplayName());
+                            updateFeatures(v);
                             return true;
                         }
                     });
@@ -89,7 +89,7 @@ public class SettingsActivity extends ActionBarActivity {
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
-            updateLanguages();
+            updateVoices();
             (start = (ListPreference)findPreference("text.start")).setOnPreferenceChangeListener(
                     new Preference.OnPreferenceChangeListener() {
                         @Override
@@ -107,26 +107,27 @@ public class SettingsActivity extends ActionBarActivity {
             if (forceOld) oldTimeySaveDialog.setEnabled(false);
         }
 
-        private void updateLanguages() {
-            Set<Locale> languages = TtsEngineManager.engines.selectedEngine.getSupportedLanguages();
-            int count = languages.size();
+        private void updateVoices() {
+            Set<TtsVoice> voices = TtsEngineManager.engines.selectedEngine.getVoices();
+            int count = voices.size();
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             int i = 0;
-            for (Locale locale : languages) {
-                names[i] = locale.getDisplayName();
-                ids[i++] = locale.toString();
+            for (TtsVoice v : voices) {
+                names[i] = v.getDisplayName();
+                ids[i++] = v.toString();
             }
-            lang.setEntries(names);
-            lang.setEntryValues(ids);
-            Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
-            lang.setValue(locale.toString());
-            lang.setSummary(locale.getDisplayName());
-            updateFeatures(locale);
+            voice.setEntries(names);
+            voice.setEntryValues(ids);
+            TtsVoice v = TtsEngineManager.engines.selectedEngine.getVoice();
+            if (v == null) return;
+            voice.setValue(v.toString());
+            voice.setSummary(v.getDisplayName());
+            updateFeatures(v);
         }
 
-        private void updateFeatures(Locale locale) {
+        private void updateFeatures(TtsVoice v) {   // todo: show other features!
             StringBuilder builder = new StringBuilder();
-            for (String feature : TtsEngineManager.engines.selectedEngine.getFeatures(locale)) {
+            for (String feature : v.getFeatures()) {
                 if (builder.length() > 0) builder.append(", ");
                 builder.append(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)
                         ? getString(R.string.settings_features_network)

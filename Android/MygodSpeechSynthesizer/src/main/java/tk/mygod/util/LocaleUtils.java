@@ -27,11 +27,4 @@ public final class LocaleUtils {
                     : new Locale(matcher.group(1), matcher.group(3), matcher.group(5))
                 : null;
     }
-
-    public static class DisplayNameComparator implements Comparator<Locale> {
-        @Override
-        public int compare(Locale lhs, Locale rhs) {
-            return lhs.getDisplayName().compareTo(rhs.getDisplayName());
-        }
-    }
 }

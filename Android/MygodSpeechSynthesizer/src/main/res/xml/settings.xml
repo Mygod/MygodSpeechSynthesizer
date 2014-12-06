@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/settings">
     <PreferenceCategory android:title="@string/settings_engines_languages">
         <tk.mygod.preference.IconListPreference android:key="engine" android:title="@string/settings_preferred_engine"/>
-        <ListPreference android:key="engine.lang" android:title="@string/settings_language"/>
+        <ListPreference android:key="engine.voice" android:title="@string/settings_voice"/>
         <Preference android:key="engine.features" android:title="@string/settings_features"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_tweaks">
