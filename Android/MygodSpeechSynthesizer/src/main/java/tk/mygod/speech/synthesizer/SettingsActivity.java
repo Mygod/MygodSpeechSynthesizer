@@ -61,7 +61,6 @@ public class SettingsActivity extends ActionBarActivity {
                             TtsEngineManager.selectEngine(newValue.toString());
                             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
                             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
-                            engine.setValue((String) newValue); // temporary hack
                             updateLanguages();
                             return true;
                         }
@@ -83,7 +82,6 @@ public class SettingsActivity extends ActionBarActivity {
                             TtsEngineManager.selectVoice(newValue.toString());
                             voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice()
                                     .getDisplayName(TtsSettingsFragment.this.getActivity()));
-                            voice.setValue((String) newValue);  // yet another temporary hack
                             return false;
                         }
                     });

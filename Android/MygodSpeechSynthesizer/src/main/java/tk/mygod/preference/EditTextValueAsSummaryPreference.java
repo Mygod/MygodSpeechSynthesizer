@@ -41,15 +41,6 @@ public class EditTextValueAsSummaryPreference extends EditTextPreference
         this.listener = listener;
     }
 
-    /**
-     * Called when a Preference has been changed by the user. This is
-     * called before the state of the Preference is about to be updated and
-     * before the state is persisted.
-     *
-     * @param preference The changed Preference.
-     * @param newValue   The new value of the Preference.
-     * @return True to update the state of the Preference with the new value.
-     */
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (listener != null && !listener.onPreferenceChange(preference, newValue)) return false;
