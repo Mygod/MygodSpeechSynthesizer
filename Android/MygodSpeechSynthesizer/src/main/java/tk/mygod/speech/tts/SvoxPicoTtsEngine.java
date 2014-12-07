@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
@@ -190,7 +191,19 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         pan = value;
     }
 
-    private HashMap<String, String> getParams(int start, int end) {
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private Bundle getParams(int start, int end) {
+        Bundle params = new Bundle();
+        Set<String> features = getVoice().getFeatures();
+        if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT))
+            params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT, 0x7fffffff);
+        if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS))
+            params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS, 0x7fffffff);
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, start + "," + end);
+        if (pan != null) params.putString(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
+        return params;
+    }
+    private HashMap<String, String> getParamsDeprecated(int start, int end) {
         HashMap<String, String> params = new HashMap<String, String>();
         params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, start + "," + end);
         if (pan != null) params.put(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
@@ -337,7 +350,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                         return null;
                     }
                     tts.speak(processText(currentText.substring(range.first, range.second)), TextToSpeech.QUEUE_ADD,
-                              getParams(range.first, range.second));
+                              getParamsDeprecated(range.first, range.second));
                     last = range;   // assuming preparer is faster than speaker, which is often the case
                     if (listener != null) listener.onTtsSynthesisPrepared(range.second);
                 } catch (Exception e) {
@@ -443,7 +456,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                         pathMap.put(range.first + "," + range.second, cache);
                         synthesizeLock.acquireUninterruptibly();
                         tts.synthesizeToFile(processText(currentText.substring(range.first, range.second)),
-                                             getParams(range.first, range.second), cache.getAbsolutePath());
+                                             getParamsDeprecated(range.first, range.second), cache.getAbsolutePath());
                         synthesizeLock.acquireUninterruptibly();    // wait for synthesis
                         synthesizeLock.release();
                     } catch (Exception e) {

@@ -15,6 +15,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.TextAppearanceSpan;
 import android.view.MenuItem;
 import tk.mygod.preference.IconListPreference;
+import tk.mygod.speech.tts.ConstantsWrapper;
 import tk.mygod.speech.tts.LocaleWrapper;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.speech.tts.TtsVoice;
@@ -147,16 +148,20 @@ public class SettingsActivity extends ActionBarActivity {
                 int start = builder.length();
                 Set<String> features = voice.getFeatures();
                 if (!(voice instanceof LocaleWrapper)) builder.append(String.format("\nName: %s\nQuality: %d (higher = better)\nLatency: %d (lower = better)", voice.getName(), voice.getQuality(), voice.getLatency()));
-                boolean first = true;
+                boolean first = true, notInstalled = false;
                 for (String feature : features)
-                    if (!TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature) &&
-                            !TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature)) {
+                    if (ConstantsWrapper.KEY_FEATURE_NOT_INSTALLED.equals(feature)) notInstalled = true;
+                    else if (!TextToSpeech.Engine.KEY_FEATURE_EMBEDDED_SYNTHESIS.equals(feature) &&
+                            !TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS.equals(feature) &&
+                            !ConstantsWrapper.KEY_FEATURE_NETWORK_RETRIES_COUNT.equals(feature) &&
+                            !ConstantsWrapper.KEY_FEATURE_NETWORK_TIMEOUT_MS.equals(feature)) {
                         if (first) {
                             first = false;
-                            builder.append("\nFeatures: ");
+                            builder.append("\nUnsupported features: ");
                         } else builder.append(", ");
                         builder.append(feature);
                     }
+                if (notInstalled) builder.append("\nAdditional data needed downloading");
                 if (voice.isNetworkConnectionRequired()) builder.append("\nNetwork connection required");
                 if (builder.length() != start) builder.setSpan(new TextAppearanceSpan(getActivity(),
                                 android.R.style.TextAppearance_Small), start + 1, builder.length(),
