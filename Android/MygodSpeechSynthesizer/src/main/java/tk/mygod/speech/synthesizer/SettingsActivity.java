@@ -119,7 +119,7 @@ public class SettingsActivity extends ActionBarActivity {
         }
 
         private void updateLanguages() {
-            Set<Locale> languages = TtsEngineManager.engines.selectedEngine.getSupportedLanguages();
+            Set<Locale> languages = TtsEngineManager.engines.selectedEngine.getLanguages();
             int count = languages.size();
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             int i = 0;
@@ -135,6 +135,7 @@ public class SettingsActivity extends ActionBarActivity {
             updateVoices();
         }
 
+        @SuppressWarnings("deprecation")
         private void updateVoices() {
             Set<TtsVoice> voices = TtsEngineManager.engines.selectedEngine.getVoices();
             int count = voices.size();

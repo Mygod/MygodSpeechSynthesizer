@@ -14,7 +14,7 @@ import java.util.*;
  * @author  Mygod
  */
 public abstract class TtsEngine {
-    public abstract Set<Locale> getSupportedLanguages();
+    public abstract Set<Locale> getLanguages();
     public abstract Locale getLanguage();
     public boolean setLanguage(Locale loc) {
         return false;

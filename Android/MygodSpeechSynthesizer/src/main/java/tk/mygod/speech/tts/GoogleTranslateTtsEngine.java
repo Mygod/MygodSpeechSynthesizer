@@ -37,7 +37,7 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     @Override
-    public Set<Locale> getSupportedLanguages() {
+    public Set<Locale> getLanguages() {
         return supportedLanguages;
     }
     @Override

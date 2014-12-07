@@ -23,8 +23,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
 /**
- * Project: Mygod Speech Synthesizer
- * @author  Mygod
+ * @author Mygod
  */
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
@@ -64,22 +63,40 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
             if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE && test != TextToSpeech.LANG_COUNTRY_AVAILABLE &&
                 test != TextToSpeech.LANG_AVAILABLE) continue;
             tts.setLanguage(locale);
-            supportedLanguages.add(tts.getLanguage());
+            supportedLanguages.add(getLanguage());
         } catch (Exception e) { // god damn Samsung TTS
             e.printStackTrace();
         }
-        setLanguage(lastLanguage == null ? Build.VERSION.SDK_INT >= 18
-                ? tts.getDefaultLanguage() : context.getResources().getConfiguration().locale : lastLanguage);
+        if (lastLanguage == null) setDefaultLanguage(); else setLanguage(lastLanguage);
         initLock.release();
     }
     @Override
-    public Set<Locale> getSupportedLanguages() {
+    public Set<Locale> getLanguages() {
         initLock.acquireUninterruptibly();
         initLock.release();
         return supportedLanguages;
     }
+    @SuppressWarnings("deprecation")
+    private void setDefaultLanguage() {
+        if (Build.VERSION.SDK_INT >= 21) try {
+            Voice voice = tts.getDefaultVoice();
+            tts.setVoice(voice);
+            setLanguage(voice.getLocale());
+            return;
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
+        setLanguage(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
+                : context.getResources().getConfiguration().locale);
+    }
+    @SuppressWarnings("deprecation")
     @Override
     public Locale getLanguage() {
+        if (Build.VERSION.SDK_INT >= 21) try {
+            return tts.getVoice().getLocale();
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
         return tts.getLanguage();
     }
     @Override
