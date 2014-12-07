@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * @author Mygod
+ * TODO:   Earcons, TtsSpans, AudioSessionId & AudioAttributes
  */
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
@@ -61,8 +62,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
         for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);
-            if (test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE && test != TextToSpeech.LANG_COUNTRY_AVAILABLE &&
-                test != TextToSpeech.LANG_AVAILABLE) continue;
+            if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
             tts.setLanguage(locale);
             supportedLanguages.add(getLanguage());
         } catch (Exception e) { // god damn Samsung TTS
@@ -104,8 +104,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     public boolean setLanguage(Locale loc) {
         try {
             int test = tts.isLanguageAvailable(loc);
-            if (test != TextToSpeech.LANG_AVAILABLE && test != TextToSpeech.LANG_COUNTRY_AVAILABLE &&
-                test != TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE) return false;
+            if (test == TextToSpeech.LANG_NOT_SUPPORTED) return false;
             tts.setLanguage(lastLanguage = loc);
             return true;
         } catch (Exception e) {
@@ -325,7 +324,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
 
         @Override
         public Set<String> getFeatures() {
-            return tts.getFeatures(locale);
+            Set<String> features = tts.getFeatures(locale);
+            if (tts.isLanguageAvailable(getLocale()) == TextToSpeech.LANG_MISSING_DATA)
+                features.add(ConstantsWrapper.KEY_FEATURE_NOT_INSTALLED);
+            return features;
         }
         @Override
         public boolean isNetworkConnectionRequired() {

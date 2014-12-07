@@ -142,7 +142,7 @@ public class SettingsActivity extends ActionBarActivity {
             int count = voices.size();
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             int i = 0;
-            for (TtsVoice voice : voices) {
+            for (TtsVoice voice : voices) { // TODO: Localizations
                 SpannableStringBuilder builder = new SpannableStringBuilder();
                 builder.append(voice.getDisplayName(getActivity()));
                 int start = builder.length();
