@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
+import android.util.Log;
 import android.util.Pair;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
@@ -44,6 +45,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     private Locale lastLanguage;
     private Context context;
     private int startOffset;
+    private boolean useNativeVoice = Build.VERSION.SDK_INT >= 21;
 
     public SvoxPicoTtsEngine(final Context context) {
         initLock.acquireUninterruptibly();
@@ -56,6 +58,14 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         setListener();
     }
     private Set<Locale> supportedLanguages;
+
+    private void handleNativeVoiceException(RuntimeException exc) throws RuntimeException {
+        if (exc instanceof NullPointerException && "collection == null".equals(exc.getMessage())) {
+            useNativeVoice = false; // disable further attempts to improve performance
+            Log.e("SvoxPicoTtsEngine", "Voices not supported: " + engineInfo.name);
+        }
+        else throw exc;
+    }
 
     @Override
     public void onInit(int status) {
@@ -79,13 +89,13 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     }
     @SuppressWarnings("deprecation")
     private void setDefaultLanguage() {
-        if (Build.VERSION.SDK_INT >= 21) try {
+        if (useNativeVoice) try {
             Voice voice = tts.getDefaultVoice();
             tts.setVoice(voice);
             setLanguage(voice.getLocale());
             return;
-        } catch (Exception exc) {
-            exc.printStackTrace();
+        } catch (RuntimeException exc) {
+            handleNativeVoiceException(exc);
         }
         setLanguage(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
                 : context.getResources().getConfiguration().locale);
@@ -93,10 +103,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     @SuppressWarnings("deprecation")
     @Override
     public Locale getLanguage() {
-        if (Build.VERSION.SDK_INT >= 21) try {
+        if (useNativeVoice) try {
             return tts.getVoice().getLocale();
-        } catch (Exception exc) {
-            exc.printStackTrace();
+        } catch (RuntimeException exc) {
+            handleNativeVoiceException(exc);
         }
         return tts.getLanguage();
     }
@@ -115,22 +125,21 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
 
     @Override
     public Set<TtsVoice> getVoices() {
-        if (Build.VERSION.SDK_INT < 21) return super.getVoices();
-        try {
+        if (useNativeVoice) try {
             TreeSet<TtsVoice> voices = new TreeSet<TtsVoice>(voiceComparator);
             for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
             return voices;
-        } catch (Exception exc) {
-            exc.printStackTrace();
-            return super.getVoices();
+        } catch (RuntimeException exc) {
+            handleNativeVoiceException(exc);
         }
+        return super.getVoices();
     }
     @Override
     public TtsVoice getVoice() {
-        if (Build.VERSION.SDK_INT >= 21) try {
+        if (useNativeVoice) try {
             return new VoiceWrapper(tts.getVoice());
-        } catch (Exception exc) {
-            exc.printStackTrace();
+        } catch (RuntimeException exc) {
+            handleNativeVoiceException(exc);
         }
         return new LocaleVoice(getLanguage());
     }
@@ -146,14 +155,14 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     }
     @Override
     public boolean setVoice(String voiceName) {
-        if (Build.VERSION.SDK_INT >= 21) try {
+        if (useNativeVoice) try {
             for (Voice voice : tts.getVoices()) if (voice.getName().equals(voiceName)) {
                 tts.setVoice(voice);
                 return true;
             }
             return false;
-        } catch (Exception exc) {
-            exc.printStackTrace();
+        } catch (RuntimeException exc) {
+            handleNativeVoiceException(exc);
         }
         return super.setVoice(voiceName);
     }
