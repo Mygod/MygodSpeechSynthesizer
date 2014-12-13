@@ -1,5 +1,6 @@
 package tk.mygod.speech.synthesizer;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -12,7 +13,6 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -47,8 +47,8 @@ import java.util.Date;
 /**
  * @author  Mygod
  */
-public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
-        TtsEngineManager.OnSelectedEngineChangingListener {
+public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCallbackListener,
+        TtsEngineManager.OnSelectedEngineChangingListener, Toolbar.OnMenuItemClickListener {
     private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private ProgressBar progressBar;
@@ -101,7 +101,11 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle(R.string.app_name);
+        toolbar.inflateMenu(R.menu.main_activity_actions);
+        styleItem = (menu = toolbar.getMenu()).findItem(R.id.action_style);
+        toolbar.setOnMenuItemClickListener(this);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         ((ObservableScrollView) findViewById(R.id.scroller)).setScrollViewListener(new ScrollViewListener() {
@@ -209,15 +213,7 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(this.menu = menu);
-        getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        styleItem = menu.findItem(R.id.action_style);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_style:
                 selectionStart = inputText.getSelectionStart();
@@ -267,7 +263,7 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     private void startSynthesis() {
