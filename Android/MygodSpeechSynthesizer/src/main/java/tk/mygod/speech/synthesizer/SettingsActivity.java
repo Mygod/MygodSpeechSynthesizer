@@ -1,5 +1,6 @@
 package tk.mygod.speech.synthesizer;
 
+import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -8,42 +9,30 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.TextAppearanceSpan;
-import android.view.MenuItem;
 import tk.mygod.preference.IconListPreference;
 import tk.mygod.speech.tts.ConstantsWrapper;
 import tk.mygod.speech.tts.LocaleWrapper;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.speech.tts.TtsVoice;
+import tk.mygod.support.v7.util.ToolbarConfigurer;
 
 import java.util.Locale;
 import java.util.Set;
 
 /**
- * Project: MygodSpeechSynthesizer
+ * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
-public class SettingsActivity extends ActionBarActivity {
+public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
+        new ToolbarConfigurer(this, (Toolbar) findViewById(R.id.toolbar), true);
     }
 
     public static class TtsSettingsFragment extends PreferenceFragment {

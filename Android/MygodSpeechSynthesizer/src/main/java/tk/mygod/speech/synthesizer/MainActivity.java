@@ -30,6 +30,7 @@ import org.xml.sax.SAXException;
 import tk.mygod.CurrentApp;
 import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
+import tk.mygod.support.v7.util.ToolbarConfigurer;
 import tk.mygod.text.SsmlDroid;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
@@ -102,7 +103,7 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.app_name);
+        new ToolbarConfigurer(this, toolbar, false);
         toolbar.inflateMenu(R.menu.main_activity_actions);
         styleItem = (menu = toolbar.getMenu()).findItem(R.id.action_style);
         toolbar.setOnMenuItemClickListener(this);

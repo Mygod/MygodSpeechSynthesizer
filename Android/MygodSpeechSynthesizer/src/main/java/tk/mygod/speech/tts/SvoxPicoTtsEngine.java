@@ -26,7 +26,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * @author Mygod
- * TODO:   Too many exceptions thrown, Earcons, AudioSessionId & AudioAttributes
+ * TODO:   Earcons, AudioSessionId & AudioAttributes
  */
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
