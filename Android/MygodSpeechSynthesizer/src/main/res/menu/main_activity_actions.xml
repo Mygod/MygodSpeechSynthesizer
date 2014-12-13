@@ -2,6 +2,9 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
       xmlns:app="http://schemas.android.com/apk/res-auto" tools:context="tk.mygod.speech.synthesizer.MainActivity">
+    <!-- TODO: Localization -->
+    <item android:id="@+id/action_style" android:title="Style..." android:icon="@drawable/ic_image_style"
+          app:showAsAction="always|withText" android:alphabeticShortcut="t" android:numericShortcut="0" />
     <group android:id="@+id/disabled_when_synthesizing">
         <item android:id="@+id/action_synthesize_to_file" android:title="@string/action_synthesize_to_file"
               app:showAsAction="never" android:alphabeticShortcut="f" android:numericShortcut="1"/>

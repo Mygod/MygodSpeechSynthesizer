@@ -25,7 +25,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * @author Mygod
- * TODO:   Earcons, TtsSpans, AudioSessionId & AudioAttributes
+ * TODO:   Too many exceptions thrown, Earcons, AudioSessionId & AudioAttributes
  */
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
@@ -40,7 +40,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     protected TextToSpeech tts;
     private Pair<Integer, Integer> last;
     public TextToSpeech.EngineInfo engineInfo;
-    private String currentText;
+    private CharSequence currentText;
     private Locale lastLanguage;
     private Context context;
     private int startOffset;
@@ -191,32 +191,32 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private Bundle getParams(int start, int end) {
+    private Bundle getParamsL(String id) {
         Bundle params = new Bundle();
         Set<String> features = getVoice().getFeatures();
         if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT))
             params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT, 0x7fffffff);
         if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS))
             params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS, 0x7fffffff);
-        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, start + "," + end);
-        if (pan != null) params.putString(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
+        if (pan != null) params.putFloat(TextToSpeech.Engine.KEY_PARAM_PAN, pan);
         return params;
     }
-    private HashMap<String, String> getParamsDeprecated(int start, int end) {
+    private HashMap<String, String> getParams(String id) {
         HashMap<String, String> params = new HashMap<String, String>();
-        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, start + "," + end);
+        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
         if (pan != null) params.put(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
         return params;
     }
     @Override
-    public void speak(String text, int startOffset) {
+    public void speak(CharSequence text, int startOffset) {
         currentText = text;
         this.startOffset = startOffset;
         synthesizeToStreamTask = null;
         (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToStream(String text, int startOffset, FileOutputStream output, File cacheDir) {
+    public void synthesizeToStream(CharSequence text, int startOffset, FileOutputStream output, File cacheDir) {
         currentText = text;
         this.startOffset = startOffset;
         speakTask = null;
@@ -351,8 +351,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                         tts.stop();
                         return null;
                     }
-                    tts.speak(processText(currentText.substring(range.first, range.second)), TextToSpeech.QUEUE_ADD,
-                              getParamsDeprecated(range.first, range.second));
+                    CharSequence part = currentText.subSequence(range.first, range.second);
+                    String id = range.first + "," + range.second;
+                    if (Build.VERSION.SDK_INT >= 21) tts.speak(part, TextToSpeech.QUEUE_ADD, getParamsL(id), id);
+                    else tts.speak(part.toString(), TextToSpeech.QUEUE_ADD, getParams(id));
                     last = range;   // assuming preparer is faster than speaker, which is often the case
                     if (listener != null) listener.onTtsSynthesisPrepared(range.second);
                 } catch (Exception e) {
@@ -457,8 +459,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                         File cache = new File(cacheDir, FileUtils.getTempFileName() + range.first);
                         pathMap.put(range.first + "," + range.second, cache);
                         synthesizeLock.acquireUninterruptibly();
-                        tts.synthesizeToFile(processText(currentText.substring(range.first, range.second)),
-                                             getParamsDeprecated(range.first, range.second), cache.getAbsolutePath());
+                        CharSequence part = currentText.subSequence(range.first, range.second);
+                        String id = range.first + "," + range.second;
+                        if (Build.VERSION.SDK_INT >= 21) tts.synthesizeToFile(part, getParamsL(id), cache, id);
+                        else tts.synthesizeToFile(part.toString(), getParams(id), cache.getAbsolutePath());
                         synthesizeLock.acquireUninterruptibly();    // wait for synthesis
                         synthesizeLock.release();
                     } catch (Exception e) {

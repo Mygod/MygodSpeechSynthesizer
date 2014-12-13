@@ -113,10 +113,12 @@ public class SettingsActivity extends ActionBarActivity {
                     }
             );
             start.setSummary(start.getEntry());
-            boolean forceOld = Build.VERSION.SDK_INT < 19;
-            CheckBoxPreference oldTimeySaveDialog = (CheckBoxPreference)findPreference("appearance.oldTimeySaveUI");
-            oldTimeySaveDialog.setChecked(TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", forceOld));
-            if (forceOld) oldTimeySaveDialog.setEnabled(false);
+            CheckBoxPreference pref = (CheckBoxPreference) findPreference("appearance.oldTimeySaveUI");
+            if (Build.VERSION.SDK_INT < 19) pref.setEnabled(false);
+            else pref.setChecked(TtsEngineManager.getOldTimeySaveUI());
+            pref = (CheckBoxPreference) findPreference("text.enableSsmlDroid");
+            if (Build.VERSION.SDK_INT < 21) pref.setEnabled(false);
+            else pref.setChecked(TtsEngineManager.getEnableSsmlDroid());
         }
 
         private void updateLanguages() {

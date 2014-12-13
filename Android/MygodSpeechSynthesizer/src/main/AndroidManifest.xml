@@ -50,7 +50,7 @@
         <activity
             android:name="tk.mygod.app.SaveFileActivity"
             android:label="@string/title_activity_save_file"
-            android:icon="@drawable/ic_doc_generic_am"/>
+            android:icon="@drawable/ic_doc_generic_am_alpha"/>
     </application>
 
 </manifest>

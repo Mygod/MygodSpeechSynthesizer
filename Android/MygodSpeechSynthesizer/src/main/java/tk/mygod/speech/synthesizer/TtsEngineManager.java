@@ -1,7 +1,9 @@
 package tk.mygod.speech.synthesizer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import tk.mygod.speech.tts.AvailableTtsEngines;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.util.LocaleUtils;
@@ -9,9 +11,10 @@ import tk.mygod.util.LocaleUtils;
 import java.util.Locale;
 
 /**
- * Project: MygodSpeechSynthesizer
+ * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
+@SuppressLint("CommitPrefEdits")
 final class TtsEngineManager {
     private TtsEngineManager() {
         throw new AssertionError();
@@ -63,5 +66,18 @@ final class TtsEngineManager {
 
     public static interface OnSelectedEngineChangingListener {
         void onSelectedEngineChanging();
+    }
+
+    static boolean getEnableSsmlDroid() {
+        return pref.getBoolean("text.enableSsmlDroid", Build.VERSION.SDK_INT >= 21);
+    }
+    static boolean getIgnoreSingleLineBreak() {
+        return pref.getBoolean("text.ignoreSingleLineBreak", false);
+    }
+    static boolean getOldTimeySaveUI() {
+        return pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19);
+    }
+    static String getLastSaveDir() {
+        return pref.getString("fileSystem.lastSaveDir", null);
     }
 }

@@ -58,21 +58,11 @@ public abstract class TtsEngine {
     public void setSpeechRate(float value) { }
     public void setPan(float value) { }
 
-    public abstract void speak(String text, int startOffset);
-    public abstract void synthesizeToStream(String text, int startOffset, FileOutputStream output, File cacheDir);
+    public abstract void speak(CharSequence text, int startOffset);
+    public abstract void synthesizeToStream(CharSequence text, int startOffset, FileOutputStream output, File cacheDir);
     public abstract void stop();
 
     public abstract void onDestroy();
-
-    private boolean ignoreSingleLineBreaks;
-    public void setIgnoreSingleLineBreaks(boolean value) {
-        ignoreSingleLineBreaks = value;
-    }
-
-    protected String processText(String text) {
-        if (ignoreSingleLineBreaks) text = text.replaceAll("(?<![\\r\\n])(\\r|\\r?\\n)(?![\\r\\n])", " ");
-        return text;
-    }
 
     public static interface OnTtsSynthesisCallbackListener {
         public void onTtsSynthesisPrepared(int end);
@@ -98,7 +88,7 @@ public abstract class TtsEngine {
         }
     }
     protected abstract int getMaxLength();
-    protected ArrayList<Pair<Integer, Integer>> splitSpeech(String text, int startOffset, boolean aggressiveMode) {
+    protected ArrayList<Pair<Integer, Integer>> splitSpeech(CharSequence text, int startOffset, boolean aggressiveMode) {
         int last = startOffset, length = text.length(), maxLength = getMaxLength();
         if (maxLength <= 0) throw new InvalidParameterException("maxLength should be a positive value.");
         ArrayList<Pair<Integer, Integer>> result = new ArrayList<Pair<Integer, Integer>>();

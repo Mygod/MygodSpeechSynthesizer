@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- TODO: Localize -->
+    <item android:id="@+id/action_tts_cardinal" android:title="Cardinal"
+          android:alphabeticShortcut="c" android:numericShortcut="1" />
+    <item android:id="@+id/action_tts_date" android:title="Date"
+          android:alphabeticShortcut="d" android:numericShortcut="2" />
+    <item android:id="@+id/action_tts_decimal" android:title="Decimal"
+          android:alphabeticShortcut="a" android:numericShortcut="3" />
+    <item android:id="@+id/action_tts_digits" android:title="Digits"
+          android:alphabeticShortcut="s" android:numericShortcut="4" />
+    <item android:id="@+id/action_tts_electronic" android:title="Electronic"
+          android:alphabeticShortcut="e" android:numericShortcut="5" />
+    <item android:id="@+id/action_tts_fraction" android:title="Fraction"
+          android:alphabeticShortcut="f" android:numericShortcut="6" />
+    <item android:id="@+id/action_tts_measure" android:title="Measure"
+          android:alphabeticShortcut="m" android:numericShortcut="7" />
+    <item android:id="@+id/action_tts_money" android:title="Money"
+          android:alphabeticShortcut="n" android:numericShortcut="8" />
+    <item android:id="@+id/action_tts_ordinal" android:title="Ordinal"
+          android:alphabeticShortcut="o" android:numericShortcut="9" />
+    <item android:id="@+id/action_tts_telephone" android:title="Telephone"
+          android:alphabeticShortcut="t" android:numericShortcut="*" />
+    <item android:id="@+id/action_tts_text" android:title="Text"
+          android:alphabeticShortcut="x" android:numericShortcut="0" />
+    <item android:id="@+id/action_tts_time" android:title="Time"
+          android:alphabeticShortcut="i" android:numericShortcut="#" />
+    <item android:id="@+id/action_tts_verbatim" android:title="Verbatim"
+          android:alphabeticShortcut="v" />
+    <item android:title="Generic attributes..." android:alphabeticShortcut="g">
+        <menu>
+            <item android:title="Gender..." android:alphabeticShortcut="g" android:numericShortcut="1">
+                <menu>
+                    <group android:id="@+id/action_tts_generic_attributes_gender">
+                        <item android:titleCondensed="neutral"
+                              android:title="Neutral"
+                              android:alphabeticShortcut="n" android:numericShortcut="1" />
+                        <item android:titleCondensed="male"
+                              android:title="Male"
+                              android:alphabeticShortcut="m" android:numericShortcut="2" />
+                        <item android:titleCondensed="female"
+                              android:title="Female"
+                              android:alphabeticShortcut="f" android:numericShortcut="3" />
+                    </group>
+                </menu>
+            </item>
+            <item android:title="Animacy..." android:alphabeticShortcut="a" android:numericShortcut="2">
+                <menu>
+                    <group android:id="@+id/action_tts_generic_attributes_animacy">
+                        <item android:titleCondensed="animate"
+                              android:title="Animate"
+                              android:alphabeticShortcut="a" android:numericShortcut="1" />
+                        <item android:titleCondensed="inanimate"
+                              android:title="Inanimate"
+                              android:alphabeticShortcut="i" android:numericShortcut="2" />
+                    </group>
+                </menu>
+            </item>
+            <item android:title="Multiplicity..." android:alphabeticShortcut="m" android:numericShortcut="3">
+                <menu>
+                    <group android:id="@+id/action_tts_generic_attributes_multiplicity">
+                        <item android:titleCondensed="single"
+                              android:title="Single"
+                              android:alphabeticShortcut="s" android:numericShortcut="1" />
+                        <item android:titleCondensed="dual"
+                              android:title="Dual"
+                              android:alphabeticShortcut="d" android:numericShortcut="2" />
+                        <item android:titleCondensed="plural"
+                              android:title="Plural"
+                              android:alphabeticShortcut="p" android:numericShortcut="3" />
+                    </group>
+                </menu>
+            </item>
+            <item android:title="Case..." android:alphabeticShortcut="c" android:numericShortcut="4">
+                <menu>
+                    <group android:id="@+id/action_tts_generic_attributes_case">
+                        <item android:titleCondensed="nominative"
+                              android:title="Nominative"
+                              android:alphabeticShortcut="n" android:numericShortcut="1" />
+                        <item android:titleCondensed="accusative"
+                              android:title="Accusative"
+                              android:alphabeticShortcut="a" android:numericShortcut="2" />
+                        <item android:titleCondensed="dative"
+                              android:title="Dative"
+                              android:alphabeticShortcut="d" android:numericShortcut="3" />
+                        <item android:titleCondensed="ablative"
+                              android:title="Ablative"
+                              android:alphabeticShortcut="b" android:numericShortcut="4" />
+                        <item android:titleCondensed="genitive"
+                              android:title="Genitive"
+                              android:alphabeticShortcut="g" android:numericShortcut="5" />
+                        <item android:titleCondensed="vocative"
+                              android:title="Vocative"
+                              android:alphabeticShortcut="v" android:numericShortcut="6" />
+                        <item android:titleCondensed="locative"
+                              android:title="Locative"
+                              android:alphabeticShortcut="l" android:numericShortcut="7" />
+                        <item android:titleCondensed="instrumental"
+                              android:title="Instrumental"
+                              android:alphabeticShortcut="l" android:numericShortcut="8" />
+                    </group>
+                </menu>
+            </item>
+        </menu>
+    </item>
+</menu>

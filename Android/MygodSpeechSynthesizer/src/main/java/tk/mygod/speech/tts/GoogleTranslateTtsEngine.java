@@ -24,7 +24,8 @@ import java.util.concurrent.Semaphore;
  */
 public class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
-    private String language = "en", currentText;
+    private String language = "en";
+    private CharSequence currentText;
     private int startOffset;
 
     static {
@@ -73,18 +74,18 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     private String getUrl(String text) throws UnsupportedEncodingException {
-        return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + language +
-               "&q=" + URLEncoder.encode(processText(text), "UTF-8");
+        return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + language + "&q=" +
+                URLEncoder.encode(text, "UTF-8");
     }
     @Override
-    public void speak(String text, int startOffset) {
+    public void speak(CharSequence text, int startOffset) {
         currentText = text;
         this.startOffset = startOffset;
         synthesizeToStreamTask = null;
         (speakTask = new SpeakTask()).execute();
     }
     @Override
-    public void synthesizeToStream(String text, int startOffset, FileOutputStream output, File cacheDir) {
+    public void synthesizeToStream(CharSequence text, int startOffset, FileOutputStream output, File cacheDir) {
         currentText = text;
         this.startOffset = startOffset;
         speakTask = null;
@@ -197,7 +198,7 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                         while (true) try {
                             player = new MediaPlayer();
                             player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                            player.setDataSource(getUrl(currentText.substring(range.first, range.second)));
+                            player.setDataSource(getUrl(currentText.subSequence(range.first, range.second).toString()));
                             player.prepare();
                             break;
                         } catch (IOException e) {
@@ -236,8 +237,8 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                     InputStream input = null;
                     try {
                         if (listener != null) listener.onTtsSynthesisCallback(range.first, range.second);
-                        IOUtils.copy(input = new URL(getUrl(currentText.substring(range.first, range.second)))
-                                .openStream(), output);
+                        IOUtils.copy(input = new URL(getUrl(currentText.subSequence(range.first, range.second)
+                                .toString())).openStream(), output);
                         if (listener != null) listener.onTtsSynthesisCallback(range.second, range.second);
                     } catch (Exception e) {
                         e.printStackTrace();

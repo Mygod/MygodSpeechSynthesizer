@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Mygod 语音合成器</string>
     <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于
-        %2$s。\n\n常见问题：如果出现“合成失败”的错误，如果你使用的是在线合成请检查您的互联网连接，或尝试换一个引擎。一些引擎可能并未提供完整的支持，如三星
-        TTS 似乎不支持合成到文件。</string>
+        %2$s。\n\n常见问题：如果出现“合成失败”的错误，可能是因为您选择的引擎需要互联网连接，请检查您的互联网连接，或尝试换一个引擎。您选择的
+        TTS 引擎很可能并未对所有的功能提供支持，如三星 TTS 似乎不支持合成到文件。</string>
     <string name="action_synthesize">合成</string>
     <string name="action_stop">停止</string>
     <string name="action_synthesize_to_file">合成到文件</string>

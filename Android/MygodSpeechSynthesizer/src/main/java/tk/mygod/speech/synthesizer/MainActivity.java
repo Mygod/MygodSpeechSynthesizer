@@ -16,6 +16,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
 import android.text.Spanned;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,19 +26,25 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import com.melnykov.fab.FloatingActionButton;
+import org.xml.sax.SAXException;
 import tk.mygod.CurrentApp;
 import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
+import tk.mygod.text.SsmlDroid;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
 import tk.mygod.widget.ObservableScrollView;
 import tk.mygod.widget.ScrollViewListener;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
- * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
 public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSynthesisCallbackListener,
@@ -47,8 +54,9 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     private ProgressBar progressBar;
     private EditText inputText;
     private Menu menu;
+    private MenuItem styleItem;
     private FloatingActionButton fab;
-    private int status;
+    private int status, selectionStart, selectionEnd;
     private boolean inBackground;
     private static final InputFilter[] noFilters = new InputFilter[0],
             readonlyFilters = new InputFilter[] { new InputFilter() {
@@ -56,10 +64,12 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                     return dest.subSequence(dstart, dend);
                 }
             } };
+    private SsmlDroid.Parser parser;
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
     private Notification.Builder builder;
 
     private String lastText, displayName;
+    @SuppressWarnings("deprecation")
     private void showNotification(CharSequence text) {
         if (status != SPEAKING) lastText = null;
         else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
@@ -77,6 +87,16 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(0);
     }
 
+    private String formatDefaultText(String pattern, Date buildTime) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(buildTime);
+        return String.format(pattern, CurrentApp.getVersionName(this),
+                DateFormat.getDateInstance(DateFormat.FULL).format(buildTime),
+                DateFormat.getTimeInstance(DateFormat.FULL).format(buildTime), calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.DAY_OF_WEEK),
+                calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,10 +111,18 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                 else if (y < oldy) fab.show();
             }
         });
-        (inputText = (EditText) findViewById(R.id.input_text))
-                .setText(String.format(getText(R.string.input_text_default).toString(), CurrentApp.getVersionName(this),
-                        SimpleDateFormat.getInstance().format(CurrentApp.getBuildTime(this))));
         TtsEngineManager.init(this, this);
+        Date buildTime = CurrentApp.getBuildTime(this);
+        inputText = (EditText) findViewById(R.id.input_text);
+        boolean failed = true;
+        if (TtsEngineManager.getEnableSsmlDroid()) try {
+            inputText.setText(formatDefaultText(IOUtils.readAllText(getResources()
+                    .openRawResource(R.raw.input_text_default)), buildTime));
+            failed = false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (failed) inputText.setText(formatDefaultText(getText(R.string.input_text_default).toString(), buildTime));
         Intent intent = new Intent();
         intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
         builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
@@ -146,6 +174,25 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     }
 
     @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (v != inputText) return;
+        getMenuInflater().inflate(R.menu.input_text_styles, menu);
+        menu.setHeaderTitle("Style...");    // todo: localize!
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        CharSequence source = inputText.getText();
+        StyleIdParser parser = new StyleIdParser(item, source.subSequence(selectionStart, selectionEnd));
+        if (parser.Tag == null) return super.onContextItemSelected(item);
+        inputText.setTextKeepState(source.subSequence(0, selectionStart) + parser.Tag +
+                source.subSequence(selectionEnd, source.length()));
+        inputText.setSelection(selectionStart + parser.Selection);
+        if (parser.Toast != null) Toast.makeText(this, parser.Toast, Toast.LENGTH_LONG).show();
+        return true;
+    }
+
+    @Override
     protected void onStop() {
         if (status != IDLE) {
             inBackground = true;
@@ -158,13 +205,69 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     protected void onRestart() {
         super.onRestart();
         cancelNotification();
+        styleItem.setVisible(TtsEngineManager.getEnableSsmlDroid());
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(this.menu = menu);
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
+        styleItem = menu.findItem(R.id.action_style);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_style:
+                selectionStart = inputText.getSelectionStart();
+                selectionEnd = inputText.getSelectionEnd();
+                registerForContextMenu(inputText);
+                openContextMenu(inputText);
+                unregisterForContextMenu(inputText);
+                return true;
+            case R.id.action_synthesize_to_file: {
+                String fileName = getSaveFileName() + '.' + MimeTypeMap.getSingleton()
+                        .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
+                Intent intent;
+                if (TtsEngineManager.getOldTimeySaveUI()) {
+                    intent = new Intent(this, SaveFileActivity.class);
+                    String dir = TtsEngineManager.getLastSaveDir();
+                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
+                }
+                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_TITLE, fileName);
+                intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
+                startActivityForResult(intent, SAVE_SYNTHESIS_CODE);
+                return true;
+            }
+            case R.id.action_open: {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("text/plain");
+                startActivityForResult(intent, OPEN_TEXT_CODE);
+                return true;
+            }
+            case R.id.action_save: {
+                String fileName = getSaveFileName();
+                if (!fileName.toLowerCase().endsWith(".txt")) fileName += ".txt";
+                Intent intent;
+                if (TtsEngineManager.getOldTimeySaveUI()) {
+                    intent = new Intent(this, SaveFileActivity.class);
+                    String dir = TtsEngineManager.getLastSaveDir();
+                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
+                }
+                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_TITLE, fileName);
+                intent.setType("text/plain");
+                startActivityForResult(intent, SAVE_TEXT_CODE);
+                return true;
+            }
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void startSynthesis() {
@@ -174,8 +277,6 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                 .setSpeechRate(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.speechRate", "1")));
         TtsEngineManager.engines.selectedEngine
                 .setPan(Float.parseFloat(TtsEngineManager.pref.getString("tweaks.pan", "0")));
-        TtsEngineManager.engines.selectedEngine
-                .setIgnoreSingleLineBreaks(TtsEngineManager.pref.getBoolean("text.ignoreSingleLineBreak", false));
         fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_av_mic));
         menu.setGroupEnabled(R.id.disabled_when_synthesizing, false);
         inputText.setFilters(readonlyFilters);
@@ -214,13 +315,22 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
         return displayName == null ? FileUtils.getTempFileName() : displayName;
     }
 
+    private CharSequence getText() throws IOException, SAXException {
+        String text = inputText.getText().toString(), temp = text.replaceAll("\r", ""); // I hate \r!!!1!
+        if (!text.equals(temp)) inputText.setText(temp);                                // & u'd better not ask y
+        return TtsEngineManager.getEnableSsmlDroid()
+                ? (parser = SsmlDroid.fromSsml(text,
+                    TtsEngineManager.getIgnoreSingleLineBreak(), null)).Result
+                : inputText.getText().toString().replaceAll("(?<![\\r\\n])(\\r|\\r?\\n)(?![\\r\\n])", " ");
+    }
+
     public void synthesize(View view) {
         if (status == IDLE) {
             try {
                 status = SPEAKING;
                 startSynthesis();
                 TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                TtsEngineManager.engines.selectedEngine.speak(inputText.getText().toString(), getStartOffset());
+                TtsEngineManager.engines.selectedEngine.speak(getText(), getStartOffset());
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, String.format(getString(R.string.synthesis_error),
@@ -228,55 +338,6 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                 stopSynthesis();
             }
         } else stopSynthesis();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_synthesize_to_file: {
-                String fileName = getSaveFileName() + '.' + MimeTypeMap.getSingleton()
-                        .getExtensionFromMimeType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                Intent intent;
-                if (Build.VERSION.SDK_INT < 19 ||
-                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19)) {
-                    intent = new Intent(this, SaveFileActivity.class);
-                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
-                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
-                }
-                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
-                intent.putExtra(Intent.EXTRA_TITLE, fileName);
-                intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                startActivityForResult(intent, SAVE_SYNTHESIS_CODE);
-                return true;
-            }
-            case R.id.action_open: {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("text/plain");
-                startActivityForResult(intent, OPEN_TEXT_CODE);
-                return true;
-            }
-            case R.id.action_save: {
-                String fileName = getSaveFileName();
-                if (!fileName.toLowerCase().endsWith(".txt")) fileName += ".txt";
-                Intent intent;
-                if (Build.VERSION.SDK_INT < 19 ||
-                        TtsEngineManager.pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19)) {
-                    intent = new Intent(this, SaveFileActivity.class);
-                    String dir = TtsEngineManager.pref.getString("fileSystem.lastSaveDir", null);
-                    if (dir != null) intent.putExtra(SaveFileActivity.EXTRA_CURRENT_DIRECTORY, dir);
-                }
-                else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
-                intent.putExtra(Intent.EXTRA_TITLE, fileName);
-                intent.setType("text/plain");
-                startActivityForResult(intent, SAVE_TEXT_CODE);
-                return true;
-            }
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -308,10 +369,10 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
                     status = SYNTHESIZING;
                     startSynthesis();
                     TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                    TtsEngineManager.engines.selectedEngine.synthesizeToStream(inputText.getText().toString(),
-                            getStartOffset(), new FileOutputStream((descriptor = getContentResolver()
+                    TtsEngineManager.engines.selectedEngine.synthesizeToStream(getText(), getStartOffset(),
+                            new FileOutputStream((descriptor = getContentResolver()
                                     .openFileDescriptor(data.getData(), "w")).getFileDescriptor()), getCacheDir());
-                } catch (FileNotFoundException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     Toast.makeText(this, String.format(getString(R.string.synthesis_error), e.getMessage()),
                             Toast.LENGTH_LONG).show();
@@ -332,7 +393,13 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
         });
     }
     @Override
-    public void onTtsSynthesisCallback(final int start, final int end) {
+    public void onTtsSynthesisCallback(int s, int e) {
+        if (parser != null) {
+            s = parser.getSsmlOffset(s, false);
+            e = parser.getSsmlOffset(e, true);
+        }
+        if (e < s) e = s;
+        final int start = s, end = e;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -349,7 +416,13 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
         });
     }
     @Override
-    public void onTtsSynthesisError(final int start, final int end) {
+    public void onTtsSynthesisError(int s, int e) {
+        if (parser != null) {
+            s = parser.getSsmlOffset(s, false);
+            e = parser.getSsmlOffset(e, true);
+        }
+        if (e < s) e = s;
+        final int start = s, end = e;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

@@ -3,9 +3,11 @@
 
     <string name="app_name">Mygod Speech Synthesizer</string>
     <string name="input_text_default">Thanks for using Mygod Speech Synthesizer %1$s! The current version was compiled
-        at %2$s.\n\nFAQ: If synthesis fails, check your Internet connection in case of online synthesis or try using
-        another engine. Some engines might not work properly in some cases, for example, Samsung TTS doesn\'t seem to
-        support synthesizing to file.</string>
+        at %2$s %3$s.\n\nTip: For advanced styling, try enabling SsmlDroid™ in Settings.\n\nFAQ: If synthesis fails,
+        check your Internet connection in case the selected engine requires Internet connection. Most TTS engines don\'t
+        support all the features, e.g. Samsung TTS doesn\'t seem to support synthesizing to file. So always try
+        switching to another engine when you encounter problems. You can also install engines from Play Store,
+        etc.</string>
     <string name="action_synthesize">Synthesize</string>
     <string name="action_stop">Stop</string>
     <string name="action_synthesize_to_file">Synthesize to File</string>
