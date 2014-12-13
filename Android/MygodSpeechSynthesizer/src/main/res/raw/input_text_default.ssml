@@ -2,4 +2,4 @@ Thanks for using <text text="My god">Mygod</text> Speech Synthesizer <verbatim v
 
 If you can't understand the confusing syntax and just want to synthesize plain text, head to Settings and uncheck "Enable <text text="s-s-m-l-droid t-m">SsmlDroid™</text>".
 
-FAQ: If synthesis fails, check your Internet connection in case the selected engine requires Internet connection. Most TTS engines don't support all the features, e.g. Samsung TTS doesn't seem to support synthesizing to file. So always try switching to another engine when you encounter problems. You can also install engines from Play Store, etc.
+<verbatim verbatim="FAQ">FAQ</verbatim>: If synthesis fails, check your Internet connection in case the selected engine requires Internet connection. Most TTS engines don't support all the features, e.g. Samsung TTS doesn't seem to support synthesizing to file. So always try switching to another engine when you encounter problems. You can also install engines from Play Store, etc.

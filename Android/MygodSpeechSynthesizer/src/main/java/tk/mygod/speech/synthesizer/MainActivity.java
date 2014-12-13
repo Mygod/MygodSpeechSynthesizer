@@ -321,7 +321,7 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
         return TtsEngineManager.getEnableSsmlDroid()
                 ? (parser = SsmlDroid.fromSsml(text,
                     TtsEngineManager.getIgnoreSingleLineBreak(), null)).Result
-                : inputText.getText().toString().replaceAll("(?<![\\r\\n])(\\r|\\r?\\n)(?![\\r\\n])", " ");
+                : inputText.getText().toString().replaceAll("(?<!\\n)(\\n)(?!\\n)", " ");
     }
 
     public void synthesize(View view) {
@@ -384,7 +384,9 @@ public class MainActivity extends ActionBarActivity implements TtsEngine.OnTtsSy
     }
 
     @Override
-    public void onTtsSynthesisPrepared(final int end) {
+    public void onTtsSynthesisPrepared(int e) {
+        if (parser != null) e = parser.getSsmlOffset(e, true);
+        final int end = e;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
