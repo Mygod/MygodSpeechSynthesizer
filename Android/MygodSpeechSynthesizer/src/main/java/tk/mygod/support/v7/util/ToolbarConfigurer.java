@@ -9,7 +9,7 @@ import tk.mygod.speech.synthesizer.R;
 /**
  * @author Mygod
  */
-public class ToolbarConfigurer implements View.OnClickListener {
+public final class ToolbarConfigurer implements View.OnClickListener {
     private Activity activity;
 
     public ToolbarConfigurer(Activity activity, Toolbar toolbar, boolean displayHomeAsUpEnabled) {

@@ -1,6 +1,6 @@
 package tk.mygod.text;
 
-import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.PersistableBundle;
 import android.text.Html;
@@ -19,21 +19,21 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 /**
+ * SsmlDroid™.
  * @author Mygod
  */
-@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public class SsmlDroid {
+public final class SsmlDroid {
     private static class Tag {
         public Tag(String name) {
             Name = name;
         }
-        public Tag(TtsSpan span, String name, int pos) {
+        public Tag(Object span, String name, int pos) {
             this(name);
             Span = span;
             Position = pos;
         }
 
-        public TtsSpan Span;
+        public Object Span;
         public String Name;
         public int Position;
     }
@@ -72,11 +72,11 @@ public class SsmlDroid {
 
         private void addMapping(int s, int t) {
             int size = mappings.size();
-            if (size > 0) { // time & space improvement
+            if (size > 0) {                         // time & space improvement
                 Mapping last = mappings.get(size - 1);
                 if (s == last.SsmlPosition && t == last.TextPosition) return;
             }
-            mappings.add(new Mapping(s, t));
+            mappings.add(new Mapping(s - 7, t));    // remember to subtract the wrapper!
         }
 
         private static int parseInt(String value, String[] patterns, int directOffset, int patternOffset)
@@ -105,10 +105,20 @@ public class SsmlDroid {
         }
 
         @Override
+        @SuppressLint("NewApi")
         public void startElement(String uri, String localName, String qName, Attributes attributes)
                 throws SAXException {
-            PersistableBundle bundle = new PersistableBundle();
             String temp, name = localName.toLowerCase();
+            if ("earcon".equals(name)) {
+                treeStack.push(new Tag(new EarconSpan(), "earcon", Result.length()));
+                return;
+            }
+            if (Build.VERSION.SDK_INT < 21) {
+                if (customHandler != null) customHandler.handleTag(true, localName, Result, reader);
+                treeStack.push(new Tag(name));
+                return;
+            }
+            PersistableBundle bundle = new PersistableBundle();
             if ("cardinal".equals(name) || "ordinal".equals(name)) {
                 if ((temp = attributes.getValue("number")) == null)
                     throw new AttributeMissingException(name + "/@number");
@@ -240,7 +250,7 @@ public class SsmlDroid {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             Tag tag = treeStack.pop();
             if (tag.Span != null)
-                Result.setSpan(tag.Span, tag.Position, Result.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                Result.setSpan(tag.Span, tag.Position, Result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             else if (customHandler != null) customHandler.handleTag(false, localName, Result, reader);
         }
 
@@ -285,6 +295,8 @@ public class SsmlDroid {
             Mapping mapping = mappings.get(preferLeft ? l : l - 1);
             return mapping.SsmlPosition + textOffset - mapping.TextPosition;
         }
+
+        // todo: getTextOffset, because why not?
     }
 
     private SsmlDroid() {
@@ -294,7 +306,8 @@ public class SsmlDroid {
     public static Parser fromSsml(String source, boolean ignoreSingleLineBreaks, Html.TagHandler customHandler)
             throws SAXException, IOException {
         XMLReader reader = XMLReaderFactory.createXMLReader("org.ccil.cowan.tagsoup.Parser");
-        Parser result = new Parser(source, customHandler, reader, ignoreSingleLineBreaks);
+        Parser result = new Parser(source = String.format("<speak>%s</speak>", source), customHandler, reader,
+                ignoreSingleLineBreaks);    // add a wrapper or parser won't behave correctly
         reader.setContentHandler(result);
         reader.parse(new InputSource(new StringReader(source)));
         return result;

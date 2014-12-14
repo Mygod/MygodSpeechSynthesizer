@@ -2,7 +2,8 @@ package tk.mygod.speech.tts;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.util.Pair;
+import android.text.Spanned;
+import tk.mygod.text.EarconSpan;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,6 +15,10 @@ import java.util.*;
  * @author  Mygod
  */
 public abstract class TtsEngine {
+    protected Context context;
+    protected TtsEngine(Context context) {
+        this.context = context;
+    }
     public abstract Set<Locale> getLanguages();
     public abstract Locale getLanguage();
     public boolean setLanguage(Locale loc) {
@@ -39,14 +44,14 @@ public abstract class TtsEngine {
     public String getID() {
         return getClass().getSimpleName();
     }
-    public String getName(Context context) {
+    public String getName() {
         return getID();
     }
-    public final Drawable getIcon(Context context) {
-        if (icon == null) icon = getIconInternal(context);
+    public final Drawable getIcon() {
+        if (icon == null) icon = getIconInternal();
         return icon;
     }
-    protected abstract Drawable getIconInternal(Context context);
+    protected abstract Drawable getIconInternal();
 
     protected OnTtsSynthesisCallbackListener listener;
     public final void setSynthesisCallbackListener(OnTtsSynthesisCallbackListener listener) {
@@ -70,11 +75,6 @@ public abstract class TtsEngine {
         public void onTtsSynthesisError(int start, int end);
     }
 
-    protected static Pair<Integer, Integer> getRange(String id) {
-        String[] parts = id.split(",");
-        return new Pair<Integer, Integer>(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-    }
-
     private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
     private static final int SPLITTERS_COUNT = 6, BEST_SPLITTERS_EVER = 0, SPACE_FOR_THE_BEST = 1;
     static {
@@ -88,34 +88,93 @@ public abstract class TtsEngine {
         }
     }
     protected abstract int getMaxLength();
-    protected ArrayList<Pair<Integer, Integer>> splitSpeech(CharSequence text, int startOffset, boolean aggressiveMode) {
+
+    protected static class SpeechPart {
+        private SpeechPart(int start, int end, boolean isEarcon) {
+            Start = start;
+            End = end;
+            IsEarcon = isEarcon;
+        }
+
+        public int Start, End;
+        public boolean IsEarcon;
+
+        public boolean equals(SpeechPart other) {
+            return Start == other.Start && End == other.End && IsEarcon == other.IsEarcon;
+        }
+        @Override
+        public boolean equals(Object other) {
+            if (other == null) return false;
+            if (other instanceof SpeechPart) return equals((SpeechPart) other);
+            try {
+                return equals(parse(other.toString()));
+            } catch (Exception exc) {
+                return false;
+            }
+        }
+
+        public static SpeechPart parse(String value) {
+            String[] parts = value.split(",");
+            return new SpeechPart(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), false);
+        }
+
+        @Override
+        public String toString() {
+            return Start + "," + End;
+        }
+    }
+
+    protected ArrayList<SpeechPart> splitSpeech(CharSequence text, int startOffset, boolean aggressiveMode) {
         int last = startOffset, length = text.length(), maxLength = getMaxLength();
         if (maxLength <= 0) throw new InvalidParameterException("maxLength should be a positive value.");
-        ArrayList<Pair<Integer, Integer>> result = new ArrayList<Pair<Integer, Integer>>();
-        while (last < length && splitters.get(text.charAt(last)) != null) ++last;
-        while (last < length) {
-            int i = last + 1, maxEnd = last + maxLength, bestPriority = SPLITTERS_COUNT;
-            if (maxEnd > length) maxEnd = length;
-            int end = maxEnd;
-            while (i < maxEnd) {
-                Integer priority = splitters.get(text.charAt(i));
-                if (priority != null) {
-                    if (priority == SPACE_FOR_THE_BEST) {
-                        int next = i + 1;
-                        if (next >= length || Character.isWhitespace(text.charAt(next))) priority = BEST_SPLITTERS_EVER;
-                    }
-                    if (priority <= bestPriority) {
-                        end = i;
-                        bestPriority = priority;
-                        if (aggressiveMode && priority == BEST_SPLITTERS_EVER) break;
-                    }
+        ArrayList<SpeechPart> result = new ArrayList<SpeechPart>();
+        int earconsLength = 0, nextEarcon = length;
+        SpeechPart[] earconParts = null;
+        if (text instanceof Spanned) {
+            Spanned spanned = (Spanned) text;
+            EarconSpan[] earcons = spanned.getSpans(last, length, EarconSpan.class);
+            if ((earconsLength = earcons.length) > 0) {
+                earconParts = new SpeechPart[earconsLength];
+                for (int i = 0; i < earconsLength; ++i) {
+                    EarconSpan span = earcons[i];
+                    earconParts[i] = new SpeechPart(spanned.getSpanStart(span), spanned.getSpanEnd(span), true);
                 }
-                ++i;
+                nextEarcon = earconParts[0].Start;
             }
-            while (end < maxEnd && splitters.get(text.charAt(end)) != null) ++end;  // some more punctuations? why not?
-            result.add(new Pair<Integer, Integer>(last, end));
-            last = end;
-            while (last < length && splitters.get(text.charAt(last)) != null) ++last;
+        }
+        int j = 0;
+        while (last < nextEarcon && splitters.get(text.charAt(last)) != null) ++last;
+        while (last < length) {
+            if (last == nextEarcon) {
+                SpeechPart part = earconParts[j];
+                result.add(part);
+                last = part.End;
+                nextEarcon = ++j < earconsLength ? earconParts[j].Start : length;
+            } else {
+                int i = last + 1, maxEnd = last + maxLength, bestPriority = SPLITTERS_COUNT;
+                if (maxEnd > nextEarcon) maxEnd = nextEarcon;
+                int end = maxEnd;
+                while (i < maxEnd) {
+                    int next = i + 1;
+                    Integer priority = splitters.get(text.charAt(i));
+                    if (priority != null) {
+                        if (priority == SPACE_FOR_THE_BEST && (next >= nextEarcon ||
+                                Character.isWhitespace(text.charAt(next)))) priority = BEST_SPLITTERS_EVER;
+                        if (priority <= bestPriority) {
+                            i = next;
+                            while (i < maxEnd && splitters.get(text.charAt(i)) != null) ++i;    // get more splitters
+                            end = i;
+                            bestPriority = priority;
+                            if (aggressiveMode && priority == BEST_SPLITTERS_EVER) break;
+                            continue;
+                        }
+                    }
+                    i = next;
+                }
+                result.add(new SpeechPart(last, end, false));
+                last = end;
+            }
+            while (last < nextEarcon && splitters.get(text.charAt(last)) != null) ++last;
         }
         return result;
     }

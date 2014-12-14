@@ -8,7 +8,7 @@ import android.content.Intent;
  * Project: MygodSpeechSynthesizer
  * @author  Mygod
  */
-public class NotificationHandler extends BroadcastReceiver {
+public final class NotificationHandler extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (TtsEngineManager.mainActivity != null &&

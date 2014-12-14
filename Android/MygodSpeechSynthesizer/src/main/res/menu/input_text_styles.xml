@@ -103,4 +103,6 @@
             </item>
         </menu>
     </item>
+    <item android:id="@+id/action_tts_earcon" android:title="Earcon"
+          android:alphabeticShortcut="r" />
 </menu>

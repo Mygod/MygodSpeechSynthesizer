@@ -1,5 +1,6 @@
 package tk.mygod.speech.synthesizer;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -48,14 +49,14 @@ import java.util.Date;
 /**
  * @author  Mygod
  */
-public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCallbackListener,
+public final class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCallbackListener,
         TtsEngineManager.OnSelectedEngineChangingListener, Toolbar.OnMenuItemClickListener {
-    private static final int OPEN_TEXT_CODE = 0, SAVE_TEXT_CODE = 1, SAVE_SYNTHESIS_CODE = 2,
+    private static final int OPEN_TEXT = 0, SAVE_TEXT = 1, SAVE_SYNTHESIS = 2, OPEN_EARCON = 3,
                              IDLE = 0, SPEAKING = 1, SYNTHESIZING = 2;
     private ProgressBar progressBar;
     private EditText inputText;
     private Menu menu;
-    private MenuItem styleItem;
+    private MenuItem styleItem, earconItem;
     private FloatingActionButton fab;
     private int status, selectionStart, selectionEnd;
     private boolean inBackground;
@@ -70,6 +71,7 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
     private Notification.Builder builder;
 
     private String lastText, displayName;
+    @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private void showNotification(CharSequence text) {
         if (status != SPEAKING) lastText = null;
@@ -183,17 +185,28 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
         if (v != inputText) return;
         getMenuInflater().inflate(R.menu.input_text_styles, menu);
         menu.setHeaderTitle("Style...");    // todo: localize!
+        earconItem = menu.findItem(R.id.action_tts_earcon);
     }
 
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        CharSequence source = inputText.getText();
-        StyleIdParser parser = new StyleIdParser(item, source.subSequence(selectionStart, selectionEnd));
-        if (parser.Tag == null) return super.onContextItemSelected(item);
+    private boolean processTag(MenuItem item, CharSequence source, CharSequence selection) {
+        StyleIdParser parser = new StyleIdParser(item, selection);
+        if (parser.Tag == null) return true;
         inputText.setTextKeepState(source.subSequence(0, selectionStart) + parser.Tag +
                 source.subSequence(selectionEnd, source.length()));
         inputText.setSelection(selectionStart + parser.Selection);
         if (parser.Toast != null) Toast.makeText(this, parser.Toast, Toast.LENGTH_LONG).show();
+        return false;
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        CharSequence source = inputText.getText(), selection = source.subSequence(selectionStart, selectionEnd);
+        if (item.getItemId() == R.id.action_tts_earcon && selection.length() == 0) {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("audio/*");
+            startActivityForResult(intent, OPEN_EARCON);
+        } else if (processTag(item, source, selection)) return super.onContextItemSelected(item);
         return true;
     }
 
@@ -213,6 +226,7 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
         styleItem.setVisible(TtsEngineManager.getEnableSsmlDroid());
     }
 
+    @SuppressLint("InlinedApi")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
@@ -235,14 +249,14 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
                 else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
                 intent.putExtra(Intent.EXTRA_TITLE, fileName);
                 intent.setType(TtsEngineManager.engines.selectedEngine.getMimeType());
-                startActivityForResult(intent, SAVE_SYNTHESIS_CODE);
+                startActivityForResult(intent, SAVE_SYNTHESIS);
                 return true;
             }
             case R.id.action_open: {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("text/plain");
-                startActivityForResult(intent, OPEN_TEXT_CODE);
+                startActivityForResult(intent, OPEN_TEXT);
                 return true;
             }
             case R.id.action_save: {
@@ -257,7 +271,7 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
                 else (intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)).addCategory(Intent.CATEGORY_OPENABLE);
                 intent.putExtra(Intent.EXTRA_TITLE, fileName);
                 intent.setType("text/plain");
-                startActivityForResult(intent, SAVE_TEXT_CODE);
+                startActivityForResult(intent, SAVE_TEXT);
                 return true;
             }
             case R.id.action_settings:
@@ -339,14 +353,13 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != RESULT_OK) return;
         switch (requestCode) {
-            case OPEN_TEXT_CODE:
-                onNewIntent(data);
+            case OPEN_TEXT:
+                if (resultCode == RESULT_OK) onNewIntent(data);
                 return;
-            case SAVE_TEXT_CODE:
+            case SAVE_TEXT:
                 OutputStream output = null;
-                try {
+                if (resultCode == RESULT_OK) try {
                     (output = getContentResolver().openOutputStream(data.getData()))
                             .write(inputText.getText().toString().getBytes());
                 } catch (IOException e) {
@@ -361,8 +374,8 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
                     }
                 }
                 return;
-            case SAVE_SYNTHESIS_CODE:
-                try {
+            case SAVE_SYNTHESIS:
+                if (resultCode == RESULT_OK) try {
                     status = SYNTHESIZING;
                     startSynthesis();
                     TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
@@ -376,6 +389,15 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
                     stopSynthesis();
                 }
                 return;
+            case OPEN_EARCON:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    if (Build.VERSION.SDK_INT >= 19) try {
+                        getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    } catch (Exception ignore) { }
+                    processTag(earconItem, inputText.getText(), uri.toString());
+                } else processTag(earconItem, inputText.getText(), "");
+                return;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -387,6 +409,7 @@ public class MainActivity extends Activity implements TtsEngine.OnTtsSynthesisCa
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                progressBar.setIndeterminate(false);
                 progressBar.setSecondaryProgress(end);
             }
         });

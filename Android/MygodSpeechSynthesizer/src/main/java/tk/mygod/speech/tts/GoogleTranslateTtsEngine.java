@@ -4,8 +4,8 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Pair;
 import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
 import tk.mygod.util.LocaleUtils;
@@ -22,7 +22,7 @@ import java.util.concurrent.Semaphore;
  * Project:  Mygod Speech Synthesizer
  * @author   Mygod
  */
-public class GoogleTranslateTtsEngine extends TtsEngine {
+public final class GoogleTranslateTtsEngine extends TtsEngine {
     private static Set<Locale> supportedLanguages;
     private String language = "en";
     private CharSequence currentText;
@@ -35,6 +35,10 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                 "de", "el", "ht", "hi", "hu", "is", "id", "it", "ja", "la", "lv", "mk", "no", "pl", "pt", "ro", "ru",
                 "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" })
             supportedLanguages.add(LocaleUtils.parseLocale(code));
+    }
+
+    protected GoogleTranslateTtsEngine(Context context) {
+        super(context);
     }
 
     @Override
@@ -56,11 +60,11 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     @Override
-    public String getName(Context context) {
+    public String getName() {
         return context.getResources().getString(R.string.google_translate_tts_engine_name);
     }
     @Override
-    protected Drawable getIconInternal(Context context) {
+    protected Drawable getIconInternal() {
         try {
             return context.getPackageManager().getApplicationIcon("com.google.android.apps.translate");
         } catch (Exception e) { // fallback if you don't have the official app installed :S
@@ -114,14 +118,14 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
         // it seems creating 32+ unreleased MediaPlayer will fail miserably with:
         // java.io.IOException: Prepare failed.: status=0x1
         private final ArrayBlockingQueue<Object> playbackQueue = new ArrayBlockingQueue<Object>(29);
-        private final HashMap<MediaPlayer, Pair<Integer, Integer>>
-                rangeMap = new HashMap<MediaPlayer, Pair<Integer, Integer>>(32);
+        private final HashMap<MediaPlayer, SpeechPart> partMap = new HashMap<MediaPlayer, SpeechPart>(32);
         private PlayerThread playThread;
 
         public void stop() {
             cancel(false);
             if (playThread == null || playThread.player == null) return;
-            playThread.player.stop();   // playback should be stopped instantly or somebody might get angry
+            // playback should be stopped instantly or somebody might get angry >:(
+            if (playThread.player.isPlaying()) playThread.player.stop();
         }
 
         private class PlayerThread extends Thread
@@ -135,21 +139,21 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                     Object obj = playbackQueue.take();
                     while (obj instanceof MediaPlayer) {
                         player = (MediaPlayer) obj;
-                        Pair<Integer, Integer> pair = rangeMap.get(player);
+                        SpeechPart part = partMap.get(player);
                         try {   // not done yet
                             if (!isCancelled()) {
-                                if (listener != null) listener.onTtsSynthesisCallback(pair.first, pair.second);
+                                if (listener != null) listener.onTtsSynthesisCallback(part.Start, part.End);
                                 player.setOnCompletionListener(this);
                                 player.setOnErrorListener(this);
                                 playLock.acquireUninterruptibly();
                                 player.start();
                                 playLock.acquireUninterruptibly(); // wait for release
                                 playLock.release();
-                                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
+                                if (listener != null) listener.onTtsSynthesisCallback(part.End, part.End);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
-                            if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+                            if (listener != null) listener.onTtsSynthesisError(part.Start, part.End);
                         } finally {
                             try {
                                 player.stop();
@@ -170,15 +174,15 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
 
             @Override
             public void onCompletion(MediaPlayer mp) {
-                Pair<Integer, Integer> pair = rangeMap.get(mp);
-                if (listener != null) listener.onTtsSynthesisCallback(pair.second, pair.second);
+                SpeechPart part = partMap.get(mp);
+                if (listener != null) listener.onTtsSynthesisCallback(part.End, part.End);
                 playLock.release();
             }
 
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                Pair<Integer, Integer> pair = rangeMap.get(mp);
-                if (listener != null) listener.onTtsSynthesisError(pair.first, pair.second);
+                SpeechPart part = partMap.get(mp);
+                if (listener != null) listener.onTtsSynthesisError(part.Start, part.End);
                 playLock.release();
                 return false;
             }
@@ -188,17 +192,18 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
         protected Void doInBackground(Void... params) {
             try {
                 // Disabling aggressive mode to reduce MediaPlayers
-                ArrayList<Pair<Integer, Integer>> ranges = splitSpeech(currentText, startOffset, false);
+                ArrayList<SpeechPart> parts = splitSpeech(currentText, startOffset, false);
                 if (isCancelled()) return null;
                 (playThread = new PlayerThread()).start();
-                for (Pair<Integer, Integer> range : ranges) {
+                for (SpeechPart part : parts) {
                     if (isCancelled()) return null;
                     MediaPlayer player = null;
                     try {
                         while (true) try {
                             player = new MediaPlayer();
                             player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                            player.setDataSource(getUrl(currentText.subSequence(range.first, range.second).toString()));
+                            String str = currentText.subSequence(part.Start, part.End).toString();
+                            player.setDataSource(part.IsEarcon ? str : getUrl(str));
                             player.prepare();
                             break;
                         } catch (IOException e) {
@@ -207,13 +212,13 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
                             Thread.sleep(1000);
                         }
                         if (isCancelled()) return null;
-                        rangeMap.put(player, range);
+                        partMap.put(player, part);
                         playbackQueue.put(player);
-                        if (listener != null) listener.onTtsSynthesisPrepared(range.second);
+                        if (listener != null) listener.onTtsSynthesisPrepared(part.End);
                     } catch (Exception e) {
                         e.printStackTrace();
                         if (player != null) player.release();
-                        if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                        if (listener != null) listener.onTtsSynthesisError(part.Start, part.End);
                     }
                 }
             } catch (Exception e) {
@@ -232,17 +237,19 @@ public class GoogleTranslateTtsEngine extends TtsEngine {
             if (params.length != 1) throw new InvalidParameterException("Params incorrect.");
             FileOutputStream output = params[0];
             try {
-                for (Pair<Integer, Integer> range : splitSpeech(currentText, startOffset, false)) {
+                for (SpeechPart part : splitSpeech(currentText, startOffset, false)) {
                     if (isCancelled()) return null;
                     InputStream input = null;
                     try {
-                        if (listener != null) listener.onTtsSynthesisCallback(range.first, range.second);
-                        IOUtils.copy(input = new URL(getUrl(currentText.subSequence(range.first, range.second)
-                                .toString())).openStream(), output);
-                        if (listener != null) listener.onTtsSynthesisCallback(range.second, range.second);
+                        if (listener != null) listener.onTtsSynthesisCallback(part.Start, part.End);
+                        String str = currentText.subSequence(part.Start, part.End).toString();
+                        IOUtils.copy(input = part.IsEarcon  // dummy mp3 merger
+                                ? context.getContentResolver().openInputStream(Uri.parse(str))
+                                : new URL(getUrl(str)).openStream(), output);
+                        if (listener != null) listener.onTtsSynthesisCallback(part.End, part.End);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        if (listener != null) listener.onTtsSynthesisError(range.first, range.second);
+                        if (listener != null) listener.onTtsSynthesisError(part.Start, part.End);
                     } finally {
                         if (input != null) try {
                             input.close();

@@ -24,7 +24,7 @@
                             android:title="@string/settings_ignore_single_line_break"
                             android:summary="@string/settings_ignore_single_line_break_summary"/>
         <CheckBoxPreference android:key="text.enableSsmlDroid" android:title="Enable SsmlDroid™"
-                            android:summary="Enable SsmlDroid™ which enables you to apply styles to the text. However, the engine might not support it. Requires 5.0+." />
+                            android:summary="Enable SsmlDroid™ which enables you to apply styles to the text." />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_appearance">
         <CheckBoxPreference android:key="appearance.notificationIcon" android:defaultValue="true"

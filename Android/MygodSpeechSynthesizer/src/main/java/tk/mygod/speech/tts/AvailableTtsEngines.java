@@ -6,10 +6,10 @@ import android.speech.tts.TextToSpeech;
 import java.util.ArrayList;
 
 /**
- * Project: MygodSpeechSynthesizer
+ * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
-public class AvailableTtsEngines extends ArrayList<TtsEngine> {
+public final class AvailableTtsEngines extends ArrayList<TtsEngine> {
     public AvailableTtsEngines(Context context) {
         SvoxPicoTtsEngine defaultEngine = new SvoxPicoTtsEngine(context);
         add(defaultEngine);
@@ -17,7 +17,7 @@ public class AvailableTtsEngines extends ArrayList<TtsEngine> {
         for (TextToSpeech.EngineInfo info : defaultEngine.tts.getEngines())
             if (info.name.equals(defaultEngineName)) defaultEngine.engineInfo = info;
             else add(new SvoxPicoTtsEngine(context, info));
-        add(new GoogleTranslateTtsEngine());
+        add(new GoogleTranslateTtsEngine(context));
     }
 
     public TtsEngine selectedEngine;

@@ -14,7 +14,7 @@ import java.util.Locale;
  * This thing is so complex that I have to split it into a separate class to make things clear.
  * @author Mygod
  */
-class StyleIdParser {
+final class StyleIdParser {
     public String Tag, Toast;
     public int Selection;
 
@@ -149,6 +149,9 @@ class StyleIdParser {
                 Tag = String.format(" case=\"%s\"", item.getTitleCondensed());
                 attribute = true;
                 break;
+            case R.id.action_tts_earcon:
+                Tag = "earcon";
+                break;
             default:    // unknown stuff clicked
                 return;
         }
@@ -160,7 +163,8 @@ class StyleIdParser {
                 if (Selection < 2) Selection = Tag.length();
             } else {
                 if (Selection < 2) Selection = Tag.length() + 2;
-                Tag = String.format("<%s>%s</%s>", Tag, selection, Tag.substring(0, Tag.indexOf(' ')));
+                int i = Tag.indexOf(' ');
+                Tag = String.format("<%s>%s</%s>", Tag, selection, i < 0 ? Tag : Tag.substring(0, i));
             }
         }
     }

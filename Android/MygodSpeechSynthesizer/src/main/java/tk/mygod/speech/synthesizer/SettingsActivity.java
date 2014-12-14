@@ -27,7 +27,7 @@ import java.util.Set;
  * Project: Mygod Speech Synthesizer
  * @author  Mygod
  */
-public class SettingsActivity extends Activity {
+public final class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,8 +49,8 @@ public class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectEngine(newValue.toString());
-                            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
-                            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
+                            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName());
+                            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon());
                             updateLanguages();
                             return true;
                         }
@@ -80,16 +80,16 @@ public class SettingsActivity extends Activity {
             Drawable[] icons = new Drawable[count];
             for (int i = 0; i < count; ++i) {
                 TtsEngine te = TtsEngineManager.engines.get(i);
-                names[i] = te.getName(getActivity());
+                names[i] = te.getName();
                 ids[i] = te.getID();
-                icons[i] = te.getIcon(getActivity());
+                icons[i] = te.getIcon();
             }
             engine.setEntries(names);
             engine.setEntryValues(ids);
             engine.setEntryIcons(icons);
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
-            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName(getActivity()));
-            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon(getActivity()));
+            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName());
+            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon());
             updateLanguages();
             (start = (ListPreference)findPreference("text.start")).setOnPreferenceChangeListener(
                     new Preference.OnPreferenceChangeListener() {
@@ -102,12 +102,11 @@ public class SettingsActivity extends Activity {
                     }
             );
             start.setSummary(start.getEntry());
+            ((CheckBoxPreference) findPreference("text.enableSsmlDroid"))
+                    .setChecked(TtsEngineManager.getEnableSsmlDroid());
             CheckBoxPreference pref = (CheckBoxPreference) findPreference("appearance.oldTimeySaveUI");
             if (Build.VERSION.SDK_INT < 19) pref.setEnabled(false);
             else pref.setChecked(TtsEngineManager.getOldTimeySaveUI());
-            pref = (CheckBoxPreference) findPreference("text.enableSsmlDroid");
-            if (Build.VERSION.SDK_INT < 21) pref.setEnabled(false);
-            else pref.setChecked(TtsEngineManager.getEnableSsmlDroid());
         }
 
         private void updateLanguages() {

@@ -69,7 +69,7 @@ final class TtsEngineManager {
     }
 
     static boolean getEnableSsmlDroid() {
-        return pref.getBoolean("text.enableSsmlDroid", Build.VERSION.SDK_INT >= 21);
+        return pref.getBoolean("text.enableSsmlDroid", false);
     }
     static boolean getIgnoreSingleLineBreak() {
         return pref.getBoolean("text.ignoreSingleLineBreak", false);
