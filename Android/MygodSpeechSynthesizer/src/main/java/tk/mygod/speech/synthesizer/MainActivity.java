@@ -33,6 +33,7 @@ import tk.mygod.app.SaveFileActivity;
 import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.support.v7.util.ToolbarConfigurer;
 import tk.mygod.text.SsmlDroid;
+import tk.mygod.text.TextMappings;
 import tk.mygod.util.FileUtils;
 import tk.mygod.util.IOUtils;
 import tk.mygod.widget.ObservableScrollView;
@@ -66,7 +67,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
                     return dest.subSequence(dstart, dend);
                 }
             } };
-    private SsmlDroid.Parser parser;
+    private TextMappings mappings;
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
     private Notification.Builder builder;
 
@@ -329,10 +330,13 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     private CharSequence getText() throws IOException, SAXException {
         String text = inputText.getText().toString(), temp = text.replaceAll("\r", ""); // I hate \r!!!1!
         if (!text.equals(temp)) inputText.setText(temp);                                // & u'd better not ask y
-        return TtsEngineManager.getEnableSsmlDroid()
-                ? (parser = SsmlDroid.fromSsml(text,
-                    TtsEngineManager.getIgnoreSingleLineBreak(), null)).Result
-                : inputText.getText().toString().replaceAll("(?<!\\n)(\\n)(?!\\n)", " ");
+        if (TtsEngineManager.getEnableSsmlDroid()) {
+            SsmlDroid.Parser parser = SsmlDroid.fromSsml(text, TtsEngineManager.getIgnoreSingleLineBreak(), null);
+            mappings = parser.Mappings;
+            return parser.Result;
+        }
+        mappings = null;
+        return inputText.getText().toString().replaceAll("(?<!\\n)(\\n)(?!\\n)", " ");
     }
 
     public void synthesize(View view) {
@@ -404,7 +408,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
 
     @Override
     public void onTtsSynthesisPrepared(int e) {
-        if (parser != null) e = parser.Mappings.getSourceOffset(e, true);
+        if (mappings != null) e = mappings.getSourceOffset(e, true);
         final int end = e;
         runOnUiThread(new Runnable() {
             @Override
@@ -416,9 +420,9 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     }
     @Override
     public void onTtsSynthesisCallback(int s, int e) {
-        if (parser != null) {
-            s = parser.Mappings.getSourceOffset(s, false);
-            e = parser.Mappings.getSourceOffset(e, true);
+        if (mappings != null) {
+            s = mappings.getSourceOffset(s, false);
+            e = mappings.getSourceOffset(e, true);
         }
         if (e < s) e = s;
         final int start = s, end = e;
@@ -439,9 +443,9 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     }
     @Override
     public void onTtsSynthesisError(int s, int e) {
-        if (parser != null) {
-            s = parser.Mappings.getSourceOffset(s, false);
-            e = parser.Mappings.getSourceOffset(e, true);
+        if (mappings != null) {
+            s = mappings.getSourceOffset(s, false);
+            e = mappings.getSourceOffset(e, true);
         }
         if (e < s) e = s;
         final int start = s, end = e;
