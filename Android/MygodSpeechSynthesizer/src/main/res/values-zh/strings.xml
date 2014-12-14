@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mygod 语音合成器</string>
-    <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于
-        %2$s。\n\n常见问题：如果出现“合成失败”的错误，可能是因为您选择的引擎需要互联网连接，请检查您的互联网连接，或尝试换一个引擎。您选择的
-        TTS 引擎很可能并未对所有的功能提供支持，如三星 TTS 似乎不支持合成到文件。</string>
-    <string name="action_synthesize">合成</string>
-    <string name="action_stop">停止</string>
+    <string name="input_text_default">感谢您使用 Mygod 语音合成器 %1$s！当前版本编译于 %2$s
+        %3$s。\n\n提示：若想要应用样式，请尝试在设置中启用
+        SsmlDroid™。\n\n常见问题：如果出现“合成失败”的错误，可能是因为您选择的引擎需要互联网连接，请检查您的互联网连接。大多数 TTS
+        引擎不支持所有的功能，例如三星 TTS 似乎不支持合成到文件。因此如果遇到问题可以尝试切换引擎。你也可以从 Play
+        市场等应用商店上下载引擎。</string>
     <string name="action_synthesize_to_file">合成到文件</string>
     <string name="action_open">打开</string>
     <string name="action_save">保存</string>
@@ -22,10 +22,6 @@
     <string name="settings_language">语言</string>
     <string name="settings_voice">声音</string>
     <string name="settings_voice_default">默认</string>
-    <string name="settings_features">支持功能</string>
-    <string name="settings_features_none">未知</string>
-    <string name="settings_features_network">在线</string>
-    <string name="settings_features_embedded">离线</string>
     <string name="settings_tweaks">调整 (可能不支持)</string>
     <string name="settings_pitch">音高 (正常为 1)</string>
     <string name="settings_speech_rate">语速 (正常为 1)</string>
@@ -47,4 +43,64 @@
     <string name="action_create_dir">创建目录</string>
     <string name="dialog_overwrite_confirm_title">确定要覆盖此文件吗？</string>
     <string name="dialog_create_dir_title">请输入目录名：</string>
+    <string name="action_style">样式…</string>
+    <string name="action_tts_cardinal">基数</string>
+    <string name="action_tts_number_toast">输入要合成的数字。</string>
+    <string name="action_tts_date">日期</string>
+    <string name="action_tts_date_toast">至少输入两个属性。</string>
+    <string name="action_tts_decimal">小数</string>
+    <string name="action_tts_decimal_toast">分别输入该数的整数部分与小数部分。</string>
+    <string name="action_tts_digits">数码</string>
+    <string name="action_tts_digits_toast">若想要阅读标记内的数码，删除 digits/@digits，否则输入要依次阅读的数码。</string>
+    <string name="action_tts_digits_toast_empty">输入要依次阅读的数码。</string>
+    <string name="action_tts_earcon">音标</string>
+    <string name="action_tts_electronic">电子地址</string>
+    <string name="action_tts_electronic_toast">至少输入一个属性。</string>
+    <string name="action_tts_fraction">分数</string>
+    <string name="action_tts_fraction_toast">分别输入该分数的分子与分母。也可以输入带分数的整数部分。</string>
+    <string name="action_tts_generic_attributes">通用属性…</string>
+    <string name="action_tts_generic_attributes_animacy">活泼…</string>
+    <string name="action_tts_generic_attributes_animacy_animate">活泼</string>
+    <string name="action_tts_generic_attributes_animacy_inanimate">单调</string>
+    <string name="action_tts_generic_attributes_case">语义格…</string>
+    <string name="action_tts_generic_attributes_case_ablative">夺格</string>
+    <string name="action_tts_generic_attributes_case_accusative">直接宾格</string>
+    <string name="action_tts_generic_attributes_case_dative">与格</string>
+    <string name="action_tts_generic_attributes_case_genitive">属格</string>
+    <string name="action_tts_generic_attributes_case_instrumental">工具格</string>
+    <string name="action_tts_generic_attributes_case_locative">位置格</string>
+    <string name="action_tts_generic_attributes_case_nominative">主格</string>
+    <string name="action_tts_generic_attributes_case_vocative">呼格</string>
+    <string name="action_tts_generic_attributes_gender">性别…</string>
+    <string name="action_tts_generic_attributes_gender_female">女性</string>
+    <string name="action_tts_generic_attributes_gender_male">男性</string>
+    <string name="action_tts_generic_attributes_gender_neutral">中性</string>
+    <string name="action_tts_generic_attributes_multiplicity_dual">双数</string>
+    <string name="action_tts_generic_attributes_multiplicity">数…</string>
+    <string name="action_tts_generic_attributes_multiplicity_plural">复数</string>
+    <string name="action_tts_generic_attributes_multiplicity_single">单数</string>
+    <string name="action_tts_measure">度量单位</string>
+    <string name="action_tts_measure_toast">输入一个基数、小数或分数以及使用英语单数形式的度量单位。</string>
+    <string name="action_tts_money">货币</string>
+    <string name="action_tts_money_toast">输入一个小数以及 ISO4217 货币代码，如 USD。也可以输入数量级。</string>
+    <string name="action_tts_ordinal">序数</string>
+    <string name="action_tts_telephone">电话</string>
+    <string name="action_tts_telephone_toast">输入该电话号码的总机号码部分。也可以输入国家代码与分机号码。</string>
+    <string name="action_tts_text">文本</string>
+    <string name="action_tts_text_toast">若想要阅读标记内的文本，删除 text/@text，否则输入要合成的文本。</string>
+    <string name="action_tts_text_toast_empty">输入要合成的文本。</string>
+    <string name="action_tts_time">时间</string>
+    <string name="action_tts_time_toast">输入该时间的小时数和分钟数。</string>
+    <string name="action_tts_verbatim">逐字</string>
+    <string name="action_tts_verbatim_toast">输入要除了空格全部逐字阅读的文本。</string>
+    <string name="settings_enable_ssmldroid">启用 SsmlDroid™</string>
+    <string name="settings_enable_ssmldroid_summary">启用 SsmlDroid™ 以对文本应用样式。</string>
+    <string name="settings_voice_information">\n名称：%1$s\n质量：%2$d (越高越好)\n延迟：%3$d (越低越好)</string>
+    <string name="settings_voice_information_network_connection_required">\n需要网络连接</string>
+    <string name="settings_voice_information_not_installed">\n需要下载额外数据</string>
+    <string name="settings_voice_information_unsupported_features">\n暂不支持的功能：</string>
+    <string name="settings_ssmldroid_user_guidelines">SsmlDroid™ 用户指南</string>
+    <string name="url_ssmldroid_user_guidelines">
+        https://github.com/Mygod/MygodSpeechSynthesizer/wiki/SsmlDroid%E2%84%A2-%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97
+    </string>
 </resources>

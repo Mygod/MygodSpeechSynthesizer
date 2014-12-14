@@ -1,5 +1,6 @@
 package tk.mygod.speech.synthesizer;
 
+import android.content.Context;
 import android.view.MenuItem;
 
 import java.net.URI;
@@ -18,12 +19,12 @@ final class StyleIdParser {
     public String Tag, Toast;
     public int Selection;
 
-    public StyleIdParser(MenuItem item, CharSequence selection) {
+    public StyleIdParser(Context context, MenuItem item, CharSequence selection) {
         boolean attribute = false;
-        switch (item.getGroupId() | item.getItemId()) { // TODO: localize toast
+        switch (item.getGroupId() | item.getItemId()) {
             case R.id.action_tts_cardinal:
                 Tag = "cardinal number=\"\"";
-                Toast = "Enter the number to be synthesized.";
+                Toast = context.getString(R.string.action_tts_number_toast);
                 break;
             case R.id.action_tts_date:
                 try {
@@ -41,7 +42,7 @@ final class StyleIdParser {
                             calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.DAY_OF_WEEK));
                 } catch (Exception ignore) {
                     Tag = "date year=\"\" month=\"\" day=\"\" weekday=\"\"";
-                    Toast = "Enter at least two of the fields.";
+                    Toast = context.getString(R.string.action_tts_date_toast);
                 }
                 break;
             case R.id.action_tts_decimal:
@@ -56,16 +57,13 @@ final class StyleIdParser {
                             i < 0 ? str : str.substring(0, i), i < 0 ? "" : str.substring(i + 1));
                 } catch (NumberFormatException ignore) {
                     Tag = "decimal integer_part=\"\" fractional_part=\"\"";
-                    Toast = "Enter the integer part and the fractional part of the decimal.";
+                    Toast = context.getString(R.string.action_tts_decimal_toast);
                 }
                 break;
             case R.id.action_tts_digits:
                 Tag = "digits digits=\"\"";
-                Toast = selection.length() == 0 ? "Enter the digits that have to be read sequentially." : "If you want to read the digits inside the tag, remove digits/@digits. Otherwise, enter the digits that have to be read sequentially.";
-                break;
-            case R.id.action_tts_fraction:
-                Tag = "fraction numerator=\"\" denominator=\"\" integer_part=\"\"";
-                Toast = "Enter the numerator and denominator of the fraction. The integer part of it is optional.";
+                Toast = context.getString(selection.length() == 0
+                        ? R.string.action_tts_digits_toast_empty : R.string.action_tts_digits_toast);
                 break;
             case R.id.action_tts_electronic:
                 try {
@@ -91,25 +89,34 @@ final class StyleIdParser {
                 } catch (URISyntaxException ignore) {
                     Tag = "electronic protocol=\"\" username=\"\" password=\"\" domain=\"\" port=\"\" path=\"\" " +
                             "query_string=\"\" fragment_id=\"\"";
-                    Toast = "Enter at least one of the field.";
+                    Toast = context.getString(R.string.action_tts_electronic_toast);
                 }
+                break;
+            case R.id.action_tts_fraction:
+                Tag = "fraction numerator=\"\" denominator=\"\" integer_part=\"\"";
+                Toast = context.getString(R.string.action_tts_fraction_toast);
                 break;
             case R.id.action_tts_measure:
                 Tag = "measure number=\"\" integer_part=\"\" fractional_part=\"\" numerator=\"\" denominator=\"\" " +
                         "unit=\"\"";
-                Toast = "Enter a cardinal, decimal or a fraction and the unit of the measure specified in English singular form.";
+                Toast = context.getString(R.string.action_tts_measure_toast);
                 break;
             case R.id.action_tts_money:
                 Tag = "money integer_part=\"\" fractional_part=\"\" currency=\"\" quantity=\"\"";
-                Toast = "Enter a decimal and an ISO4217 currency code (e.g. USD). Quantity is optional.";
+                Toast = context.getString(R.string.action_tts_money_toast);
+                break;
+            case R.id.action_tts_ordinal:
+                Tag = "ordinal number=\"\"";
+                Toast = context.getString(R.string.action_tts_number_toast);
                 break;
             case R.id.action_tts_telephone:
                 Tag = "telephone number_parts=\"\" country_code=\"\" extension=\"\"";
-                Toast = "Enter the main number part of the telephone number. Country code and extension part of it is optional.";
+                Toast = context.getString(R.string.action_tts_telephone_toast);
                 break;
             case R.id.action_tts_text:
                 Tag = "text text=\"\"";
-                Toast = selection.length() == 0 ? "Enter the text to be synthesized." : "If you want to read the text in the tag, remove text/@text. Otherwise, enter the text to be synthesized.";
+                Toast = context.getString(selection.length() == 0
+                        ? R.string.action_tts_text_toast_empty : R.string.action_tts_text_toast);
                 break;
             case R.id.action_tts_time:
                 try {
@@ -126,12 +133,12 @@ final class StyleIdParser {
                             calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
                 } catch (Exception ignore) {
                     Tag = "time hours=\"\" minutes=\"\"";
-                    Toast = "Enter the hours and minutes of the time.";
+                    Toast = context.getString(R.string.action_tts_time_toast);
                 }
                 break;
             case R.id.action_tts_verbatim:
                 Tag = "verbatim verbatim=\"\"";
-                Toast = "Enter the text where the characters are read verbatim, except whitespace.";
+                Toast = context.getString(R.string.action_tts_verbatim_toast);
                 break;
             case R.id.action_tts_generic_attributes_gender:
                 Tag = String.format(" gender=\"%s\"", item.getTitleCondensed());

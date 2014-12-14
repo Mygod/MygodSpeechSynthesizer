@@ -1,0 +1,5 @@
+感谢您使用 <text text="My god">Mygod</text> 语音合成器 <verbatim verbatim="%1$s">%1$s</verbatim>！当前版本编译于 <date year="%4$d" month="%5$d" day="%6$d" weekday="%7$d">%2$s</date> <time hours="%8$d" minutes="%9$d">%3$s</time>。
+
+您已经启用了 <text text="s-s-m-l-droid t-m">SsmlDroid™</text>。请注意一些引擎可能不能提供完整的支持，详细信息请在设置中查看用户指南。如果你搞不懂这些神奇的格式，而只想合成纯文本，请在设置中去取消选中“启用 <text text="s-s-m-l-droid t-m">SsmlDroid™</text>”。
+
+常见问题：如果出现“合成失败”的错误，可能是因为您选择的引擎需要互联网连接，请检查您的互联网连接。大多数 TTS 引擎不支持所有的功能，例如三星 TTS 似乎不支持合成到文件。因此如果遇到问题可以尝试切换引擎。你也可以从 Play 市场等应用商店上下载引擎。

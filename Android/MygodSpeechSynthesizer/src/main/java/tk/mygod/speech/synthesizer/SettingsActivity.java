@@ -1,7 +1,9 @@
 package tk.mygod.speech.synthesizer;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -104,6 +106,15 @@ public final class SettingsActivity extends Activity {
             start.setSummary(start.getEntry());
             ((CheckBoxPreference) findPreference("text.enableSsmlDroid"))
                     .setChecked(TtsEngineManager.getEnableSsmlDroid());
+            findPreference("ssmlDroid.userGuidelines")
+                    .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                        @Override
+                        public boolean onPreferenceClick(Preference preference) {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getActivity()
+                                    .getString(R.string.url_ssmldroid_user_guidelines))));
+                            return false;
+                        }
+                    });
             CheckBoxPreference pref = (CheckBoxPreference) findPreference("appearance.oldTimeySaveUI");
             if (Build.VERSION.SDK_INT < 19) pref.setEnabled(false);
             else pref.setChecked(TtsEngineManager.getOldTimeySaveUI());
@@ -121,6 +132,7 @@ public final class SettingsActivity extends Activity {
             lang.setEntries(names);
             lang.setEntryValues(ids);
             Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
+            if (locale == null) return;
             lang.setValue(locale.toString());
             lang.setSummary(locale.getDisplayName());
             updateVoices();
@@ -132,12 +144,14 @@ public final class SettingsActivity extends Activity {
             int count = voices.size();
             CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
             int i = 0;
-            for (TtsVoice voice : voices) { // TODO: Localizations
+            for (TtsVoice voice : voices) {
                 SpannableStringBuilder builder = new SpannableStringBuilder();
                 builder.append(voice.getDisplayName(getActivity()));
                 int start = builder.length();
                 Set<String> features = voice.getFeatures();
-                if (!(voice instanceof LocaleWrapper)) builder.append(String.format("\nName: %s\nQuality: %d (higher = better)\nLatency: %d (lower = better)", voice.getName(), voice.getQuality(), voice.getLatency()));
+                if (!(voice instanceof LocaleWrapper))
+                    builder.append(String.format(getString(R.string.settings_voice_information), voice.getName(),
+                            voice.getQuality(), voice.getLatency()));
                 boolean first = true, notInstalled = false;
                 for (String feature : features)
                     if (ConstantsWrapper.KEY_FEATURE_NOT_INSTALLED.equals(feature)) notInstalled = true;
@@ -147,12 +161,13 @@ public final class SettingsActivity extends Activity {
                             !ConstantsWrapper.KEY_FEATURE_NETWORK_TIMEOUT_MS.equals(feature)) {
                         if (first) {
                             first = false;
-                            builder.append("\nUnsupported features: ");
+                            builder.append(getText(R.string.settings_voice_information_unsupported_features));
                         } else builder.append(", ");
                         builder.append(feature);
                     }
-                if (notInstalled) builder.append("\nAdditional data needed downloading");
-                if (voice.isNetworkConnectionRequired()) builder.append("\nNetwork connection required");
+                if (notInstalled) builder.append(getText(R.string.settings_voice_information_not_installed));
+                if (voice.isNetworkConnectionRequired())
+                    builder.append(getText(R.string.settings_voice_information_network_connection_required));
                 if (builder.length() != start) builder.setSpan(new TextAppearanceSpan(getActivity(),
                                 android.R.style.TextAppearance_Small), start + 1, builder.length(),
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);

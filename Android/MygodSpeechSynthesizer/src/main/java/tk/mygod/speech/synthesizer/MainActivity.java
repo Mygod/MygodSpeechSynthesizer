@@ -185,12 +185,12 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         if (v != inputText) return;
         getMenuInflater().inflate(R.menu.input_text_styles, menu);
-        menu.setHeaderTitle("Style...");    // todo: localize!
+        menu.setHeaderTitle(R.string.action_style);
         earconItem = menu.findItem(R.id.action_tts_earcon);
     }
 
     private boolean processTag(MenuItem item, CharSequence source, CharSequence selection) {
-        StyleIdParser parser = new StyleIdParser(item, selection);
+        StyleIdParser parser = new StyleIdParser(this, item, selection);
         if (parser.Tag == null) return true;
         inputText.setTextKeepState(source.subSequence(0, selectionStart) + parser.Tag +
                 source.subSequence(selectionEnd, source.length()));

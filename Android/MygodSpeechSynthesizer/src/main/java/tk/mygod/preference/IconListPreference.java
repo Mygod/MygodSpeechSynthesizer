@@ -56,6 +56,8 @@ public class IconListPreference extends ListPreference implements DialogInterfac
     @Override
     protected void onPrepareDialogBuilder(@NonNull Builder builder) {
         CharSequence[] entries = getEntries(), entryValues = getEntryValues();
+        if (entries == null) entries = new CharSequence[0];
+        if (entryValues == null) entryValues = new CharSequence[0];
         if (entries.length != entryValues.length) throw new IllegalStateException
                 ("ListPreference requires an entries array and an entryValues array which are both the same length");
         if (mEntryIcons != null && entries.length != mEntryIcons.length) throw new IllegalStateException

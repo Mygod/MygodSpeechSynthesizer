@@ -25,7 +25,6 @@ import java.util.concurrent.Semaphore;
 
 /**
  * @author Mygod
- * TODO:   AudioSessionId & AudioAttributes
  */
 @SuppressLint("NewApi")
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
