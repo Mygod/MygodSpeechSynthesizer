@@ -404,7 +404,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
 
     @Override
     public void onTtsSynthesisPrepared(int e) {
-        if (parser != null) e = parser.getSsmlOffset(e, true);
+        if (parser != null) e = parser.Mappings.getSourceOffset(e, true);
         final int end = e;
         runOnUiThread(new Runnable() {
             @Override
@@ -417,8 +417,8 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     @Override
     public void onTtsSynthesisCallback(int s, int e) {
         if (parser != null) {
-            s = parser.getSsmlOffset(s, false);
-            e = parser.getSsmlOffset(e, true);
+            s = parser.Mappings.getSourceOffset(s, false);
+            e = parser.Mappings.getSourceOffset(e, true);
         }
         if (e < s) e = s;
         final int start = s, end = e;
@@ -440,8 +440,8 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     @Override
     public void onTtsSynthesisError(int s, int e) {
         if (parser != null) {
-            s = parser.getSsmlOffset(s, false);
-            e = parser.getSsmlOffset(e, true);
+            s = parser.Mappings.getSourceOffset(s, false);
+            e = parser.Mappings.getSourceOffset(e, true);
         }
         if (e < s) e = s;
         final int start = s, end = e;

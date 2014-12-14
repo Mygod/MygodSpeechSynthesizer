@@ -15,7 +15,6 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Stack;
 
 /**
@@ -38,15 +37,6 @@ public final class SsmlDroid {
         public int Position;
     }
 
-    private static class Mapping {
-        public Mapping(int s, int t) {
-            SsmlPosition = s;
-            TextPosition = t;
-        }
-
-        public int SsmlPosition, TextPosition;
-    }
-
     public static class Parser extends DefaultHandler {
         private static final String[]
                 months = "january,february,march,april,may,june,july,august,september,october,november,december"
@@ -55,12 +45,12 @@ public final class SsmlDroid {
         private Stack<Tag> treeStack = new Stack<Tag>();
         private Locator locator;
         private Field theCurrentLine, theCurrentColumn;
-        private ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         private int lineNumber, offset;
         private String source;
         private Html.TagHandler customHandler;
         private XMLReader reader;
         private boolean ignoreSingleLineBreaks;
+        public TextMappings Mappings = new TextMappings();
         public SpannableStringBuilder Result = new SpannableStringBuilder();
 
         Parser(String src, Html.TagHandler handler, XMLReader reader, boolean ignoreSingleLineBreaks) {
@@ -68,15 +58,6 @@ public final class SsmlDroid {
             customHandler = handler;
             this.reader = reader;
             this.ignoreSingleLineBreaks = ignoreSingleLineBreaks;
-        }
-
-        private void addMapping(int s, int t) {
-            int size = mappings.size();
-            if (size > 0) {                         // time & space improvement
-                Mapping last = mappings.get(size - 1);
-                if (s == last.SsmlPosition && t == last.TextPosition) return;
-            }
-            mappings.add(new Mapping(s - 7, t));    // remember to subtract the wrapper!
         }
 
         private static int parseInt(String value, String[] patterns, int directOffset, int patternOffset)
@@ -270,33 +251,12 @@ public final class SsmlDroid {
                 if (offset++ < 0 || offset > source.length()) throw new SAXException("Line number overflow.");
                 ++lineNumber;
             }
-            int i = offset + column - 1, j = Result.length();
-            addMapping(i - length, j);
-            addMapping(i, j + length);
+            int i = offset + column - 8, j = Result.length();   // remember to subtract the wrapper!
+            Mappings.addMapping(i - length, j);
+            Mappings.addMapping(i, j + length);
             for (i = 0; i < length; i++) Result.append(ignoreSingleLineBreaks && i > 0 && i < ch.length - 1 &&
                     ch[i - 1] != '\n' && ch[i] == '\n' && ch[i + 1] != '\n' ? ' ' : ch[i]);
         }
-
-        /**
-         * Get SSML offset from text offset. Takes O(log n) where n is the number of tags. Thread-safe.
-         * @param textOffset Text offset.
-         * @param preferLeft If there is an tag at the specified offset, go as left as possible.
-         *                   Otherwise, go as right as possible.
-         * @return SSML offset.
-         */
-        public int getSsmlOffset(int textOffset, boolean preferLeft) {
-            int l = 0, r = mappings.size();
-            while (l < r) {
-                int mid = (l + r) >> 1;
-                int pos = mappings.get(mid).TextPosition;
-                if (textOffset < pos || textOffset == pos && preferLeft) r = mid;
-                else l = mid + 1;
-            }
-            Mapping mapping = mappings.get(preferLeft ? l : l - 1);
-            return mapping.SsmlPosition + textOffset - mapping.TextPosition;
-        }
-
-        // todo: getTextOffset, because why not?
     }
 
     private SsmlDroid() {
