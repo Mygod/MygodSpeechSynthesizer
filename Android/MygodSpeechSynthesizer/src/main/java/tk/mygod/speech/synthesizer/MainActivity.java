@@ -309,6 +309,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
         progressBar.setVisibility(View.INVISIBLE);
         if (descriptor != null) descriptor = null;  // pretending I'm reading the value here
         status = IDLE;
+        fab.show();
         cancelNotification();
     }
     @Override
