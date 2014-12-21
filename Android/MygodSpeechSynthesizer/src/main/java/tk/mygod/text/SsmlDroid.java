@@ -3,7 +3,7 @@ package tk.mygod.text;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.PersistableBundle;
-import android.text.Html;
+import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.TtsSpan;
@@ -42,18 +42,18 @@ public final class SsmlDroid {
                 months = "january,february,march,april,may,june,july,august,september,october,november,december"
                     .split(","),
                 weekdays = "sunday,monday,tuesday,wednesday,thursday,friday,saturday".split(",");
-        private Stack<Tag> treeStack = new Stack<Tag>();
+        private Stack<Tag> treeStack = new Stack<>();
         private Locator locator;
         private Field theCurrentLine, theCurrentColumn;
         private int lineNumber, offset;
         private String source;
-        private Html.TagHandler customHandler;
+        private TagHandler customHandler;
         private XMLReader reader;
         private boolean ignoreSingleLineBreaks;
         public TextMappings Mappings = new TextMappings();
         public SpannableStringBuilder Result = new SpannableStringBuilder();
 
-        Parser(String src, Html.TagHandler handler, XMLReader reader, boolean ignoreSingleLineBreaks) {
+        Parser(String src, TagHandler handler, XMLReader reader, boolean ignoreSingleLineBreaks) {
             source = src;
             customHandler = handler;
             this.reader = reader;
@@ -90,12 +90,12 @@ public final class SsmlDroid {
         public void startElement(String uri, String localName, String qName, Attributes attributes)
                 throws SAXException {
             String temp, name = localName.toLowerCase();
+            if (customHandler != null && customHandler.handleTag(true, localName, Result, reader)) return;
             if ("earcon".equals(name)) {
                 treeStack.push(new Tag(new EarconSpan(), "earcon", Result.length()));
                 return;
             }
             if (Build.VERSION.SDK_INT < 21) {
-                if (customHandler != null) customHandler.handleTag(true, localName, Result, reader);
                 treeStack.push(new Tag(name));
                 return;
             }
@@ -212,7 +212,6 @@ public final class SsmlDroid {
                     throw new AttributeMissingException("verbatim/@verbatim");
                 bundle.putString(TtsSpan.ARG_VERBATIM, temp);
             } else {
-                if (customHandler != null) customHandler.handleTag(true, localName, Result, reader);
                 treeStack.push(new Tag(name));
                 return;
             }
@@ -263,7 +262,7 @@ public final class SsmlDroid {
         throw new AssertionError();
     }
 
-    public static Parser fromSsml(String source, boolean ignoreSingleLineBreaks, Html.TagHandler customHandler)
+    public static Parser fromSsml(String source, boolean ignoreSingleLineBreaks, TagHandler customHandler)
             throws SAXException, IOException {
         XMLReader reader = XMLReaderFactory.createXMLReader("org.ccil.cowan.tagsoup.Parser");
         Parser result = new Parser(source = String.format("<speak>%s</speak>", source), customHandler, reader,
@@ -271,5 +270,9 @@ public final class SsmlDroid {
         reader.setContentHandler(result);
         reader.parse(new InputSource(new StringReader(source)));
         return result;
+    }
+
+    public static interface TagHandler {
+        public boolean handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader);
     }
 }
