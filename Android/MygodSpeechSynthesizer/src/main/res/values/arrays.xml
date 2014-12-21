@@ -10,4 +10,14 @@
         <item>selection_start</item>
         <item>selection_end</item>
     </string-array>
+    <string-array name="settings_notification_type">
+        <item>No notification icon (4.1+)</item>
+        <item>Normal notification</item>
+        <item>Heads up notification (5.0+)</item>
+    </string-array>
+    <string-array name="settings_notification_type_values" translatable="false">
+        <item>-2</item>
+        <item>0</item>
+        <item>1</item>
+    </string-array>
 </resources>

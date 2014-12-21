@@ -80,8 +80,8 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
         if (!inBackground) return;
         builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
                .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null);
-        if (Build.VERSION.SDK_INT >= 16) builder.setPriority(TtsEngineManager.pref.getBoolean
-                ("appearance.notificationIcon", true) ? Notification.PRIORITY_DEFAULT : Notification.PRIORITY_MIN);
+        if (Build.VERSION.SDK_INT >= 16) builder.setPriority(Integer.parseInt(
+                TtsEngineManager.pref.getString("appearance.notificationType", "0")));
         else builder.setContentText(null).setTicker(null);
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, Build.VERSION.SDK_INT >= 16
                 ? new Notification.BigTextStyle(builder).bigText(lastText).build() : builder.getNotification());

@@ -6,8 +6,6 @@ import android.preference.Preference;
 import android.util.AttributeSet;
 
 /**
- * Project: MygodSpeechSynthesizer
- *
  * @author Mygod
  */
 public class EditTextValueAsSummaryPreference extends EditTextPreference

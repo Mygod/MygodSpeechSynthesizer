@@ -8,6 +8,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -21,8 +22,10 @@ import tk.mygod.speech.synthesizer.R;
  * @author   Mygod
  * Based on: https://github.com/atanarro/IconListPreference/blob/master/src/com/tanarro/iconlistpreference/IconListPreference.java
  */
-public class IconListPreference extends ListPreference implements DialogInterface.OnClickListener {
+public class IconListPreference extends ListPreference
+        implements DialogInterface.OnClickListener, Preference.OnPreferenceChangeListener {
     private Drawable[] mEntryIcons = null;
+    private boolean valueAsSummary;
     private int selectedEntry = -1;
 
     public IconListPreference(Context context, AttributeSet attrs) {
@@ -34,6 +37,7 @@ public class IconListPreference extends ListPreference implements DialogInterfac
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconPreference, defStyle, 0);
         int entryIconsResId = a.getResourceId(R.styleable.IconPreference_entryIcons, -1);
         if (entryIconsResId != -1) setEntryIcons(entryIconsResId);
+        setValueAsSummary(a.getBoolean(R.styleable.IconPreference_valueAsSummary, false));
         a.recycle();
     }
 
@@ -51,6 +55,36 @@ public class IconListPreference extends ListPreference implements DialogInterfac
         for (int i = 0; i < icons_array.length(); i++) icon_ids_array[i] = icons_array.getDrawable(i);
         setEntryIcons(icon_ids_array);
         icons_array.recycle();
+    }
+
+    public boolean getValueAsSummary() {
+        return valueAsSummary;
+    }
+
+    public void setValueAsSummary(boolean value) {
+        valueAsSummary = value;
+    }
+
+    private OnPreferenceChangeListener listener;
+    @Override
+    public OnPreferenceChangeListener getOnPreferenceChangeListener() {
+        return listener;
+    }
+    @Override
+    public void setOnPreferenceChangeListener(OnPreferenceChangeListener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        if (listener != null && !listener.onPreferenceChange(preference, newValue)) return false;
+        String val = newValue.toString();
+        if (valueAsSummary) {
+            setSummary(val);
+            if (mEntryIcons != null) setIcon(mEntryIcons[selectedEntry]);
+        }
+        setValue(val);  // temporary hack
+        return true;
     }
 
     @Override

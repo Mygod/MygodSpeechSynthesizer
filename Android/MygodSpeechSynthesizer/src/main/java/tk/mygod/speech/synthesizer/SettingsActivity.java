@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -39,7 +37,7 @@ public final class SettingsActivity extends Activity {
 
     public static class TtsSettingsFragment extends PreferenceFragment {
         private IconListPreference engine, voice;
-        private ListPreference lang, start;
+        private ListPreference lang;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -51,8 +49,6 @@ public final class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectEngine(newValue.toString());
-                            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName());
-                            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon());
                             updateLanguages();
                             return true;
                         }
@@ -62,7 +58,6 @@ public final class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectLanguage(newValue.toString());
-                            lang.setSummary(TtsEngineManager.engines.selectedEngine.getLanguage().getDisplayName());
                             updateVoices();
                             return true;
                         }
@@ -72,8 +67,6 @@ public final class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectVoice(newValue.toString());
-                            voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice()
-                                    .getDisplayName(TtsSettingsFragment.this.getActivity()));
                             return false;
                         }
                     });
@@ -93,19 +86,6 @@ public final class SettingsActivity extends Activity {
             engine.setSummary(TtsEngineManager.engines.selectedEngine.getName());
             engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon());
             updateLanguages();
-            (start = (ListPreference)findPreference("text.start")).setOnPreferenceChangeListener(
-                    new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            start.setValue(newValue.toString());
-                            start.setSummary(start.getEntry());
-                            return true;
-                        }
-                    }
-            );
-            start.setSummary(start.getEntry());
-            ((CheckBoxPreference) findPreference("text.enableSsmlDroid"))
-                    .setChecked(TtsEngineManager.getEnableSsmlDroid());
             findPreference("ssmlDroid.userGuidelines")
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                         @Override
@@ -115,9 +95,6 @@ public final class SettingsActivity extends Activity {
                             return false;
                         }
                     });
-            CheckBoxPreference pref = (CheckBoxPreference) findPreference("appearance.oldTimeySaveUI");
-            if (Build.VERSION.SDK_INT < 19) pref.setEnabled(false);
-            else pref.setChecked(TtsEngineManager.getOldTimeySaveUI());
         }
 
         private void updateLanguages() {

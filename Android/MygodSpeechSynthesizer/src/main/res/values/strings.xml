@@ -34,8 +34,7 @@
     <string name="settings_ignore_single_line_break">Ignore single line breaks</string>
     <string name="settings_ignore_single_line_break_summary">Ignore the single line breaks but keep the multiple ones.</string>
     <string name="settings_appearance">Appearance</string>
-    <string name="settings_show_notification_icon">Show notification icon</string>
-    <string name="settings_show_notification_icon_summary">Hiding notification icon is only available in 4.1+.</string>
+    <string name="settings_notification_type">Show notification icon</string>
     <string name="settings_show_ticker">Enable text scrolling</string>
     <string name="settings_show_ticker_summary">Scroll text that is being spoken on the status bar. (Only available in
         4.4-)</string>
