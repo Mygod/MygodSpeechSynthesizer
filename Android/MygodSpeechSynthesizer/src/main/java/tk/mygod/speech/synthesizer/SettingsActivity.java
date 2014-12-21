@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
@@ -36,8 +35,7 @@ public final class SettingsActivity extends Activity {
     }
 
     public static class TtsSettingsFragment extends PreferenceFragment {
-        private IconListPreference engine, voice;
-        private ListPreference lang;
+        private IconListPreference engine, lang, voice;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +51,7 @@ public final class SettingsActivity extends Activity {
                             return true;
                         }
                     });
-            (lang = (ListPreference) findPreference("engine.lang"))
+            (lang = (IconListPreference) findPreference("engine.lang"))
                     .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -83,8 +81,7 @@ public final class SettingsActivity extends Activity {
             engine.setEntryValues(ids);
             engine.setEntryIcons(icons);
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
-            engine.setSummary(TtsEngineManager.engines.selectedEngine.getName());
-            engine.setIcon(TtsEngineManager.engines.selectedEngine.getIcon());
+            engine.init();
             updateLanguages();
             findPreference("ssmlDroid.userGuidelines")
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -111,7 +108,7 @@ public final class SettingsActivity extends Activity {
             Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
             if (locale == null) return;
             lang.setValue(locale.toString());
-            lang.setSummary(locale.getDisplayName());
+            lang.init();
             updateVoices();
         }
 
@@ -155,7 +152,7 @@ public final class SettingsActivity extends Activity {
             voice.setEntryValues(ids);
             TtsVoice v = TtsEngineManager.engines.selectedEngine.getVoice();
             voice.setValue(v.getName());
-            voice.setSummary(v.getDisplayName(getActivity()));
+            voice.init();
         }
     }
 }

@@ -78,7 +78,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
         if (status != SPEAKING) lastText = null;
         else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
         if (!inBackground) return;
-        builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
+        builder.setWhen(System.currentTimeMillis()).setContentText(lastText).setVibrate(new long[0])    // heads-up hack
                .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null);
         if (Build.VERSION.SDK_INT >= 16) builder.setPriority(Integer.parseInt(
                 TtsEngineManager.pref.getString("appearance.notificationType", "0")));

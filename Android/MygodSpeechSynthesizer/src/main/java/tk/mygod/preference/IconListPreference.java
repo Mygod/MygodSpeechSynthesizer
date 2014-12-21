@@ -34,11 +34,16 @@ public class IconListPreference extends ListPreference
 
     public IconListPreference(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs);
+        super.setOnPreferenceChangeListener(this);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconPreference, defStyle, 0);
         int entryIconsResId = a.getResourceId(R.styleable.IconPreference_entryIcons, -1);
         if (entryIconsResId != -1) setEntryIcons(entryIconsResId);
         setValueAsSummary(a.getBoolean(R.styleable.IconPreference_valueAsSummary, false));
         a.recycle();
+    }
+
+    public Drawable getEntryIcon() {
+        return mEntryIcons[selectedEntry];
     }
 
     public Drawable[] getEntryIcons() {
@@ -65,6 +70,22 @@ public class IconListPreference extends ListPreference
         valueAsSummary = value;
     }
 
+    public void init() {
+        CharSequence[] entryValues = getEntryValues();
+        if (entryValues == null) return;
+        String selectedValue = getValue();
+        for (selectedEntry = 0; selectedEntry < entryValues.length; selectedEntry++)
+            if (selectedValue.compareTo((String) entryValues[selectedEntry]) == 0) break;
+        setSummary(getEntry());
+        if (mEntryIcons != null) setIcon(getEntryIcon());
+    }
+
+    @Override
+    protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
+        super.onSetInitialValue(restoreValue, defaultValue);
+        init();
+    }
+
     private OnPreferenceChangeListener listener;
     @Override
     public OnPreferenceChangeListener getOnPreferenceChangeListener() {
@@ -78,12 +99,11 @@ public class IconListPreference extends ListPreference
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (listener != null && !listener.onPreferenceChange(preference, newValue)) return false;
-        String val = newValue.toString();
+        setValue(newValue.toString());  // temporary hack
         if (valueAsSummary) {
-            setSummary(val);
-            if (mEntryIcons != null) setIcon(mEntryIcons[selectedEntry]);
+            setSummary(getEntry());
+            if (mEntryIcons != null) setIcon(getEntryIcon());
         }
-        setValue(val);  // temporary hack
         return true;
     }
 
@@ -97,9 +117,6 @@ public class IconListPreference extends ListPreference
         if (mEntryIcons != null && entries.length != mEntryIcons.length) throw new IllegalStateException
                 ("IconListPreference requires the icons entries array be the same length than entries or null");
         CheckedListAdapter adapter = new CheckedListAdapter();
-        String selectedValue = getValue();
-        for (selectedEntry = 0; selectedEntry < entryValues.length; selectedEntry++)
-            if (selectedValue.compareTo((String) entryValues[selectedEntry]) == 0) break;
         builder.setAdapter(adapter, this);
         builder.setPositiveButton(null, null);
     }

@@ -4,7 +4,8 @@
     <PreferenceCategory android:title="@string/settings_engines_languages">
         <tk.mygod.preference.IconListPreference android:key="engine" android:title="@string/settings_preferred_engine"
                                                 app:valueAsSummary="true"/>
-        <ListPreference android:key="engine.lang" android:title="@string/settings_language"/>
+        <tk.mygod.preference.IconListPreference android:key="engine.lang" android:title="@string/settings_language"
+                                                app:valueAsSummary="true"/>
         <tk.mygod.preference.IconListPreference android:key="engine.voice" android:title="@string/settings_voice"
                                                 app:valueAsSummary="true"/>
     </PreferenceCategory>
