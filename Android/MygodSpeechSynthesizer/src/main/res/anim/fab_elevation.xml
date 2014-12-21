@@ -2,10 +2,10 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_enabled="true" android:state_pressed="true">
         <objectAnimator android:duration="@android:integer/config_shortAnimTime" android:propertyName="translationZ"
-                        android:valueTo="8dip" android:valueType="floatType" />
+                        android:valueTo="14dip" android:valueType="floatType" />
     </item>
     <item>
         <objectAnimator android:duration="@android:integer/config_shortAnimTime" android:propertyName="translationZ"
-                        android:valueTo="14dip" android:valueType="floatType" />
+                        android:valueTo="8dip" android:valueType="floatType" />
     </item>
 </selector>
