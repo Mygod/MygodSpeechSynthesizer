@@ -117,6 +117,7 @@ public class IconListPreference extends ListPreference
         if (mEntryIcons != null && entries.length != mEntryIcons.length) throw new IllegalStateException
                 ("IconListPreference requires the icons entries array be the same length than entries or null");
         CheckedListAdapter adapter = new CheckedListAdapter();
+        builder.setSingleChoiceItems((CharSequence[]) null, selectedEntry, null);
         builder.setAdapter(adapter, this);
         builder.setPositiveButton(null, null);
     }
@@ -155,7 +156,6 @@ public class IconListPreference extends ListPreference
                             "android"), parent, false);
             CheckedTextView text = (CheckedTextView) convertView.findViewById(android.R.id.text1);
             text.setText(getEntries()[position]);
-            text.setChecked(selectedEntry == position);
             if (mEntryIcons != null)
                 text.setCompoundDrawablesWithIntrinsicBounds(mEntryIcons[position], null, null, null);
             return convertView;
