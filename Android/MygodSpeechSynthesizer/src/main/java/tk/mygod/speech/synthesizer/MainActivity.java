@@ -221,8 +221,8 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
+    protected void onStart() {
+        super.onStart();
         cancelNotification();
         styleItem.setVisible(TtsEngineManager.getEnableSsmlDroid());
     }
