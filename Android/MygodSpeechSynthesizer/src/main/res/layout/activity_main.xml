@@ -19,7 +19,7 @@
                                                android:layout_width="wrap_content" android:layout_height="wrap_content"
                                                android:src="@drawable/ic_av_mic_none" android:onClick="synthesize"
                                                android:layout_margin="16dp" app:fab_shadow="false"
-                                               android:stateListAnimator="@anim/button_elevation"
+                                               android:stateListAnimator="@anim/fab_elevation"
                                                app:fab_colorNormal="@color/material_purple_500"
                                                app:fab_colorPressed="@color/material_purple_600"/>
     </FrameLayout>
