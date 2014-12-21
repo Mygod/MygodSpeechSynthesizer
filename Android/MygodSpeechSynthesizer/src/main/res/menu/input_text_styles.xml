@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/action_tts_cardinal" android:title="@string/action_tts_cardinal"
-          android:alphabeticShortcut="c" android:numericShortcut="1" />
+          android:alphabeticShortcut="c" android:numericShortcut="1" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_ordinal" android:title="@string/action_tts_ordinal"
-          android:alphabeticShortcut="o" android:numericShortcut="2" />
+          android:alphabeticShortcut="o" android:numericShortcut="2" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_decimal" android:title="@string/action_tts_decimal"
-          android:alphabeticShortcut="a" android:numericShortcut="3" />
+          android:alphabeticShortcut="a" android:numericShortcut="3" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_fraction" android:title="@string/action_tts_fraction"
-          android:alphabeticShortcut="f" android:numericShortcut="4" />
+          android:alphabeticShortcut="f" android:numericShortcut="4" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_digits" android:title="@string/action_tts_digits"
-          android:alphabeticShortcut="s" android:numericShortcut="5" />
+          android:alphabeticShortcut="s" android:numericShortcut="5" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_telephone" android:title="@string/action_tts_telephone"
-          android:alphabeticShortcut="t" android:numericShortcut="6" />
+          android:alphabeticShortcut="t" android:numericShortcut="6" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_measure" android:title="@string/action_tts_measure"
-          android:alphabeticShortcut="m" android:numericShortcut="7" />
+          android:alphabeticShortcut="m" android:numericShortcut="7" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_money" android:title="@string/action_tts_money"
-          android:alphabeticShortcut="n" android:numericShortcut="8" />
+          android:alphabeticShortcut="n" android:numericShortcut="8" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_date" android:title="@string/action_tts_date"
-          android:alphabeticShortcut="d" android:numericShortcut="9" />
+          android:alphabeticShortcut="d" android:numericShortcut="9" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_time" android:title="@string/action_tts_time"
-          android:alphabeticShortcut="i" android:numericShortcut="*" />
+          android:alphabeticShortcut="i" android:numericShortcut="*" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_electronic" android:title="@string/action_tts_electronic"
-          android:alphabeticShortcut="e" android:numericShortcut="0" />
+          android:alphabeticShortcut="e" android:numericShortcut="0" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_verbatim" android:title="@string/action_tts_verbatim"
-          android:alphabeticShortcut="v" android:numericShortcut="#" />
+          android:alphabeticShortcut="v" android:numericShortcut="#" android:enabled="@bool/lollipop" />
     <item android:id="@+id/action_tts_text" android:title="@string/action_tts_text"
-          android:alphabeticShortcut="x" />
-    <item android:title="@string/action_tts_generic_attributes" android:alphabeticShortcut="g">
+          android:alphabeticShortcut="x" android:enabled="@bool/lollipop" />
+    <item android:title="@string/action_tts_generic_attributes"
+          android:alphabeticShortcut="g" android:enabled="@bool/lollipop">
         <menu>
             <item android:title="@string/action_tts_generic_attributes_gender"
                   android:alphabeticShortcut="g" android:numericShortcut="1">

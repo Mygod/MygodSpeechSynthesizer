@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <bool name="lollipop">true</bool>
     <color name="flatButtonText">@color/material_purple_500</color>
     <style name="Theme.Material.Purple" parent="Theme.Material.PurpleBase">
         <item name="android:alertDialogTheme">@style/Theme.Material.Purple.AlertDialog</item>
