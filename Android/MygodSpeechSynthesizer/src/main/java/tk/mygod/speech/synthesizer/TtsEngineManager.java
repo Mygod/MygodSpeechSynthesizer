@@ -80,7 +80,8 @@ final class TtsEngineManager {
         return pref.getBoolean("text.ignoreSingleLineBreak", false);
     }
     static boolean getOldTimeySaveUI() {
-        return pref.getBoolean("appearance.oldTimeySaveUI", Build.VERSION.SDK_INT < 19);
+        boolean old = Build.VERSION.SDK_INT < 19;
+        return old || pref.getBoolean("appearance.oldTimeySaveUI", old);
     }
     static String getLastSaveDir() {
         return pref.getString("fileSystem.lastSaveDir", null);
