@@ -35,6 +35,11 @@ final class TtsEngineManager {
         onSelectedEngineChangingListener = listener;    // well I don't want it fired right away
     }
 
+    static void destroy() {
+        onSelectedEngineChangingListener = null;
+        engines.onDestroy();
+    }
+
     static void selectEngine(String id) {
         if (onSelectedEngineChangingListener != null) onSelectedEngineChangingListener.onSelectedEngineChanging();
         if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID());

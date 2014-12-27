@@ -463,7 +463,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
     @Override
     public void onDestroy() {
         stopSynthesis();
-        TtsEngineManager.engines.onDestroy();
+        TtsEngineManager.destroy();
         super.onDestroy();
     }
 }
