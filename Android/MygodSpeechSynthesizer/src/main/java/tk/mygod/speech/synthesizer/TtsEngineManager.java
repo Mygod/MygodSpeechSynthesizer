@@ -81,7 +81,7 @@ final class TtsEngineManager {
     }
     static boolean getOldTimeySaveUI() {
         boolean old = Build.VERSION.SDK_INT < 19;
-        return old || pref.getBoolean("appearance.oldTimeySaveUI", old);
+        return old || pref.getBoolean("appearance.oldTimeySaveUI", false);
     }
     static String getLastSaveDir() {
         return pref.getString("fileSystem.lastSaveDir", null);

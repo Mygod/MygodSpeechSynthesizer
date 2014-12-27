@@ -26,7 +26,7 @@ public abstract class TtsEngine {
     }
 
     public Set<TtsVoice> getVoices() {
-        HashSet<TtsVoice> result = new HashSet<TtsVoice>();
+        HashSet<TtsVoice> result = new HashSet<>();
         result.add(getVoice());
         return result;
     }
@@ -75,7 +75,7 @@ public abstract class TtsEngine {
         public void onTtsSynthesisError(int start, int end);
     }
 
-    private static final HashMap<Character, Integer> splitters = new HashMap<Character, Integer>();
+    private static final HashMap<Character, Integer> splitters = new HashMap<>();
     private static final int SPLITTERS_COUNT = 6, BEST_SPLITTERS_EVER = 0, SPACE_FOR_THE_BEST = 1;
     static {
         int priority = BEST_SPLITTERS_EVER;
@@ -127,7 +127,7 @@ public abstract class TtsEngine {
     protected ArrayList<SpeechPart> splitSpeech(CharSequence text, int startOffset, boolean aggressiveMode) {
         int last = startOffset, length = text.length(), maxLength = getMaxLength();
         if (maxLength <= 0) throw new InvalidParameterException("maxLength should be a positive value.");
-        ArrayList<SpeechPart> result = new ArrayList<SpeechPart>();
+        ArrayList<SpeechPart> result = new ArrayList<>();
         int earconsLength = 0, nextEarcon = length;
         SpeechPart[] earconParts = null;
         if (text instanceof Spanned) {

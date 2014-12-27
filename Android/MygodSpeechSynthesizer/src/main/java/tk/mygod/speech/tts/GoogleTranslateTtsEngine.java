@@ -29,7 +29,7 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
     private int startOffset;
 
     static {
-        supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
+        supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
         for (String code : new String[] {
                 "af", "sq", "ar", "hy", "bs", "ca", "zh-CN", "zh-TW", "hr", "cs", "da", "nl", "en", "eo", "fi", "fr",
                 "de", "el", "ht", "hi", "hu", "is", "id", "it", "ja", "la", "lv", "mk", "no", "pl", "pt", "ro", "ru",
@@ -117,8 +117,8 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
     private final class SpeakTask extends AsyncTask<Void, Void, Void> {
         // it seems creating 32+ unreleased MediaPlayer will fail miserably with:
         // java.io.IOException: Prepare failed.: status=0x1
-        private final ArrayBlockingQueue<Object> playbackQueue = new ArrayBlockingQueue<Object>(29);
-        private final HashMap<MediaPlayer, SpeechPart> partMap = new HashMap<MediaPlayer, SpeechPart>(32);
+        private final ArrayBlockingQueue<Object> playbackQueue = new ArrayBlockingQueue<>(29);
+        private final HashMap<MediaPlayer, SpeechPart> partMap = new HashMap<>(32);
         private PlayerThread playThread;
 
         public void stop() {

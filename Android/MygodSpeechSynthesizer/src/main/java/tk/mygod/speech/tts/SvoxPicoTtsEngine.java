@@ -79,7 +79,8 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
 
     @Override
     public void onInit(int status) {
-        supportedLanguages = new TreeSet<Locale>(new LocaleUtils.DisplayNameComparator());
+        if (status != TextToSpeech.SUCCESS) throw new RuntimeException("SvoxPicoTtsEngine initialization failed.");
+        supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
         for (Locale locale : Locale.getAvailableLocales()) try {
             int test = tts.isLanguageAvailable(locale);
             if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
@@ -136,7 +137,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     @Override
     public Set<TtsVoice> getVoices() {
         if (useNativeVoice) try {
-            TreeSet<TtsVoice> voices = new TreeSet<TtsVoice>(voiceComparator);
+            TreeSet<TtsVoice> voices = new TreeSet<>(voiceComparator);
             for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
             return voices;
         } catch (RuntimeException exc) {
@@ -222,7 +223,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         return params;
     }
     private HashMap<String, String> getParams(String id) {
-        HashMap<String, String> params = new HashMap<String, String>();
+        HashMap<String, String> params = new HashMap<>();
         params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
         if (pan != null) params.put(TextToSpeech.Engine.KEY_PARAM_PAN, pan.toString());
         return params;
@@ -403,8 +404,8 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     private final class SynthesizeToStreamTask extends AsyncTask<Object, Void, Void> {
         private FileOutputStream output;
         private ArrayList<SpeechPart> parts;
-        private final LinkedBlockingDeque<String> mergeQueue = new LinkedBlockingDeque<String>();
-        private final HashMap<String, File> fileMap = new HashMap<String, File>();
+        private final LinkedBlockingDeque<String> mergeQueue = new LinkedBlockingDeque<>();
+        private final HashMap<String, File> fileMap = new HashMap<>();
         public final Semaphore synthesizeLock = new Semaphore(1);
 
         private class BackgroundThread extends Thread {

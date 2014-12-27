@@ -16,7 +16,7 @@ public class TextMappings {
         private int sourceOffset, targetOffset;
     }
 
-    private ArrayList<Mapping> mappings = new ArrayList<Mapping>();
+    private ArrayList<Mapping> mappings = new ArrayList<>();
 
     /**
      * Add a mapping between two offsets.

@@ -39,7 +39,7 @@ public final class SaveFileActivity extends ActionBarActivity
             if (currentDirectory.getParent() != null) path += "/";
             getSupportActionBar().setSubtitle(path);
         }
-        directoryList = new ArrayList<File>();
+        directoryList = new ArrayList<>();
         File[] files = currentDirectory.listFiles();
         Arrays.sort(files, this);
         if (currentDirectory.getParent() != null) directoryList.add(new File(".."));
