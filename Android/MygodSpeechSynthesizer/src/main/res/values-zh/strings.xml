@@ -33,7 +33,7 @@
     <string name="settings_appearance">外观</string>
     <string name="settings_notification_type">通知类型</string>
     <string name="settings_show_ticker">启用滚动文本</string>
-    <string name="settings_show_ticker_summary">在状态栏中滚动当前正在阅读的文本。（仅在 4.4- 可用）</string>
+    <string name="settings_show_ticker_summary">在状态栏中滚动当前正在阅读的文本。（一些 5.0+ 系统可能不支持此功能）</string>
     <string name="settings_old_timey_save_ui">怀旧风格保存界面</string>
     <string name="settings_old_timey_save_ui_summary">使用怀旧风格保存界面替代 4.4+ 的 SAF 框架。</string>
 
