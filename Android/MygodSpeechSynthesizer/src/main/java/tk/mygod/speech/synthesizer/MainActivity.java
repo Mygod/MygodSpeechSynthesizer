@@ -2,7 +2,6 @@ package tk.mygod.speech.synthesizer;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -14,6 +13,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -69,7 +69,7 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
             } };
     private TextMappings mappings;
     private ParcelFileDescriptor descriptor;    // used to keep alive from GC
-    private Notification.Builder builder;
+    private NotificationCompat.Builder builder;
 
     private String lastText, displayName;
     @SuppressLint("NewApi")
@@ -78,13 +78,11 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
         if (status != SPEAKING) lastText = null;
         else if (text != null) lastText = text.toString().replaceAll("\\s+", " ");
         if (!inBackground) return;
-        builder.setWhen(System.currentTimeMillis()).setContentText(lastText).setVibrate(new long[0])    // heads-up hack
-               .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null);
-        if (Build.VERSION.SDK_INT >= 16) builder.setPriority(Integer.parseInt(
-                TtsEngineManager.pref.getString("appearance.notificationType", "0")));
-        else builder.setContentText(null).setTicker(null);
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, Build.VERSION.SDK_INT >= 16
-                ? new Notification.BigTextStyle(builder).bigText(lastText).build() : builder.getNotification());
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(0,
+                new NotificationCompat.BigTextStyle(builder.setWhen(System.currentTimeMillis()).setContentText(lastText)
+                    .setTicker(TtsEngineManager.pref.getBoolean("appearance.ticker", false) ? lastText : null)
+                    .setPriority(Integer.parseInt(TtsEngineManager.pref.getString("appearance.notificationType", "0")))
+                    .setVibrate(new long[0])).bigText(lastText).build());   // heads-up hack
     }
     private void cancelNotification() {
         inBackground = false;   // which disables further notifications
@@ -131,14 +129,14 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
             e.printStackTrace();
         }
         if (failed) inputText.setText(formatDefaultText(getText(R.string.input_text_default).toString(), buildTime));
-        Intent intent = new Intent();
-        intent.setAction("tk.mygod.speech.synthesizer.action.STOP");
-        builder = new Notification.Builder(this).setContentTitle(getString(R.string.notification_title))
+        builder = new NotificationCompat.Builder(this).setContentTitle(getString(R.string.notification_title))
                 .setAutoCancel(true).setSmallIcon(R.drawable.ic_communication_message)
+                .setColor(getResources().getColor(R.color.material_purple_500))
                 .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
                         PendingIntent.FLAG_UPDATE_CURRENT))
-                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, intent, 0));
-        intent = getIntent();
+                .setDeleteIntent(PendingIntent.getBroadcast(this, 0,
+                        new Intent().setAction("tk.mygod.speech.synthesizer.action.STOP"), 0));
+        Intent intent = getIntent();
         if (intent.getData() != null) onNewIntent(intent);
     }
 
