@@ -122,6 +122,7 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
         private PlayerThread playThread;
 
         public void stop() {
+            if (isCancelled()) return;
             cancel(false);
             if (playThread == null || playThread.player == null) return;
             // playback should be stopped instantly or somebody might get angry >:(
