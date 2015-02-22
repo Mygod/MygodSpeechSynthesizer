@@ -80,17 +80,23 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     @Override
     public void onInit(int status) {
         if (status != TextToSpeech.SUCCESS) throw new RuntimeException("SvoxPicoTtsEngine initialization failed.");
-        supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
-        for (Locale locale : Locale.getAvailableLocales()) try {
-            int test = tts.isLanguageAvailable(locale);
-            if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
-            tts.setLanguage(locale);
-            supportedLanguages.add(getLanguage());
-        } catch (Exception e) { // god damn Samsung TTS
-            e.printStackTrace();
-        }
-        if (lastLanguage == null) setDefaultLanguage(); else setLanguage(lastLanguage);
-        initLock.release();
+        new Thread() {
+            @Override
+            public void run() {
+                getVoices();
+                supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
+                for (Locale locale : Locale.getAvailableLocales()) try {
+                    int test = tts.isLanguageAvailable(locale);
+                    if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
+                    tts.setLanguage(locale);
+                    supportedLanguages.add(getLanguage());
+                } catch (Exception e) { // god damn Samsung TTS
+                    e.printStackTrace();
+                }
+                if (lastLanguage == null) setDefaultLanguage(); else setLanguage(lastLanguage);
+                initLock.release();
+            }
+        }.start();  // put init in a separate thread to speed up booting
     }
     @Override
     public Set<Locale> getLanguages() {
@@ -102,8 +108,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     private void setDefaultLanguage() {
         if (useNativeVoice) try {
             Voice voice = tts.getDefaultVoice();
-            tts.setVoice(voice);
-            setLanguage(voice.getLocale());
+            if (voice != null) {
+                tts.setVoice(voice);
+                setLanguage(voice.getLocale());
+            }
             return;
         } catch (RuntimeException exc) {
             handleNativeVoiceException(exc);
