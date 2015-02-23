@@ -125,8 +125,13 @@ public final class SettingsActivity extends Activity {
             voice.setEntries(names);
             voice.setEntryValues(ids);
             TtsVoice v = TtsEngineManager.engines.selectedEngine.getVoice();
-            voice.setValue(v.getName());
-            voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice().getDisplayName());
+            if (v == null) {
+                voice.setValue(null);
+                voice.setSummary(null);
+            } else {
+                voice.setValue(v.getName());
+                voice.setSummary(v.getDisplayName());
+            }
             voice.init();
         }
 

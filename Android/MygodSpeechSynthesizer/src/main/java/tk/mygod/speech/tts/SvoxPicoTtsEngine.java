@@ -83,7 +83,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     private void initVoices() {
         voices = new TreeSet<>();
         if (useNativeVoice) try {
-            for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
+            for (Voice voice : tts.getVoices()) voices.add(VoiceWrapper.wrap(voice));
             return;
         } catch (RuntimeException exc) {
             useNativeVoice = false; // disable further attempts to improve performance ;-)
@@ -111,7 +111,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     public TtsVoice getVoice() {
         initLock.acquireUninterruptibly();
         initLock.release();
-        return useNativeVoice ? new VoiceWrapper(tts.getVoice()) : new LocaleVoice(tts.getLanguage());
+        return useNativeVoice ? VoiceWrapper.wrap(tts.getVoice()) : new LocaleVoice(tts.getLanguage());
     }
     @Override
     public boolean setVoice(TtsVoice voice) {
@@ -144,10 +144,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         }
         initLock.release();
         if (useNativeVoice) {
-            for (Voice voice : tts.getVoices()) if (voiceName.equals(voice.getName())) {
-                tts.setVoice(voice);
-                return true;
-            }
+            for (TtsVoice voice : voices) if (voiceName.equals(voice.getName())) return setVoice(voice);
             return false;
         }
         try {
@@ -194,11 +191,14 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private Bundle getParamsL(String id) {
         Bundle params = new Bundle();
-        Set<String> features = getVoice().getFeatures();
-        if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT))
-            params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT, 0x7fffffff);
-        if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS))
-            params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS, 0x7fffffff);
+        TtsVoice voice = getVoice();
+        if (voice != null) {
+            Set<String> features = voice.getFeatures();
+            if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT))
+                params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_RETRIES_COUNT, 0x7fffffff);
+            if (features.contains(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS))
+                params.putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_TIMEOUT_MS, 0x7fffffff);
+        }
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
         if (pan != null) params.putFloat(TextToSpeech.Engine.KEY_PARAM_PAN, pan);
         return params;
@@ -279,6 +279,9 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
 
         VoiceWrapper(Voice voice) {
             this.voice = voice;
+        }
+        public static VoiceWrapper wrap(Voice voice) {
+            return voice == null ? null : new VoiceWrapper(voice);
         }
 
         @Override
