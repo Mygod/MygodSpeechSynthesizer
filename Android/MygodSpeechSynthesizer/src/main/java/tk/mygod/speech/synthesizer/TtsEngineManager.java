@@ -6,9 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import tk.mygod.speech.tts.AvailableTtsEngines;
 import tk.mygod.speech.tts.TtsEngine;
-import tk.mygod.util.LocaleUtils;
-
-import java.util.Locale;
 
 /**
  * Project: Mygod Speech Synthesizer
@@ -45,18 +42,9 @@ final class TtsEngineManager {
         if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID());
         editor.putString("engine", id);
         editor.apply();
-        Locale sourceLang = LocaleUtils.parseLocale(pref.getString("engine." + id, ""));
-        if (sourceLang != null || (sourceLang = LocaleUtils.parseLocale(pref.getString("engine.lang", ""))) != null)
-            engines.selectedEngine.setLanguage(sourceLang);
-    }
-
-    static void selectLanguage(String lang) {
-        selectLanguage(engines.selectedEngine, lang);
-    }
-    static void selectLanguage(TtsEngine engine, String lang) {
-        engine.setLanguage(LocaleUtils.parseLocale(lang));
-        editor.putString("engine." + engine.getID(), engine.getLanguage().toString());
-        editor.apply();
+        String voice = pref.getString("engine." + id, "");
+        if (!voice.isEmpty() || !(voice = pref.getString("engine.voice", "")).isEmpty())
+            engines.selectedEngine.setVoice(voice);
     }
 
     static void selectVoice(String voice) {
@@ -64,12 +52,11 @@ final class TtsEngineManager {
     }
     static void selectVoice(TtsEngine engine, String voice) {
         engine.setVoice(voice);
-        editor.putString("engine." + engine.getID() + '.' + engine.getLanguage().toString(),
-                         engine.getVoice().getName());
+        editor.putString("engine." + engine.getID(), engine.getVoice().getName());
         editor.apply();
     }
 
-    public static interface OnSelectedEngineChangingListener {
+    public interface OnSelectedEngineChangingListener {
         void onSelectedEngineChanging();
     }
 

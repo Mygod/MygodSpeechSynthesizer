@@ -22,9 +22,7 @@
     <string name="settings">Settings</string>
     <string name="settings_engines_languages">Engines &amp; Languages</string>
     <string name="settings_preferred_engine">Preferred engine</string>
-    <string name="settings_language">Language</string>
     <string name="settings_voice">Voice</string>
-    <string name="settings_voice_default">Default</string>
     <string name="settings_tweaks">Tweaks (engine might not support)</string>
     <string name="settings_pitch">Pitch (1 for normal)</string>
     <string name="settings_speech_rate">Speech rate (1 for normal)</string>
@@ -110,9 +108,20 @@
     <string name="action_tts_time_toast">Enter the hours and minutes of the time.</string>
     <string name="action_tts_verbatim_toast">Enter the text where the characters are read verbatim, except whitespace.
     </string>
-    <string name="settings_voice_information">\nName: %1$s\nQuality: %2$d (higher = better)\nLatency: %3$d
-        (lower = better)
+    <string name="settings_latency">Latency: %d</string>
+    <string name="settings_latency_very_low">Very low expected synthesizer latency (&lt; 20ms)</string>
+    <string name="settings_latency_low">Low expected synthesizer latency (~20ms)</string>
+    <string name="settings_latency_normal">Normal expected synthesizer latency (~50ms)</string>
+    <string name="settings_latency_high">Network based expected synthesizer latency (~200ms)</string>
+    <string name="settings_latency_very_high">Very slow network based expected synthesizer latency (> 200ms)</string>
+    <string name="settings_quality">Quality: %d</string>
+    <string name="settings_quality_very_low">Very low, but still intelligible quality of speech synthesis</string>
+    <string name="settings_quality_low">Low, not human-like quality of speech synthesis</string>
+    <string name="settings_quality_normal">Normal quality of speech synthesis</string>
+    <string name="settings_quality_high">High, human-like quality of speech synthesis</string>
+    <string name="settings_quality_very_high">Very high, almost human-indistinguishable quality of speech synthesis
     </string>
+    <string name="settings_voice_information">\nLanguage: %1$s\n%2$s\n%3$s</string>
     <string name="settings_voice_information_unsupported_features">"\nUnsupported features: "</string>
     <string name="settings_voice_information_not_installed">\nAdditional data needed downloading</string>
     <string name="settings_voice_information_network_connection_required">\nNetwork connection required</string>

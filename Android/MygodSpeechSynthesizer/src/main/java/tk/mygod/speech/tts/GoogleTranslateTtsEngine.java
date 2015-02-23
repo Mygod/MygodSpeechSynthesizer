@@ -8,13 +8,15 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.IOUtils;
-import tk.mygod.util.LocaleUtils;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.InvalidParameterException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
@@ -23,37 +25,43 @@ import java.util.concurrent.Semaphore;
  * @author   Mygod
  */
 public final class GoogleTranslateTtsEngine extends TtsEngine {
-    private static Set<Locale> supportedLanguages;
-    private String language = "en";
+    private static Set<TtsVoice> voices;
+    private LocaleWrapper voice;
     private CharSequence currentText;
     private int startOffset;
 
     static {
-        supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
+        voices = new TreeSet<>();
         for (String code : new String[] {
                 "af", "sq", "ar", "hy", "bs", "ca", "zh-CN", "zh-TW", "hr", "cs", "da", "nl", "en", "eo", "fi", "fr",
                 "de", "el", "ht", "hi", "hu", "is", "id", "it", "ja", "la", "lv", "mk", "no", "pl", "pt", "ro", "ru",
-                "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" })
-            supportedLanguages.add(LocaleUtils.parseLocale(code));
+                "sr", "sk", "es", "sw", "sv", "ta", "th", "tr", "vi", "cy" }) voices.add(new LocaleWrapper(code));
     }
 
     protected GoogleTranslateTtsEngine(Context context) {
         super(context);
+        setVoice("en");
     }
 
     @Override
-    public Set<Locale> getLanguages() {
-        return supportedLanguages;
+    public Set<TtsVoice> getVoices() {
+        return voices;
     }
     @Override
-    public Locale getLanguage() {
-        return LocaleUtils.parseLocale(language);
+    public TtsVoice getVoice() {
+        return voice;
     }
     @Override
-    public boolean setLanguage(Locale loc) {
-        String lang = loc.toString().replace('_', '-');
-        if (supportedLanguages.contains(loc)) {
-            language = lang;
+    public boolean setVoice(TtsVoice voice) {
+        boolean result = voices.contains(voice);
+        if (result) this.voice = (LocaleWrapper) voice;
+        return result;
+    }
+    @Override
+    public boolean setVoice(String voice) {
+        if (voice == null || voice.isEmpty()) return false;
+        for (TtsVoice v : voices) if (voice.equals(v.getName())) {
+            this.voice = (LocaleWrapper) v;
             return true;
         }
         return false;
@@ -78,7 +86,7 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
     }
 
     private String getUrl(String text) throws UnsupportedEncodingException {
-        return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + language + "&q=" +
+        return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + voice.code + "&q=" +
                 URLEncoder.encode(text, "UTF-8");
     }
     @Override

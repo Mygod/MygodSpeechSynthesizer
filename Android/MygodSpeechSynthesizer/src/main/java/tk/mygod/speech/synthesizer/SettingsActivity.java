@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -19,7 +20,6 @@ import tk.mygod.speech.tts.TtsEngine;
 import tk.mygod.speech.tts.TtsVoice;
 import tk.mygod.support.v7.util.ToolbarConfigurer;
 
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -35,7 +35,7 @@ public final class SettingsActivity extends Activity {
     }
 
     public static class TtsSettingsFragment extends PreferenceFragment {
-        private IconListPreference engine, lang, voice;
+        private IconListPreference engine, voice;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -47,15 +47,6 @@ public final class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectEngine(newValue.toString());
-                            updateLanguages();
-                            return true;
-                        }
-                    });
-            (lang = (IconListPreference) findPreference("engine.lang"))
-                    .setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            TtsEngineManager.selectLanguage(newValue.toString());
                             updateVoices();
                             return true;
                         }
@@ -65,6 +56,7 @@ public final class SettingsActivity extends Activity {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             TtsEngineManager.selectVoice(newValue.toString());
+                            voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice().getDisplayName());
                             return false;
                         }
                     });
@@ -82,7 +74,7 @@ public final class SettingsActivity extends Activity {
             engine.setEntryIcons(icons);
             engine.setValue(TtsEngineManager.engines.selectedEngine.getID());
             engine.init();
-            updateLanguages();
+            updateVoices();
             findPreference("ssmlDroid.userGuidelines")
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                         @Override
@@ -94,24 +86,6 @@ public final class SettingsActivity extends Activity {
                     });
         }
 
-        private void updateLanguages() {
-            Set<Locale> languages = TtsEngineManager.engines.selectedEngine.getLanguages();
-            int count = languages.size();
-            CharSequence[] names = new CharSequence[count], ids = new CharSequence[count];
-            int i = 0;
-            for (Locale locale : languages) {
-                names[i] = locale.getDisplayName();
-                ids[i++] = locale.toString();
-            }
-            lang.setEntries(names);
-            lang.setEntryValues(ids);
-            Locale locale = TtsEngineManager.engines.selectedEngine.getLanguage();
-            if (locale == null) return;
-            lang.setValue(locale.toString());
-            lang.init();
-            updateVoices();
-        }
-
         @SuppressWarnings("deprecation")
         private void updateVoices() {
             Set<TtsVoice> voices = TtsEngineManager.engines.selectedEngine.getVoices();
@@ -120,12 +94,12 @@ public final class SettingsActivity extends Activity {
             int i = 0;
             for (TtsVoice voice : voices) {
                 SpannableStringBuilder builder = new SpannableStringBuilder();
-                builder.append(voice.getDisplayName(getActivity()));
+                builder.append(voice.getDisplayName());
                 int start = builder.length();
                 Set<String> features = voice.getFeatures();
-                if (!(voice instanceof LocaleWrapper))
-                    builder.append(String.format(getString(R.string.settings_voice_information), voice.getName(),
-                            voice.getQuality(), voice.getLatency()));
+                if (!(voice instanceof LocaleWrapper)) builder.append(String.format(
+                        getString(R.string.settings_voice_information), voice.getLocale().getDisplayName(),
+                        qualityFormat(voice.getQuality()), latencyFormat(voice.getLatency())));
                 boolean first = true, notInstalled = false;
                 for (String feature : features)
                     if (ConstantsWrapper.KEY_FEATURE_NOT_INSTALLED.equals(feature)) notInstalled = true;
@@ -152,7 +126,29 @@ public final class SettingsActivity extends Activity {
             voice.setEntryValues(ids);
             TtsVoice v = TtsEngineManager.engines.selectedEngine.getVoice();
             voice.setValue(v.getName());
+            voice.setSummary(TtsEngineManager.engines.selectedEngine.getVoice().getDisplayName());
             voice.init();
+        }
+
+        private CharSequence latencyFormat(int latency) {
+            switch (latency) {
+                case Voice.LATENCY_VERY_LOW: return getText(R.string.settings_latency_very_low);
+                case Voice.LATENCY_LOW: return getText(R.string.settings_latency_low);
+                case Voice.LATENCY_NORMAL: return getText(R.string.settings_latency_normal);
+                case Voice.LATENCY_HIGH: return getText(R.string.settings_latency_high);
+                case Voice.LATENCY_VERY_HIGH: return getText(R.string.settings_latency_very_high);
+                default: return String.format(getString(R.string.settings_latency), latency);
+            }
+        }
+        private CharSequence qualityFormat(int quality) {
+            switch (quality) {
+                case Voice.QUALITY_VERY_LOW: return getText(R.string.settings_quality_very_low);
+                case Voice.QUALITY_LOW: return getText(R.string.settings_quality_low);
+                case Voice.QUALITY_NORMAL: return getText(R.string.settings_quality_normal);
+                case Voice.QUALITY_HIGH: return getText(R.string.settings_quality_high);
+                case Voice.QUALITY_VERY_HIGH: return getText(R.string.settings_quality_very_high);
+                default: return String.format(getString(R.string.settings_quality), quality);
+            }
         }
     }
 }

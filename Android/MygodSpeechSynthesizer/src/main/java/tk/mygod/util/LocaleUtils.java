@@ -2,7 +2,6 @@ package tk.mygod.util;
 
 import android.text.TextUtils;
 
-import java.util.Comparator;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,12 +25,5 @@ public final class LocaleUtils {
                         : new Locale(matcher.group(1), matcher.group(3))
                     : new Locale(matcher.group(1), matcher.group(3), matcher.group(5))
                 : null;
-    }
-
-    public static class DisplayNameComparator implements Comparator<Locale> {
-        @Override
-        public int compare(Locale lhs, Locale rhs) {
-            return lhs.getDisplayName().compareTo(rhs.getDisplayName());
-        }
     }
 }

@@ -76,7 +76,7 @@ public class IconListPreference extends ListPreference
         String selectedValue = getValue();
         for (selectedEntry = 0; selectedEntry < entryValues.length; selectedEntry++)
             if (selectedValue.compareTo((String) entryValues[selectedEntry]) == 0) break;
-        setSummary(getEntry());
+        if (valueAsSummary) setSummary(getEntry());
         if (mEntryIcons != null) setIcon(getEntryIcon());
     }
 

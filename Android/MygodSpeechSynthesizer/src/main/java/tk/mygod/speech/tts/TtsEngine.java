@@ -19,26 +19,11 @@ public abstract class TtsEngine {
     protected TtsEngine(Context context) {
         this.context = context;
     }
-    public abstract Set<Locale> getLanguages();
-    public abstract Locale getLanguage();
-    public boolean setLanguage(Locale loc) {
-        return false;
-    }
 
-    public Set<TtsVoice> getVoices() {
-        HashSet<TtsVoice> result = new HashSet<>();
-        result.add(getVoice());
-        return result;
-    }
-    public TtsVoice getVoice() {
-        return new LocaleWrapper(getLanguage());
-    }
-    public boolean setVoice(TtsVoice voice) {
-        return voice instanceof LocaleWrapper && voice.getLocale() == getLanguage();
-    }
-    public boolean setVoice(String voice) {
-        return "Default".equals(voice);
-    }
+    public abstract Set<TtsVoice> getVoices();
+    public abstract TtsVoice getVoice();
+    public abstract boolean setVoice(TtsVoice voice);
+    public abstract boolean setVoice(String voice);
 
     private Drawable icon;
     public String getID() {
@@ -69,10 +54,10 @@ public abstract class TtsEngine {
 
     public abstract void onDestroy();
 
-    public static interface OnTtsSynthesisCallbackListener {
-        public void onTtsSynthesisPrepared(int end);
-        public void onTtsSynthesisCallback(int start, int end);
-        public void onTtsSynthesisError(int start, int end);
+    public interface OnTtsSynthesisCallbackListener {
+        void onTtsSynthesisPrepared(int end);
+        void onTtsSynthesisCallback(int start, int end);
+        void onTtsSynthesisError(int start, int end);
     }
 
     private static final HashMap<Character, Integer> splitters = new HashMap<>();

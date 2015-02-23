@@ -29,20 +29,13 @@ import java.util.concurrent.Semaphore;
 @SuppressLint("NewApi")
 public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.OnInitListener {
     private static Field earcons, startLock;
-    private final Comparator<TtsVoice> voiceComparator = new Comparator<TtsVoice>() {
-        @Override
-        public int compare(TtsVoice lhs, TtsVoice rhs) {
-            String l = lhs.getDisplayName(context), r = rhs.getDisplayName(context);
-            int result = l.compareToIgnoreCase(r);
-            return result == 0 ? l.compareTo(r) : result;
-        }
-    };
     private final Semaphore initLock = new Semaphore(1);
     protected TextToSpeech tts;
     private SpeechPart lastPart;
     public TextToSpeech.EngineInfo engineInfo;
     private CharSequence currentText;
-    private Locale lastLanguage;
+    private Set<TtsVoice> voices;
+    private String preInitSetVoice;
     private int startOffset;
     private boolean useNativeVoice = Build.VERSION.SDK_INT >= 21;
 
@@ -68,122 +61,102 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         tts = new TextToSpeech(context, this, (engineInfo = info).name);
         setListener();
     }
-    private Set<Locale> supportedLanguages;
 
-    private void handleNativeVoiceException(RuntimeException exc) throws RuntimeException {
-        if (exc instanceof NullPointerException && "collection == null".equals(exc.getMessage())) {
-            useNativeVoice = false; // disable further attempts to improve performance
-            Log.e("SvoxPicoTtsEngine", "Voices not supported: " + engineInfo.name);
-        } else throw exc;
-    }
-
+    @SuppressWarnings("deprecation")
     @Override
     public void onInit(int status) {
         if (status != TextToSpeech.SUCCESS) throw new RuntimeException("SvoxPicoTtsEngine initialization failed.");
         new Thread() {
             @Override
             public void run() {
-                getVoices();
-                supportedLanguages = new TreeSet<>(new LocaleUtils.DisplayNameComparator());
-                for (Locale locale : Locale.getAvailableLocales()) try {
-                    int test = tts.isLanguageAvailable(locale);
-                    if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
-                    tts.setLanguage(locale);
-                    supportedLanguages.add(getLanguage());
-                } catch (Exception e) { // god damn Samsung TTS
-                    e.printStackTrace();
-                }
-                if (lastLanguage == null) setDefaultLanguage(); else setLanguage(lastLanguage);
+                initVoices();   // split into methods so I can use return for simplicity
+                if (preInitSetVoice != null) setVoice(preInitSetVoice); else if (useNativeVoice) {
+                    Voice voice = tts.getDefaultVoice();
+                    if (voice != null) tts.setVoice(voice);
+                } else setVoice(new LocaleVoice(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
+                        : context.getResources().getConfiguration().locale));
                 initLock.release();
             }
         }.start();  // put init in a separate thread to speed up booting
     }
-    @Override
-    public Set<Locale> getLanguages() {
-        initLock.acquireUninterruptibly();
-        initLock.release();
-        return supportedLanguages;
-    }
     @SuppressWarnings("deprecation")
-    private void setDefaultLanguage() {
+    private void initVoices() {
+        voices = new TreeSet<>();
         if (useNativeVoice) try {
-            Voice voice = tts.getDefaultVoice();
-            if (voice != null) {
-                tts.setVoice(voice);
-                setLanguage(voice.getLocale());
-            }
+            for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
             return;
         } catch (RuntimeException exc) {
-            handleNativeVoiceException(exc);
+            useNativeVoice = false; // disable further attempts to improve performance ;-)
+            exc.printStackTrace();
+            Log.e("SvoxPicoTtsEngine", "Voices not supported: " + engineInfo.name);
         }
-        setLanguage(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
-                : context.getResources().getConfiguration().locale);
+        for (Locale locale : Locale.getAvailableLocales()) try {    // do the lame test
+            int test = tts.isLanguageAvailable(locale);
+            if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
+            tts.setLanguage(locale);
+            voices.add(new LocaleVoice(tts.getLanguage()));
+        } catch (Exception e) { // god damn Samsung TTS
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Set<TtsVoice> getVoices() {
+        initLock.acquireUninterruptibly();
+        initLock.release();
+        return voices;
     }
     @SuppressWarnings("deprecation")
     @Override
-    public Locale getLanguage() {
-        if (useNativeVoice) try {
-            return tts.getVoice().getLocale();
-        } catch (RuntimeException exc) {
-            handleNativeVoiceException(exc);
-        }
-        return tts.getLanguage();
+    public TtsVoice getVoice() {
+        initLock.acquireUninterruptibly();
+        initLock.release();
+        return useNativeVoice ? new VoiceWrapper(tts.getVoice()) : new LocaleVoice(tts.getLanguage());
     }
     @Override
-    public boolean setLanguage(Locale loc) {
+    public boolean setVoice(TtsVoice voice) {
+        if (!initLock.tryAcquire()) {
+            preInitSetVoice = voice.getName();
+            return true;
+        }
+        initLock.release();
+        if (useNativeVoice && voice instanceof VoiceWrapper) try {
+            tts.setVoice(((VoiceWrapper) voice).voice);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
         try {
-            int test = tts.isLanguageAvailable(loc);
-            if (test == TextToSpeech.LANG_NOT_SUPPORTED) return false;
-            tts.setLanguage(lastLanguage = loc);
+            tts.setLanguage(voice.getLocale());
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-
-    @Override
-    public Set<TtsVoice> getVoices() {
-        if (useNativeVoice) try {
-            TreeSet<TtsVoice> voices = new TreeSet<>(voiceComparator);
-            for (Voice voice : tts.getVoices()) voices.add(new VoiceWrapper(voice));
-            return voices;
-        } catch (RuntimeException exc) {
-            handleNativeVoiceException(exc);
-        }
-        return super.getVoices();
-    }
-    @Override
-    public TtsVoice getVoice() {
-        if (useNativeVoice) try {
-            return new VoiceWrapper(tts.getVoice());
-        } catch (RuntimeException exc) {
-            handleNativeVoiceException(exc);
-        }
-        return new LocaleVoice(getLanguage());
-    }
-    @Override
-    public boolean setVoice(TtsVoice voice) {
-        if (Build.VERSION.SDK_INT >= 21 && voice instanceof VoiceWrapper) try {
-            tts.setVoice(((VoiceWrapper) voice).voice);
-            return true;
-        } catch (Exception exc) {
-            exc.printStackTrace();
-        }
-        return super.setVoice(voice);
-    }
     @Override
     public boolean setVoice(String voiceName) {
-        if (useNativeVoice) try {
-            for (Voice voice : tts.getVoices()) if (voice.getName().equals(voiceName)) {
+        if (voiceName == null || voiceName.isEmpty()) return false;
+        if (!initLock.tryAcquire()) {
+            preInitSetVoice = voiceName;
+            return true;
+        }
+        initLock.release();
+        if (useNativeVoice) {
+            for (Voice voice : tts.getVoices()) if (voiceName.equals(voice.getName())) {
                 tts.setVoice(voice);
                 return true;
             }
             return false;
-        } catch (RuntimeException exc) {
-            handleNativeVoiceException(exc);
         }
-        return super.setVoice(voiceName);
+        try {
+            tts.setLanguage(LocaleUtils.parseLocale(voiceName));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -273,13 +246,11 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                     synthesizeToStreamTask.mergeQueue.add(utteranceId);
                     synthesizeToStreamTask.synthesizeLock.release();
                     if (listener != null) listener.onTtsSynthesisPrepared(part.End);
-                }
-                else if (speakTask != null && listener != null)
+                } else if (speakTask != null && listener != null)
                     if (part.Start == lastPart.Start && part.End == lastPart.End) {
                         listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
                         speakTask = null;
-                    }
-                    else listener.onTtsSynthesisCallback(part.End, part.End);
+                    } else listener.onTtsSynthesisCallback(part.End, part.End);
             }
 
             @Override
@@ -335,8 +306,8 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
             return voice.isNetworkConnectionRequired();
         }
         @Override
-        public String getDisplayName(Context context) {
-            return String.format("%s (%s)", voice.getName(), voice.getLocale().getDisplayName());
+        public String getDisplayName() {
+            return voice.getName();
         }
 
         @Override
@@ -346,7 +317,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
     }
     @SuppressWarnings("deprecation")
     final class LocaleVoice extends LocaleWrapper {
-        LocaleVoice(Locale loc) {
+        private LocaleVoice(Locale loc) {
             super(loc);
         }
 

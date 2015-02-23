@@ -1,7 +1,5 @@
 package tk.mygod.speech.tts;
 
-import android.content.Context;
-import tk.mygod.speech.synthesizer.R;
 import tk.mygod.util.LocaleUtils;
 
 import java.util.Collections;
@@ -9,13 +7,14 @@ import java.util.Locale;
 import java.util.Set;
 
 public class LocaleWrapper extends TtsVoice {
-    protected Locale locale;
+    protected final Locale locale;
+    public final String code;
 
     LocaleWrapper(Locale loc) {
-        locale = loc;
+        code = (locale = loc).toString();
     }
     LocaleWrapper(String code) {
-        locale = LocaleUtils.parseLocale(code);
+        locale = LocaleUtils.parseLocale(this.code = code);
     }
 
     @Override
@@ -32,7 +31,7 @@ public class LocaleWrapper extends TtsVoice {
     }
     @Override
     public String getName() {
-        return "Default";
+        return code;
     }
     @Override
     public int getQuality() {
@@ -43,7 +42,7 @@ public class LocaleWrapper extends TtsVoice {
         return true;
     }
     @Override
-    public String getDisplayName(Context context) {
-        return context.getString(R.string.settings_voice_default);
+    public String getDisplayName() {
+        return locale.getDisplayName();
     }
 }
