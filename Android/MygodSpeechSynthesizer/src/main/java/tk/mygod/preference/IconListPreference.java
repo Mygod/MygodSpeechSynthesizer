@@ -25,7 +25,6 @@ import tk.mygod.speech.synthesizer.R;
 public class IconListPreference extends ListPreference
         implements DialogInterface.OnClickListener, Preference.OnPreferenceChangeListener {
     private Drawable[] mEntryIcons = null;
-    private boolean valueAsSummary;
     private int selectedEntry = -1;
 
     public IconListPreference(Context context, AttributeSet attrs) {
@@ -38,7 +37,6 @@ public class IconListPreference extends ListPreference
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconPreference, defStyle, 0);
         int entryIconsResId = a.getResourceId(R.styleable.IconPreference_entryIcons, -1);
         if (entryIconsResId != -1) setEntryIcons(entryIconsResId);
-        setValueAsSummary(a.getBoolean(R.styleable.IconPreference_valueAsSummary, false));
         a.recycle();
     }
 
@@ -62,21 +60,12 @@ public class IconListPreference extends ListPreference
         icons_array.recycle();
     }
 
-    public boolean getValueAsSummary() {
-        return valueAsSummary;
-    }
-
-    public void setValueAsSummary(boolean value) {
-        valueAsSummary = value;
-    }
-
     public void init() {
         CharSequence[] entryValues = getEntryValues();
         if (entryValues == null) return;
         String selectedValue = getValue();
         for (selectedEntry = 0; selectedEntry < entryValues.length; selectedEntry++)
             if (selectedValue.compareTo((String) entryValues[selectedEntry]) == 0) break;
-        if (valueAsSummary) setSummary(getEntry());
         if (mEntryIcons != null) setIcon(getEntryIcon());
     }
 
@@ -100,10 +89,7 @@ public class IconListPreference extends ListPreference
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (listener != null && !listener.onPreferenceChange(preference, newValue)) return false;
         setValue(newValue.toString());  // temporary hack
-        if (valueAsSummary) {
-            setSummary(getEntry());
-            if (mEntryIcons != null) setIcon(getEntryIcon());
-        }
+        if (mEntryIcons != null) setIcon(getEntryIcon());
         return true;
     }
 
