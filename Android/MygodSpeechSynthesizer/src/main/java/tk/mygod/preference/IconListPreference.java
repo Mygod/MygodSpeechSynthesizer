@@ -131,8 +131,10 @@ public class IconListPreference extends ListPreference
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
-        selectedEntry = which;
-        super.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+        if (which >= 0) {
+            selectedEntry = which;
+            super.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+        } else super.onClick(dialog, which);
         dialog.dismiss();
     }
 
