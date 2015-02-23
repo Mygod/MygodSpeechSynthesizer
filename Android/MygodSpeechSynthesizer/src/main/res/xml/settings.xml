@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/settings">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:app="http://schemas.android.com/apk/res-auto" android:title="@string/settings">
     <PreferenceCategory android:title="@string/settings_engines_languages">
         <tk.mygod.preference.IconListPreference android:key="engine" android:title="@string/settings_preferred_engine"
                                                 android:summary="%s"/>
@@ -17,9 +18,11 @@
                                                               android:inputType="numberDecimal|numberSigned"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_text">
-        <ListPreference android:key="text.start" android:summary="%s" android:defaultValue="beginning"
-                        android:title="@string/settings_start_from" android:entries="@array/settings_start_from"
-                        android:entryValues="@array/settings_start_from_values"/>
+        <tk.mygod.preference.DropDownPreference android:key="text.start" app:summary="%s"
+                                                android:defaultValue="beginning"
+                                                android:title="@string/settings_start_from"
+                                                app:entries="@array/settings_start_from"
+                                                app:entryValues="@array/settings_start_from_values"/>
         <CheckBoxPreference android:key="text.ignoreSingleLineBreak"
                             android:title="@string/settings_ignore_single_line_break"
                             android:summary="@string/settings_ignore_single_line_break_summary"/>
@@ -28,10 +31,10 @@
         <Preference android:key="ssmlDroid.userGuidelines" android:title="@string/settings_ssmldroid_user_guidelines"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_appearance">
-        <ListPreference android:key="appearance.notificationType" android:summary="%s" android:defaultValue="0"
-                        android:entries="@array/settings_notification_type"
-                        android:entryValues="@array/settings_notification_type_values"
-                        android:title="@string/settings_notification_type"/>
+        <tk.mygod.preference.DropDownPreference android:key="appearance.notificationType" app:summary="%s"
+                                                android:defaultValue="0" app:entries="@array/settings_notification_type"
+                                                app:entryValues="@array/settings_notification_type_values"
+                                                android:title="@string/settings_notification_type"/>
         <CheckBoxPreference android:key="appearance.ticker" android:title="@string/settings_show_ticker"
                             android:summary="@string/settings_show_ticker_summary"/>
         <CheckBoxPreference android:key="appearance.oldTimeySaveUI" android:title="@string/settings_old_timey_save_ui"

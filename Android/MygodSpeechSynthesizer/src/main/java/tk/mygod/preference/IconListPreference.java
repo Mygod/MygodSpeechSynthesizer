@@ -34,8 +34,8 @@ public class IconListPreference extends ListPreference
     public IconListPreference(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs);
         super.setOnPreferenceChangeListener(this);
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconPreference, defStyle, 0);
-        int entryIconsResId = a.getResourceId(R.styleable.IconPreference_entryIcons, -1);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.IconListPreference, defStyle, 0);
+        int entryIconsResId = a.getResourceId(R.styleable.IconListPreference_entryIcons, -1);
         if (entryIconsResId != -1) setEntryIcons(entryIconsResId);
         a.recycle();
     }
