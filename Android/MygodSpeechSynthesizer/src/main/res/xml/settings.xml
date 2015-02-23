@@ -7,15 +7,15 @@
         <tk.mygod.preference.IconListPreference android:key="engine.voice" android:title="@string/settings_voice"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_tweaks">
-        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.pitch" android:defaultValue="1"
-                                                              android:title="@string/settings_pitch"
-                                                              android:inputType="numberDecimal|numberSigned"/>
-        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.speechRate" android:defaultValue="1"
-                                                              android:title="@string/settings_speech_rate"
-                                                              android:inputType="numberDecimal|numberSigned"/>
-        <tk.mygod.preference.EditTextValueAsSummaryPreference android:key="tweaks.pan" android:defaultValue="0"
-                                                              android:title="@string/settings_pan"
-                                                              android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextPlusPreference android:key="tweaks.pitch" android:defaultValue="1" app:summary="%s"
+                                                    android:title="@string/settings_pitch"
+                                                    android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextPlusPreference android:key="tweaks.speechRate" android:defaultValue="1"
+                                                    app:summary="%s" android:title="@string/settings_speech_rate"
+                                                    android:inputType="numberDecimal|numberSigned"/>
+        <tk.mygod.preference.EditTextPlusPreference android:key="tweaks.pan" android:defaultValue="0" app:summary="%s"
+                                                    android:title="@string/settings_pan"
+                                                    android:inputType="numberDecimal|numberSigned"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_text">
         <tk.mygod.preference.DropDownPreference android:key="text.start" app:summary="%s"
