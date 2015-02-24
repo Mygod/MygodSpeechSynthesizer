@@ -69,7 +69,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
         new Thread() {
             @Override
             public void run() {
-                initVoices();   // split into methods so I can use return for simplicity
+                initVoices();       // split into methods so I can use return for simplicity
                 initLock.release(); // warning: race condition possible
                 if (preInitSetVoice != null) setVoice(preInitSetVoice); else if (useNativeVoice) {
                     Voice voice = tts.getDefaultVoice();
@@ -77,7 +77,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                 } else setVoice(new LocaleVoice(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
                         : context.getResources().getConfiguration().locale));
             }
-        }.start();  // put init in a separate thread to speed up booting
+        }.start();                  // put init in a separate thread to speed up booting
     }
     @SuppressWarnings("deprecation")
     private void initVoices() {
@@ -95,7 +95,7 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
             if (test == TextToSpeech.LANG_NOT_SUPPORTED) continue;
             tts.setLanguage(locale);
             voices.add(new LocaleVoice(tts.getLanguage()));
-        } catch (Exception e) { // god damn Samsung TTS
+        } catch (Exception e) {     // god damn Samsung TTS
             e.printStackTrace();
         }
     }
