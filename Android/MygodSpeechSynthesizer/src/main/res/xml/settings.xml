@@ -4,7 +4,8 @@
     <PreferenceCategory android:title="@string/settings_engines_languages">
         <tk.mygod.preference.IconListPreference android:key="engine" android:title="@string/settings_preferred_engine"
                                                 android:summary="%s"/>
-        <tk.mygod.preference.IconListPreference android:key="engine.voice" android:title="@string/settings_voice"/>
+        <tk.mygod.preference.IconListPreference android:key="engine.voice" android:title="@string/settings_voice"
+                                                android:persistent="false"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_tweaks">
         <tk.mygod.preference.EditTextPlusPreference android:key="tweaks.pitch" android:defaultValue="1" app:summary="%s"

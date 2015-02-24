@@ -42,9 +42,7 @@ final class TtsEngineManager {
         if (!engines.selectEngine(id)) selectEngine(engines.get(0).getID());
         editor.putString("engine", id);
         editor.apply();
-        String voice = pref.getString("engine." + id, "");
-        if (!voice.isEmpty() || !(voice = pref.getString("engine.voice", "")).isEmpty())
-            engines.selectedEngine.setVoice(voice);
+        engines.selectedEngine.setVoice(pref.getString("engine." + id, ""));
     }
 
     static void selectVoice(String voice) {
