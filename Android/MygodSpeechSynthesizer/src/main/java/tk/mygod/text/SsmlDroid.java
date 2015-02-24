@@ -272,7 +272,7 @@ public final class SsmlDroid {
         return result;
     }
 
-    public static interface TagHandler {
-        public boolean handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader);
+    public interface TagHandler {
+        boolean handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader);
     }
 }
