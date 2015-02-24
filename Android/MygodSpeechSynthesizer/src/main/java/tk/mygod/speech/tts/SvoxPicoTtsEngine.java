@@ -70,12 +70,12 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
             @Override
             public void run() {
                 initVoices();   // split into methods so I can use return for simplicity
+                initLock.release(); // warning: race condition possible
                 if (preInitSetVoice != null) setVoice(preInitSetVoice); else if (useNativeVoice) {
                     Voice voice = tts.getDefaultVoice();
                     if (voice != null) tts.setVoice(voice);
                 } else setVoice(new LocaleVoice(Build.VERSION.SDK_INT >= 18 ? tts.getDefaultLanguage()
                         : context.getResources().getConfiguration().locale));
-                initLock.release();
             }
         }.start();  // put init in a separate thread to speed up booting
     }
