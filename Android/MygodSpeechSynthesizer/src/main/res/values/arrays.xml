@@ -11,7 +11,7 @@
         <item>selection_end</item>
     </string-array>
     <string-array name="settings_notification_type">
-        <item>No notification icon (4.1+)</item>
+        <item>No notification icon</item>
         <item>Normal notification</item>
         <item>Heads up notification (5.0+)</item>
     </string-array>

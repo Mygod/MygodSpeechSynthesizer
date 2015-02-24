@@ -1,7 +1,7 @@
 package tk.mygod.support.v7.util;
 
 import android.app.Activity;
-import android.support.v4.app.NavUtils;
+import android.content.Intent;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import tk.mygod.speech.synthesizer.R;
@@ -21,6 +21,7 @@ public final class ToolbarConfigurer implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        NavUtils.navigateUpFromSameTask(activity);
+        Intent intent = activity.getParentActivityIntent();
+        if (intent == null) activity.finish(); else activity.navigateUpTo(intent);
     }
 }
