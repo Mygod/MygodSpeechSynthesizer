@@ -342,9 +342,10 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
         if (status == IDLE) {
             try {
                 status = SPEAKING;
+                CharSequence text = getText();  // pre-process text
                 startSynthesis();
                 TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                TtsEngineManager.engines.selectedEngine.speak(getText(), getStartOffset());
+                TtsEngineManager.engines.selectedEngine.speak(text, getStartOffset());
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, String.format(getString(R.string.synthesis_error),
@@ -380,9 +381,10 @@ public final class MainActivity extends Activity implements TtsEngine.OnTtsSynth
             case SAVE_SYNTHESIS:
                 if (resultCode == RESULT_OK) try {
                     status = SYNTHESIZING;
+                    CharSequence text = getText();  // pre-process text
                     startSynthesis();
                     TtsEngineManager.engines.selectedEngine.setSynthesisCallbackListener(this);
-                    TtsEngineManager.engines.selectedEngine.synthesizeToStream(getText(), getStartOffset(),
+                    TtsEngineManager.engines.selectedEngine.synthesizeToStream(text, getStartOffset(),
                             new FileOutputStream((descriptor = getContentResolver()
                                     .openFileDescriptor(data.getData(), "w")).getFileDescriptor()), getCacheDir());
                 } catch (Exception e) {
