@@ -173,8 +173,6 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
                             obj = playbackQueue.take();
                         }
                     }
-                    if (!isCancelled() && listener != null)
-                        listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
                     speakTask = null;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -267,7 +265,6 @@ public final class GoogleTranslateTtsEngine extends TtsEngine {
                         }
                     }
                 }
-                if (listener != null) listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
             } catch (Exception e) {
                 e.printStackTrace();
                 if (listener != null) listener.onTtsSynthesisError(0, currentText.length());

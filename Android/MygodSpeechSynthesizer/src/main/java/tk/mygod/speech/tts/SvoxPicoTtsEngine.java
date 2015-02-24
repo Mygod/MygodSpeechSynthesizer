@@ -246,11 +246,10 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                     synthesizeToStreamTask.mergeQueue.add(utteranceId);
                     synthesizeToStreamTask.synthesizeLock.release();
                     if (listener != null) listener.onTtsSynthesisPrepared(part.End);
-                } else if (speakTask != null && listener != null)
-                    if (part.Start == lastPart.Start && part.End == lastPart.End) {
-                        listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
-                        speakTask = null;
-                    } else listener.onTtsSynthesisCallback(part.End, part.End);
+                } else if (speakTask != null && listener != null) {
+                    if (part.Start == lastPart.Start && part.End == lastPart.End) speakTask = null;
+                    listener.onTtsSynthesisCallback(part.End, part.End);
+                }
             }
 
             @Override
@@ -377,8 +376,6 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                 e.printStackTrace();
                 if (listener != null) listener.onTtsSynthesisError(0, currentText.length());
             }
-            if (lastPart == null && listener != null)   // nothing speakable, end now
-                listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
             return null;
         }
     }
@@ -465,8 +462,6 @@ public final class SvoxPicoTtsEngine extends TtsEngine implements TextToSpeech.O
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    if (!isCancelled() && listener != null)
-                        listener.onTtsSynthesisCallback(currentText.length(), currentText.length());
                     synthesizeToStreamTask = null;
                 }
             }
