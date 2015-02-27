@@ -1,5 +1,0 @@
-Thanks for using <text text="My god">Mygod</text> Speech Synthesizer <verbatim verbatim="%1$s">%1$s</verbatim>! The current version was compiled at <date year="%4$d" month="%5$d" day="%6$d" weekday="%7$d">%2$s</date> <time hours="%8$d" minutes="%9$d">%3$s</time>.
-
-You have enabled <text text="s-s-m-l-droid t-m">SsmlDroid™</text>. Please note that engine might not fully support it, for more information please check the User Guidelines in Settings. If you can't understand the confusing syntax and just want to synthesize plain text, head to Settings and uncheck "Enable <text text="s-s-m-l-droid t-m">SsmlDroid™</text>".
-
-<verbatim verbatim="FAQ">FAQ</verbatim>: If synthesis fails, check your Internet connection in case the selected engine requires Internet connection. Most TTS engines don't support all the features, e.g. Samsung TTS doesn't seem to support synthesizing to file. So always try switching to another engine when you encounter problems. You can also install engines from Play Store, etc.
